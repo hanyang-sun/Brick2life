@@ -1,4 +1,5 @@
 using BrickDefense.Core;
+if (args.Contains("--simulation-layout-checks")) { SimulationLayoutChecks.Run(); return; }
 if (args.Contains("--combat-checks")) { CombatChecks.Run(); return; }
 if (args.Contains("--multiple-spawn-checks")) { MultipleSpawnChecks.Run(); return; }
 if (args.Contains("--scan-rejection-checks")) { ScanRejectionChecks.Run(); return; }

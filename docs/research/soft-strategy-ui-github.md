@@ -54,4 +54,4 @@
 
 实际使用原生圆角绘制、缓存文字样式与仅供照片页使用的 GUISkin 副本；两张 2×2 纯色纹理提供滚动条配色，销毁面板时清理主题自有 Skin/Texture。控件仍由 GUI.Button 处理输入，GUI 状态在 finally 中恢复。未复制参考项目源码，也未引入第三方包或图像。
 
-逻辑、Unity 场景及真实 Game 视图交互/截图检查通过。1280×801、862×679、540×801 窗口下完成例子切换、棋盘选点、原 JPG 核心取色、保存、分析、确认、裁切拒绝及窄屏滚动。原图 RGB 和不透明页面通过像素核对。详细结果见 [规格记录](../../.scratch/soft-strategy-ui/spec.md)，截图见 [验证目录](../../.scratch/soft-strategy-ui/verification/README.md)。
+逻辑、Unity 场景及真实 Game 视图交互/截图检查通过。1280×801、862×679、540×801 窗口下完成例子切换、棋盘选点、原 JPG 核心取色、保存、分析、确认、裁切拒绝及窄屏滚动。原图 RGB 和不透明页面通过像素核对。当时的截图与操作结果见 [验证目录](../../.scratch/soft-strategy-ui/verification/README.md)。

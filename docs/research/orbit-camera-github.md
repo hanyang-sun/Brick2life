@@ -32,7 +32,7 @@ Jrs 仓库独立 LICENSE 页面、raw URL 和提交 API 抓取失败，但实际
 
 ## 初版实施结果（2026-10-11）
 
-按以上范围局部改编 Jrs 的轨道计算并保留完整 MIT 声明。Unity 编译和 Game 视图事件检查通过（退出 0，ORBIT_CAMERA_CHECKS_PASSED）：旋转/俯仰/全周、五个按钮及复位、UI/照片页隔离、释放捕获、旋转后选格、示例切换和棋盘入框。1280×801 与 540×801 的实际画面记录在 [.scratch/orbit-camera/verification](../../.scratch/orbit-camera/verification/README.md)。详细验证与限制见 [spec.md](../../.scratch/orbit-camera/spec.md)。
+按以上范围局部改编 Jrs 的轨道计算并保留完整 MIT 声明。Unity 编译和 Game 视图事件检查通过（退出 0，ORBIT_CAMERA_CHECKS_PASSED）：旋转/俯仰/全周、五个按钮及复位、UI/照片页隔离、释放捕获、旋转后选格、示例切换和棋盘入框。这些按钮后来已移除；1280×801 与 540×801 的当时画面、验证范围与限制见 [验证记录](../../.scratch/orbit-camera/verification/README.md)。
 
 ## 斜俯视调整：编码前比较（2026-10-11）
 

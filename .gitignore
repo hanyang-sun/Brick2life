@@ -27,3 +27,5 @@
 /.scratch/color-recognition/debug/bin/
 /.scratch/color-recognition/debug/obj/
 /.scratch/color-recognition/debug/*.rgb
+# Runtime exports from the simulation camera.
+/SimulationCaptures/

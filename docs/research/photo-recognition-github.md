@@ -4,7 +4,7 @@
 
 ## 范围与验收
 
-依据 `docs/requirements-v1.md` 第 2、3、5、7 节：单张 RGB 俯拍、10×10 格纸、方向固定到纸面标记、逐格空/占与颜色识别、同色紧贴积木独立编号、失败拒绝、地图核对后生成三维关卡。实现范围见 `.scratch/photo-recognition/spec.md`。
+当时依据 `docs/requirements-v1.md` 第 2、3、5、7 节：单张 RGB 俯拍、10×10 格纸、方向固定到纸面标记、逐格空/占与颜色识别、同色紧贴积木独立编号、失败拒绝、地图核对后生成三维关卡。该格纸流程后来被移除；现行照片入口见 `docs/requirements-plain-only-v1.2.md`。
 
 ## 检索与实际阅读
 
@@ -43,4 +43,4 @@
 - `Brick Defense/Export Scan Board` 已加入，要求输入实测毫米边长，再导出原尺寸 SVG。格纸尺寸及标记位置与定位器一致。
 - .NET 检查通过：独立生成的像素图 → 100 格/9 积木 → 400 游戏格/36 占格 → 16 步；90/180/270 度旋转、独立透视投影、相邻同色、缺标记、未知颜色、混色、缺标定均符合预期。既有 200 个布局仍与独立 BFS 一致。
 - Unity 6000.3.24f1 最终批处理退出码 0，脚本编译成功；`VerifyPhotoIntegration` 的 PNG 实际解码、像素方向、9 积木和 16 步关卡检查通过，新脚本 `.meta` 已生成。
-- 合成图保存在 `Tests/Fixtures/synthetic-reference.png`，已目视核对。未获得实拍照片，未做实物准确率、人工相机交互或 Android 真机验收；后续事项记录在 `.scratch/photo-recognition/issues/01-real-photo-calibration.md`。
+- 合成图保存在 `Tests/Fixtures/synthetic-reference.png`，已目视核对。当时未获得实拍照片，也未做实物准确率、人工相机交互或 Android 真机验收；后续改为无格纸实拍流程，见 `docs/research/markerless-photo-github.md` 与 `docs/research/plain-only-photo-github.md`。
