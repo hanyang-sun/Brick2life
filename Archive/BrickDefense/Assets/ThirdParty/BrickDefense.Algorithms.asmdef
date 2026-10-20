@@ -1,0 +1,7 @@
+{
+  "name": "BrickDefense.Algorithms",
+  "references": [
+    "BrickDefense.Contracts"
+  ],
+  "noEngineReferences": true
+}

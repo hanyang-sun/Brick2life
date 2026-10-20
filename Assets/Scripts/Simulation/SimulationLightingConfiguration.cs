@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityApplication = UnityEngine.Application;
 
 namespace Brick2Life.Simulation
 {
@@ -81,7 +82,7 @@ namespace Brick2Life.Simulation
             presets.Sort((a, b) => string.CompareOrdinal(a.objectPath, b.objectPath));
             return new SimulationLightingConfiguration
             {
-                unityVersion = Application.unityVersion, activeColorSpace = QualitySettings.activeColorSpace.ToString(),
+                unityVersion = UnityApplication.unityVersion, activeColorSpace = QualitySettings.activeColorSpace.ToString(),
                 ambientMode = RenderSettings.ambientMode.ToString(), ambientSkyColor = C(RenderSettings.ambientSkyColor),
                 ambientEquatorColor = C(RenderSettings.ambientEquatorColor), ambientGroundColor = C(RenderSettings.ambientGroundColor),
                 ambientIntensity = F(RenderSettings.ambientIntensity), reflectionIntensity = F(RenderSettings.reflectionIntensity),

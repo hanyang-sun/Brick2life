@@ -2,6 +2,8 @@
 
 更新日期：2026-10-19。适用于任务 A 的 `SimulationCameraCapture`。
 
+2026-10-20 架构更新：采集通过独立 SimulationBoardSession 读取冻结快照，CaptureFrame 返回本次结果，SaveImage 负责按钮与文件保存。格式保持兼容；最新回归与接入说明见 [架构说明](architecture.md)。
+
 ## 使用方式与文件关系
 
 在当前仿真场景点击“保存 RGB + 标注”，仍会生成同名 PNG 和 JSON。相机元数据在顶层 schema 2 引入，当前随光照扩展升至 **3**；`cameraConfigurationId` 和 `cameraConfiguration` 的内容与编号算法保持相机 schema 1。schema 3 新增的光照字段见 [光照使用与代码说明](task-a-lighting-guide.md)。历史文件不会被重写，读取器需要允许 schema 1 缺少相机字段、schema 1/2 缺少光照字段。
@@ -10,7 +12,7 @@
 
 - `Assets/Scripts/Simulation/SimulationCameraCapture.cs`：配置快照、编号、配对导出及一致性保护。
 - `Tests/Unity/SimulationCameraMetadataChecks.cs`：在隔离 Unity 工程中实际渲染和读取 PNG/JSON 的检查源码，不参与主工程 .NET 检查项目的编译。
-- `Tests/RunSimulationCameraMetadataChecks.ps1`：将本次 Simulation 源码和检查源码复制到 `.scratch/camera-metadata-validation/run-*`，运行隐藏的独立 Unity 工程；主工程可以保持打开。
+- `Tests/RunSimulationCameraMetadataChecks.ps1`：将 Core、Simulation 和检查源码复制到 `.scratch/camera-metadata-validation/run-*`，运行隐藏的独立 Unity 工程；主工程可以保持打开。
 - `docs/research/simulation-camera-metadata-github.md`：编码前候选、源码和许可证比较。本次没有引入外部包或复制第三方代码。
 
 ## 字段含义

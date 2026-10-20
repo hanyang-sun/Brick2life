@@ -3,7 +3,11 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $runPath = Join-Path $repoRoot ('.scratch\camera-metadata-validation\run-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 New-Item -ItemType Directory -Path (Join-Path $runPath 'Assets\Editor'), (Join-Path $runPath 'Packages'), (Join-Path $runPath 'ProjectSettings') -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $repoRoot 'Assets\Scripts\Simulation') -Destination (Join-Path $runPath 'Assets\Simulation') -Recurse
+foreach ($folder in @('Core', 'Simulation')) {
+    $destination = Join-Path $runPath ('Assets\Scripts\' + $folder)
+    New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $repoRoot ('Assets\Scripts\' + $folder)) -Destination $destination -Recurse
+}
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Unity\SimulationCameraMetadataChecks.cs') -Destination (Join-Path $runPath 'Assets\Editor\SimulationCameraMetadataChecks.cs')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'ProjectSettings\ProjectVersion.txt') -Destination (Join-Path $runPath 'ProjectSettings\ProjectVersion.txt')
 $manifest = Get-Content -LiteralPath (Join-Path $repoRoot 'Packages\manifest.json') -Raw | ConvertFrom-Json

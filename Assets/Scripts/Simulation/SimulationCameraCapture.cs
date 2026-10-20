@@ -4,8 +4,10 @@ using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using Brick2Life.Core;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityApplication = UnityEngine.Application;
 
 namespace Brick2Life.Simulation
 {
@@ -14,35 +16,23 @@ namespace Brick2Life.Simulation
     {
         private const string FolderName = "SimulationCaptures";
         [SerializeField] private Camera sourceCamera;
-        [SerializeField] private SimulationBrickEditor brickEditor;
+        private SimulationBoardSession board;
         [SerializeField] private Text statusLabel;
 
         public string LastSavedPath { get; private set; }
+        public void Bind(SimulationBoardSession session) => board = session ?? throw new ArgumentNullException(nameof(session));
 
         public void SaveImage()
         {
             try
             {
-                if (sourceCamera == null || sourceCamera.targetTexture == null || brickEditor == null)
-                    throw new InvalidOperationException("请配置顶置相机、RenderTexture 和积木编辑器。");
-                DateTime capturedAt = DateTime.UtcNow;
-                string frameId = "rgb_" + capturedAt.ToString("yyyyMMdd_HHmmssfff", CultureInfo.InvariantCulture) + "_" + Guid.NewGuid().ToString("N");
-                RenderTexture target = sourceCamera.targetTexture;
-                GroundTruth truth = Snapshot(frameId, capturedAt);
-                byte[] png = ReadCurrentRgb();
-                if (truth.layoutVersion != brickEditor.LayoutVersion)
-                    throw new InvalidOperationException("拍摄期间积木状态发生变化，请重新保存。");
-                if (sourceCamera.targetTexture != target ||
-                    truth.cameraConfigurationId != ConfigurationId(SnapshotCamera(target)))
-                    throw new InvalidOperationException("拍摄期间相机参数发生变化，请重新保存。");
-                if (truth.lightingConfigurationId != ConfigurationId(SimulationLightingConfiguration.SnapshotScene(), SimulationLightingConfiguration.IdPrefix))
-                    throw new InvalidOperationException("拍摄期间光照参数发生变化，请重新保存。");
-                string directory = Application.isEditor
-                    ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", FolderName))
-                    : Path.Combine(Application.persistentDataPath, FolderName);
+                SimulationCapture frame = CaptureFrame();
+                string directory = UnityApplication.isEditor
+                    ? Path.GetFullPath(Path.Combine(UnityApplication.dataPath, "..", FolderName))
+                    : Path.Combine(UnityApplication.persistentDataPath, FolderName);
                 Directory.CreateDirectory(directory);
-                string path = Path.Combine(directory, truth.imageFile);
-                SavePair(path, png, Encoding.UTF8.GetBytes(JsonUtility.ToJson(truth, true)));
+                string path = Path.Combine(directory, frame.FrameId + ".png");
+                SavePair(path, frame.CopyRgbPng(), Encoding.UTF8.GetBytes(frame.GroundTruthJson));
                 LastSavedPath = path;
                 if (statusLabel != null)
                     statusLabel.text = $"已保存 PNG + JSON\n{FolderName}/";
@@ -55,31 +45,53 @@ namespace Brick2Life.Simulation
             }
         }
 
-        private GroundTruth Snapshot(string frameId, DateTime capturedAt)
+        // Programmatic capture returns the current result or throws; it does not depend on a UI status label or write files.
+        public SimulationCapture CaptureFrame()
+        {
+            if (sourceCamera == null || sourceCamera.targetTexture == null || board == null || !board.IsInitialized)
+                throw new InvalidOperationException("请配置顶置相机、RenderTexture 和独立棋盘会话。");
+            DateTime capturedAt = DateTime.UtcNow;
+            string frameId = "rgb_" + capturedAt.ToString("yyyyMMdd_HHmmssfff", CultureInfo.InvariantCulture) + "_" + Guid.NewGuid().ToString("N");
+            RenderTexture target = sourceCamera.targetTexture;
+            BoardSnapshot frozen = board.Snapshot();
+            GroundTruth truth = Snapshot(frameId, capturedAt, frozen);
+            byte[] png = ReadCurrentRgb();
+            if (truth.layoutVersion != board.Version)
+                throw new InvalidOperationException("拍摄期间积木状态发生变化，请重新保存。");
+            if (sourceCamera.targetTexture != target || truth.cameraConfigurationId != ConfigurationId(SnapshotCamera(target)))
+                throw new InvalidOperationException("拍摄期间相机参数发生变化，请重新保存。");
+            if (truth.lightingConfigurationId != ConfigurationId(SimulationLightingConfiguration.SnapshotScene(), SimulationLightingConfiguration.IdPrefix))
+                throw new InvalidOperationException("拍摄期间光照参数发生变化，请重新保存。");
+            return new SimulationCapture(frameId, new DateTimeOffset(capturedAt), target.width, target.height,
+                png, frozen, JsonUtility.ToJson(truth, true));
+        }
+
+        private GroundTruth Snapshot(string frameId, DateTime capturedAt, BoardSnapshot snapshot)
         {
             RenderTexture target = sourceCamera.targetTexture;
             var truth = new GroundTruth
             {
                 frameId = frameId, imageFile = frameId + ".png",
                 capturedAtUtc = capturedAt.ToString("O", CultureInfo.InvariantCulture),
-                unityFrame = Time.frameCount, layoutVersion = brickEditor.LayoutVersion,
+                unityFrame = Time.frameCount, layoutVersion = (int)snapshot.Version,
                 imageWidth = target.width, imageHeight = target.height,
                 cameraConfiguration = SnapshotCamera(target),
                 lightingConfiguration = SimulationLightingConfiguration.SnapshotScene(),
-                cells = new GroundTruthCell[SimulationLayout.Size * SimulationLayout.Size]
+                cells = new GroundTruthCell[snapshot.Definition.CellCount]
             };
             truth.cameraConfigurationId = ConfigurationId(truth.cameraConfiguration);
             truth.lightingConfigurationId = ConfigurationId(truth.lightingConfiguration, SimulationLightingConfiguration.IdPrefix);
             truth.boardCorners = SnapshotBoardCorners(truth);
-            for (int y = 0; y < SimulationLayout.Size; y++)
-                for (int x = 0; x < SimulationLayout.Size; x++)
-                    truth.cells[y * SimulationLayout.Size + x] = new GroundTruthCell { gridX = x, gridY = y };
-            foreach (SimulationLayout.Brick brick in brickEditor.Bricks)
-            {
-                GroundTruthCell cell = truth.cells[brick.GridY * SimulationLayout.Size + brick.GridX];
-                cell.occupied = true; cell.brickId = brick.BrickId;
-                cell.colorId = brick.ColorId; cell.layer = brick.Layer;
-            }
+            for (int y = 0; y < snapshot.Definition.Height; y++)
+                for (int x = 0; x < snapshot.Definition.Width; x++)
+                {
+                    BoardCell cell = snapshot.At(x, y);
+                    truth.cells[snapshot.Definition.Index(x, y)] = new GroundTruthCell
+                    {
+                        gridX = x, gridY = y, occupied = cell.Occupancy == Occupancy.Occupied,
+                        brickId = cell.BrickId ?? "", colorId = cell.ColorId ?? "", layer = 0
+                    };
+                }
             return truth;
         }
 
@@ -90,7 +102,7 @@ namespace Brick2Life.Simulation
             Rect rect = sourceCamera.rect;
             return new CameraConfiguration
             {
-                unityVersion = Application.unityVersion,
+                unityVersion = UnityApplication.unityVersion,
                 projectionType = sourceCamera.orthographic ? "orthographic" : "perspective",
                 imageWidth = target.width, imageHeight = target.height,
                 worldPosition = new Vector3(Finite(position.x), Finite(position.y), Finite(position.z)),
@@ -204,7 +216,7 @@ namespace Brick2Life.Simulation
             public CameraConfiguration cameraConfiguration;
             public string lightingConfigurationId;
             public SimulationLightingConfiguration lightingConfiguration;
-            public int gridWidth = SimulationLayout.Size, gridHeight = SimulationLayout.Size;
+            public int gridWidth = BoardDefinition.Size, gridHeight = BoardDefinition.Size;
             public Vector3 worldOrigin = Vector3.zero;
             public float cellSize = 1;
             public string coordinateConvention = "gridX=+worldX; gridY=+worldZ; layer=+worldY; image pixels originate at top-left";

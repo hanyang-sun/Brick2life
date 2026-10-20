@@ -1,0 +1,10 @@
+{
+  "name": "BrickDefense.Presentation",
+  "references": [
+    "BrickDefense.Contracts",
+    "BrickDefense.Application",
+    "BrickDefense.Vision",
+    "BrickDefense.Infrastructure"
+  ],
+  "noEngineReferences": false
+}

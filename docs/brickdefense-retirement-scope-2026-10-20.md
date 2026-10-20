@@ -1,6 +1,6 @@
 # BrickDefense 退役清理范围
 
-日期：2026-10-20。状态：已完成引用核对与范围整理，尚未移动或删除源码、资源和测试。
+日期：2026-10-20。状态：已按确认范围归档旧源码、资源和测试；Core、Application、独立编辑器/检查/构建入口已建立，实际验证见 architecture.md。
 
 ## 原则与核对结果
 
@@ -41,7 +41,7 @@
 
 ## 配套修改与验收
 
-1. 建立 Brick2Life.Checks.csproj 与新 Program，默认执行现有 325 项布局检查；旧测试不改名保留为默认检查。
+1. 建立 Brick2Life.Checks.csproj 与新 Program，默认执行现有 325 项布局检查；旧测试随旧系统归档，不进入默认检查。
 2. Unity 检查脚本只复制新场景、新工具及真实依赖。
 3. Build Settings 切换到新仿真场景，完成实际 Player 构建验证。
 4. 主 README 和 architecture.md 专门描述 Brick2Life 现状、启动方式及待接通链路。

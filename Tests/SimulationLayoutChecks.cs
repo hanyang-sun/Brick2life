@@ -1,4 +1,4 @@
-using Brick2Life.Simulation;
+using Brick2Life.Core;
 
 internal static class SimulationLayoutChecks
 {
@@ -8,7 +8,7 @@ internal static class SimulationLayoutChecks
         void Check(bool condition, string message)
         { assertions++; if (!condition) throw new Exception(message); }
 
-        var layout = new SimulationLayout();
+        var layout = new BoardLayout();
         Check(layout.Bricks.Count == 0 && layout.Version == 0, "An empty board must be valid.");
         foreach (var cell in new[] { (-1, 0), (0, -1), (10, 0), (0, 10) })
         {

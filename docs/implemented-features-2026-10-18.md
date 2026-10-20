@@ -1,5 +1,7 @@
 # 项目已实现功能汇总
 
+> 历史核对记录。2026-10-20 已实施旧系统退役与 Core/Application 重构；当前目录和状态以 [架构说明](architecture.md) 为准。
+
 核对日期：2026-10-18（Asia/Shanghai）。依据当前磁盘代码、场景配置、采集文件和已有验证记录整理。
 
 ## 1. 当前完成到哪一步
@@ -13,7 +15,7 @@
 | 主 Unity 工程 | `BrickDefenseMVP/`，Unity 6000.3.24f1，Built-in 渲染管线 |
 | 本次核对分支 | `feat/task-a-unity-bricks-camera`，HEAD：`597c47b` |
 | 新仿真场景 | [Brick2LifeSimulation.unity](../Assets/Scenes/Brick2LifeSimulation.unity)，在 Unity 中打开后运行 |
-| 旧塔防场景 | [BrickDefenseDemo.unity](../Assets/Scenes/BrickDefenseDemo.unity)，仍是 Build Settings 中启用的构建场景 |
+| 旧塔防场景 | [BrickDefenseDemo.unity](../Archive/BrickDefense/Assets/Scenes/BrickDefenseDemo.unity)，仍是 Build Settings 中启用的构建场景 |
 | 历史 Windows 包 | `Builds/BrickDefense-v1.3.1-Windows-x64.zip`，对应旧塔防原型，未包含新仿真工作台 |
 
 ## 2. Brick2Life 仿真平台已实现功能
@@ -41,7 +43,7 @@
 
 主要代码：
 
-- [SimulationLayout.cs](../Assets/Scripts/Simulation/SimulationLayout.cs)：真实布局、合法格位、占用、稳定 ID 与版本。
+- [SimulationLayout.cs](../Archive/BrickDefense/Assets/Scripts/Simulation/SimulationLayout.cs)：真实布局、合法格位、占用、稳定 ID 与版本。
 - [SimulationBrickEditor.cs](../Assets/Scripts/Simulation/SimulationBrickEditor.cs)：增删、拖拽、颜色按钮与清空。
 - [SimulationGridPointer.cs](../Assets/Scripts/Simulation/SimulationGridPointer.cs)：拾取、格号和轮廓提示。
 - [SimulationWorkspaceCamera.cs](../Assets/Scripts/Simulation/SimulationWorkspaceCamera.cs)：三维主视图自动取景。

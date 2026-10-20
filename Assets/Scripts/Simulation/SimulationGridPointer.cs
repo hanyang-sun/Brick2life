@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using Brick2Life.Core;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityApplication = UnityEngine.Application;
 
 namespace Brick2Life.Simulation
 {
@@ -43,13 +45,13 @@ namespace Brick2Life.Simulation
         {
             if (dragPreview)
             {
-                if (Application.isFocused && SimulationLayout.Contains(dragCell.x, dragCell.y))
+                if (UnityApplication.isFocused && BoardLayout.Contains(dragCell.x, dragCell.y))
                     // 移动目标是棋盘格位，方框贴合棋盘而不是积木顶面。
                     ShowCell(dragCell, 0);
                 else ClearHover();
                 return;
             }
-            if (!Application.isFocused || !Input.mousePresent ||
+            if (!UnityApplication.isFocused || !Input.mousePresent ||
                 !TryPickCell(Input.mousePosition, out Vector2Int cell, out float surfaceHeight))
             {
                 ClearHover();
@@ -74,7 +76,7 @@ namespace Brick2Life.Simulation
             Vector3 position = isBrick ? hit.collider.bounds.center : hit.point;
             int gridX = Mathf.FloorToInt(position.x);
             int gridY = Mathf.FloorToInt(position.z);
-            if (!SimulationLayout.Contains(gridX, gridY)) return false;
+            if (!BoardLayout.Contains(gridX, gridY)) return false;
             cell = new Vector2Int(gridX, gridY);
             surfaceHeight = isBrick ? hit.collider.bounds.max.y : hit.point.y;
             return true;

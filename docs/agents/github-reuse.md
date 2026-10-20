@@ -4,7 +4,7 @@
 
 ## 编码前的步骤
 
-1. 从 `docs/requirements-v1.md` 和当前任务明确功能范围与验收条件。
+1. 从当前用户任务、`README.md`、`docs/architecture.md` 和 `docs/brick2life-development-plan.md` 明确范围与验收条件；旧规格位于 `Archive/BrickDefense/docs/`，仅在明确迁入旧算法时查阅。
 2. 在 GitHub 检索相同或相近功能的项目；可使用 GitHub 搜索或限定 `github.com` 的网络搜索。记录检索日期、关键词和真实仓库链接。
 3. 阅读候选项目的 README、相关源文件及许可证。比较功能匹配程度、Unity/C# 兼容性、Android 离线运行能力、依赖成本和维护情况。候选充足时比较至少两个；候选较少时如实记录结果。
 4. 汇总各候选中可采用的部分，明确选择哪些机制、组件或代码，以及如何适配本项目接口。把结论写入 `docs/research/<feature-slug>-github.md`。

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityApplication = UnityEngine.Application;
 using UnityEngine.Rendering;
 
 namespace Brick2Life.Simulation
@@ -97,7 +98,7 @@ namespace Brick2Life.Simulation
                 ambientColor.g * ambientMultiplier, ambientColor.b * ambientMultiplier, 1);
             RenderSettings.ambientIntensity = 1;
             RenderSettings.reflectionIntensity = 0;
-            if (Application.isPlaying)
+            if (UnityApplication.isPlaying)
             {
                 QualitySettings.shadows = ShadowQuality.All;
                 QualitySettings.shadowResolution = ShadowResolution.High;
