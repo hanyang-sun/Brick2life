@@ -1,6 +1,10 @@
 # BrickDefenseMVP → Brick2Life
 
-**方向与实现状态：**本仓库将沿 `main` 发展为 Brick2Life：虚拟积木布局、固定桌面坐标下的相机识别、布局变化检测、塔防游戏联动和桌面投影反馈。当前可运行代码仍是下文的 BrickDefenseMVP 单张照片塔防原型；Brick2Life 闭环尚未实现，Unity 默认场景仍为 `Assets/Scenes/BrickDefenseDemo.unity`。新方向的范围、文件清单、三人分支和 PR 顺序见 [Brick2Life 开发方案](docs/brick2life-development-plan.md)。
+**方向与实现状态（2026-10-18 核对）：**当前 `feat/task-a-unity-bricks-camera` 分支已包含 Brick2Life 单层仿真工作台：三维操作主视图、固定顶置相机预览、积木增删与拖拽移动、可配置颜色、清空棋盘，以及 RGB PNG 与真值 JSON 配对导出（包含棋盘四角的世界/图像坐标）。场景为 `Assets/Scenes/Brick2LifeSimulation.unity`，需在 Unity 中单独打开。识别、变化检测、游戏更新和投影反馈的 Brick2Life 闭环尚未接通。
+
+下文主要介绍保留的 BrickDefenseMVP 单张照片塔防原型；Build Settings 的默认构建入口仍为 `Assets/Scenes/BrickDefenseDemo.unity`。当前功能、验证依据和未完成项见 [项目已实现功能汇总](docs/implemented-features-2026-10-18.md)。新方向的范围、文件清单、三人分支和 PR 顺序见 [Brick2Life 开发方案](docs/brick2life-development-plan.md)。
+
+2026-10-19 仿真扩展：Play 后点击右侧“光照：双侧 · 标准”，可选择左侧/右侧/双侧白光、三档亮度、左右强度比例、环境光倍数和阴影开关。默认双侧标准亮度、比例 50:50、环境 1 倍，小窗口可滚动操作。采集 JSON 顶层 schema 3、光照 schema 2 同时记录请求设置与实际生效值；使用方式、代码入口和实测边界见 [光照说明](docs/task-a-lighting-guide.md) 与 [相机元数据说明](docs/task-a-camera-metadata-guide.md)。
 
 旧版源码由 `brickdefense-v1.3.1` 标签固定在提交 `c3bce83`。另有仓库外的 Git 历史备份与 Windows 试玩包；它们不包含尚未提交的实验记录工作。
 

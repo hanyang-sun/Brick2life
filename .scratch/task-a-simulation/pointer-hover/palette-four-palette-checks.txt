@@ -1,0 +1,17 @@
+screen=1024x768 checks=16
+PASS editor enabled
+PASS one generated button per palette entry: 4
+PASS template remains hidden
+PASS button selects index 0
+PASS button label from configuration 0
+PASS button selects index 1
+PASS button label from configuration 1
+PASS button selects index 2
+PASS button label from configuration 2
+PASS button selects index 3
+PASS button label from configuration 3
+PASS new color ID saved in layout
+PASS new color uses configured material
+PASS drag preserves new color and brick ID
+PASS delete new color
+PASS palette layout has usable dimensions

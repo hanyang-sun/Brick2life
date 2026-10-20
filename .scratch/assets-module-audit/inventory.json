@@ -1,0 +1,1172 @@
+{
+  "inspectedAt": "2026-10-15",
+  "root": "D:\\桌面\\计算机图形学\\BrickDefenseMVP\\Assets",
+  "baseline": "c3bce83daacb4ac3b09434ce96a748c983d55abf",
+  "totalFiles": 141,
+  "contentFiles": 63,
+  "metaFiles": 78,
+  "directoryMetaFiles": 15,
+  "csharpFiles": 45,
+  "totalBytes": 8710557.0,
+  "categories": [
+    {
+      "category": "可以删除",
+      "count": 3
+    },
+    {
+      "category": "需要修改",
+      "count": 9
+    },
+    {
+      "category": "暂时保留",
+      "count": 24
+    },
+    {
+      "category": "直接复用",
+      "count": 27
+    }
+  ],
+  "referenceLimit": "静态 GUID 与词法类型引用，仅覆盖 Assets；不是 Roslyn 语义分析或 Unity 实际依赖图。动态引用另见报告。",
+  "files": [
+    {
+      "path": "Assets/Editor/BattleChecks.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 26538,
+      "sha256": "443b316ddc9391fd5cc1732f779a17e835ceda3e831bd50b6bd9eb0110d9be96",
+      "meta": "Assets/Editor/BattleChecks.cs.meta",
+      "guid": "89f4a5d7aff346c2acdfd7469d23a7ed",
+      "declaredTypes": [
+        "BattleChecks"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Editor/BrickDefense.Editor.asmdef",
+      "category": "直接复用",
+      "reason": "保留现有程序集边界及第三方内部可见性；新增依赖按模块单独扩展。",
+      "bytes": 330,
+      "sha256": "b55f057fe242b5e694a73baff0d9b31ba6eee2d28a1f90a10a1705c903cf8be5",
+      "meta": "Assets/Editor/BrickDefense.Editor.asmdef.meta",
+      "guid": "c6488ec471312ae449f31d5e895c43a0",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Editor/DemoSceneChecks.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 19397,
+      "sha256": "9a8795fde9392b1c49826b09ef739a62ce1c8f56f42cd963092c745093819fca",
+      "meta": "Assets/Editor/DemoSceneChecks.cs.meta",
+      "guid": "6ae58427674e6a5409f7db393c270b2b",
+      "declaredTypes": [
+        "DemoSceneChecks",
+        "RejectionReport",
+        "SavedIssue",
+        "SavedPoint"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Editor/DemoSceneSetup.cs",
+      "category": "需要修改",
+      "reason": "保留旧场景生成器，修正重置整个构建场景列表的行为。",
+      "bytes": 961,
+      "sha256": "2c4a6e7008369312d9b3fc0ef99ca4898ae4b33e2bf64a393f6494d527eb21bc",
+      "meta": "Assets/Editor/DemoSceneSetup.cs.meta",
+      "guid": "a6be095172aac6748b5a4702c294aa58",
+      "declaredTypes": [
+        "DemoSceneSetup"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Editor/LayoutReviewUiChecks.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 14279,
+      "sha256": "e55b7502d217f8f1885014e1aff6f14c2b549d6028ad917ae56cb643b8177680",
+      "meta": "Assets/Editor/LayoutReviewUiChecks.cs.meta",
+      "guid": "ee92190864bb493aada633c31eb694ed",
+      "declaredTypes": [
+        "LayoutReviewUiChecks"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Editor/OrbitCameraChecks.cs",
+      "category": "可以删除",
+      "reason": "旧 UI/手势专用验收工具；仅在归档历史验收、替代覆盖和团队确认后清理，本次不删。",
+      "bytes": 29652,
+      "sha256": "468a2f4e2d0ddf0cc55c2909cb89d47be2fdfc90c9875f00bb9da7f8d7cd2228",
+      "meta": "Assets/Editor/OrbitCameraChecks.cs.meta",
+      "guid": "fa95ec93b5354c9392fce5366d428fbd",
+      "declaredTypes": [
+        "OrbitCameraChecks"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Editor/PhotoFilePicker.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 295,
+      "sha256": "01c3812c514d812472a85748b4e583ad7278f7a9d10104b347b28958080d9a10",
+      "meta": "Assets/Editor/PhotoFilePicker.cs.meta",
+      "guid": "3e06c7ccf4c500c4c98ceca0dc3cb343",
+      "declaredTypes": [
+        "PhotoFilePicker"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Editor/PhotoOverlayChecks.cs",
+      "category": "可以删除",
+      "reason": "旧 UI/手势专用验收工具；仅在归档历史验收、替代覆盖和团队确认后清理，本次不删。",
+      "bytes": 8231,
+      "sha256": "465f6b9c134f653711cd678ac5814391f0af211dc846b870b69b2290793c2f6d",
+      "meta": "Assets/Editor/PhotoOverlayChecks.cs.meta",
+      "guid": "b82313c9453f378479abab3e352d7595",
+      "declaredTypes": [
+        "PhotoOverlayChecks"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Editor/PhotoScanTools.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 2650,
+      "sha256": "65b53006821e6dd662669ea3c0d16b2442a126a629ddd81677972ad199d6a9f7",
+      "meta": "Assets/Editor/PhotoScanTools.cs.meta",
+      "guid": "21430b11239dad349b93e6a10daead11",
+      "declaredTypes": [
+        "PhotoScanTools"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/SoftStrategyUiChecks.cs"
+      ]
+    },
+    {
+      "path": "Assets/Editor/SoftStrategyUiChecks.cs",
+      "category": "可以删除",
+      "reason": "旧 UI/手势专用验收工具；仅在归档历史验收、替代覆盖和团队确认后清理，本次不删。",
+      "bytes": 20499,
+      "sha256": "94720fd6724de75decc245ade106fb5ebb7d361fcfa8c0a5893a4feee751ba69",
+      "meta": "Assets/Editor/SoftStrategyUiChecks.cs.meta",
+      "guid": "b336a0775f41457580946f583b6f93df",
+      "declaredTypes": [
+        "SoftStrategyUiChecks"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Resources/BrickSurface.mat",
+      "category": "直接复用",
+      "reason": "保留 Standard 运行时着色器依赖，曾修复 Windows 材质初始化失败。",
+      "bytes": 1002,
+      "sha256": "9fdea6221a0fdf76f20c580595407e2e33172ee699430e6905ce4cdfa11d9cd8",
+      "meta": "Assets/Resources/BrickSurface.mat.meta",
+      "guid": "6e9f70e8e0d44a8292d56f4f2a963ce2",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Resources/Fonts/NotoSansSC-OFL.txt",
+      "category": "直接复用",
+      "reason": "字体及在用第三方代码的许可证/来源随所属资源保留。",
+      "bytes": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "meta": "Assets/Resources/Fonts/NotoSansSC-OFL.txt.meta",
+      "guid": "85feabd1202a4fe79866a83a39d6c669",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Resources/Fonts/NotoSansSC-Regular.otf",
+      "category": "直接复用",
+      "reason": "字体及在用第三方代码的许可证/来源随所属资源保留。",
+      "bytes": 8331336,
+      "sha256": "faa6c9df652116dde789d351359f3d7e5d2285a2b2a1f04a2d7244df706d5ea9",
+      "meta": "Assets/Resources/Fonts/NotoSansSC-Regular.otf.meta",
+      "guid": "8ef0a4285f45e574f84e0e36ad48a450",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Resources/photo-scan-settings.json",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 198,
+      "sha256": "b68e57d7e6b46732f944ec98fc0532dcc07928e8fcf76621ebae24ccd93c6d72",
+      "meta": "Assets/Resources/photo-scan-settings.json.meta",
+      "guid": "ebad19d0e3479f24b85c8d612d69cfda",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Scenes/BrickDefenseDemo.unity",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 4847,
+      "sha256": "667bf3962c486e3cc4aaf5262845816ac78cc2ca8b232c18584fd0ee889cf623",
+      "meta": "Assets/Scenes/BrickDefenseDemo.unity.meta",
+      "guid": "4bb27bfa10a0926458bd732d5d95644b",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Scripts/Application/BattleSession.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 3204,
+      "sha256": "a84776d1b728ac1a7af2d9a9af1d3cbb7957397af3d0d515bfb05c27c0e0161e",
+      "meta": "Assets/Scripts/Application/BattleSession.cs.meta",
+      "guid": "6c6c4e87690e493db02bba04d7d95e56",
+      "declaredTypes": [
+        "BattleSession"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/BrickDefenseDemo.cs",
+        "Scripts/Presentation/CombatView.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Application/BrickDefense.Application.asmdef",
+      "category": "直接复用",
+      "reason": "保留现有程序集边界及第三方内部可见性；新增依赖按模块单独扩展。",
+      "bytes": 186,
+      "sha256": "0a0445130c4df10413f9f6dc094117a620c312da64f4d3b41e294e1df05bd3b2",
+      "meta": "Assets/Scripts/Application/BrickDefense.Application.asmdef.meta",
+      "guid": "08336944fe8019947826d185f8724206",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Scripts/Application/LayoutEditSession.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 12010,
+      "sha256": "c5158396eb08a505a64caeefaa6d478053ba81628ab3ec09e8c6f30c32b29af1",
+      "meta": "Assets/Scripts/Application/LayoutEditSession.cs.meta",
+      "guid": "1497de154bc04a61be70d01cfebde798",
+      "declaredTypes": [
+        "LayoutEditSession"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Application/PhotoScanSession.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Application/LevelSession.cs",
+      "category": "需要修改",
+      "reason": "经预测状态适配接入新来源；保留建造期提交和战斗锁定策略。",
+      "bytes": 5842,
+      "sha256": "1d1387d72c455f373ca64978ddeeec4c6c23483b52286f2bee97cbb4af41ee1d",
+      "meta": "Assets/Scripts/Application/LevelSession.cs.meta",
+      "guid": "776cc4ded6682fc40b46a375d53da9e8",
+      "declaredTypes": [
+        "LayoutDefinition",
+        "LayoutSource",
+        "LevelContext",
+        "LevelSession"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Editor/DemoSceneChecks.cs",
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/OrbitCameraChecks.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Application/BattleSession.cs",
+        "Scripts/Application/LayoutEditSession.cs",
+        "Scripts/Application/PhotoScanSession.cs",
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/BrickDefenseDemo.cs",
+        "Scripts/Presentation/DemoUI.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Application/PhotoScanSession.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 3516,
+      "sha256": "f59c1827d8d8931017115a72865485fb2415339ba442c016ddf72e0a47e26e04",
+      "meta": "Assets/Scripts/Application/PhotoScanSession.cs.meta",
+      "guid": "f48d357af4e327b4595fdbd34d02764c",
+      "declaredTypes": [
+        "PhotoScanSession"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/DemoSceneChecks.cs",
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Contracts/BrickDefense.Contracts.asmdef",
+      "category": "直接复用",
+      "reason": "保留现有程序集边界及第三方内部可见性；新增依赖按模块单独扩展。",
+      "bytes": 94,
+      "sha256": "953fdc2a489141d42b3b2f65ae3ef8789ace83865da1dee106150b46ca0d3fbe",
+      "meta": "Assets/Scripts/Contracts/BrickDefense.Contracts.asmdef.meta",
+      "guid": "103de8a1017e0a54ba24cee68f781edb",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Scripts/Contracts/CombatModels.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 3923,
+      "sha256": "a88563542edd6b9265fea33fec369c2eeb8fc29188747ea9b6171b9e6701cf36",
+      "meta": "Assets/Scripts/Contracts/CombatModels.cs.meta",
+      "guid": "81dd668bcd4a4f948add023440c1c53d",
+      "declaredTypes": [
+        "BattlePhase",
+        "CombatConfig",
+        "EnemyState",
+        "GameState",
+        "RuntimeLimits",
+        "ShotEvent",
+        "WavePlan"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Scripts/Application/BattleSession.cs",
+        "Scripts/Domain/BattleSimulation.cs",
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/BrickDefenseDemo.cs",
+        "Scripts/Presentation/CombatView.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Contracts/LayoutReviewModels.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 2494,
+      "sha256": "e5ae88b2376dff550edb9684dce535e53743b62dd2a275cfe3cb6e4052fc35f0",
+      "meta": "Assets/Scripts/Contracts/LayoutReviewModels.cs.meta",
+      "guid": "66c19a75ffa148299d74cc8eafaf885a",
+      "declaredTypes": [
+        "LayoutEditOperation",
+        "LayoutEditStage",
+        "LayoutReviewRecord",
+        "LayoutReviewStatistics"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/LayoutReviewUiChecks.cs",
+        "Scripts/Application/LayoutEditSession.cs",
+        "Scripts/Infrastructure/LayoutReviewStore.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Contracts/Models.cs",
+      "category": "需要修改",
+      "reason": "保留旧游戏合同，增补固定格点、预测状态和事件合同，不让游戏合法性限制感知。",
+      "bytes": 8991,
+      "sha256": "1219264bccd82a16cc058d74e526bb2a211e2519d7f0a921a2b329a7878a529a",
+      "meta": "Assets/Scripts/Contracts/Models.cs.meta",
+      "guid": "719201bd982e88949992ca634d1c80dc",
+      "declaredTypes": [
+        "BoardSize",
+        "BrickObservation",
+        "BrickRole",
+        "GridCell",
+        "GridPlacement",
+        "GridPoint",
+        "GridResult",
+        "Issue",
+        "LevelCell",
+        "LevelEntity",
+        "LevelResult",
+        "LevelRules",
+        "PhysicalCellObservation",
+        "PhysicalCellState",
+        "ResultStatus",
+        "ScanResult",
+        "SpawnRoute"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Editor/DemoSceneChecks.cs",
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/OrbitCameraChecks.cs",
+        "Editor/PhotoScanTools.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Application/BattleSession.cs",
+        "Scripts/Application/LayoutEditSession.cs",
+        "Scripts/Application/LevelSession.cs",
+        "Scripts/Application/PhotoScanSession.cs",
+        "Scripts/Contracts/LayoutReviewModels.cs",
+        "Scripts/Domain/BattleSimulation.cs",
+        "Scripts/Domain/ExampleScans.cs",
+        "Scripts/Domain/GridPathfinder.cs",
+        "Scripts/Domain/LevelPipeline.cs",
+        "Scripts/Infrastructure/LayoutReviewStore.cs",
+        "Scripts/Infrastructure/ScanReportStore.cs",
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/ChineseUi.cs",
+        "Scripts/Presentation/CombatView.cs",
+        "Scripts/Presentation/DemoUI.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs",
+        "Scripts/Presentation/LevelView.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs",
+        "Scripts/Vision/PhotoModels.cs",
+        "Scripts/Vision/PlainBackgroundRecognizer.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Contracts/PhotoEvidence.cs",
+      "category": "需要修改",
+      "reason": "增加固定棋盘坐标依据与标定标识，保留相对坐标旧格式。",
+      "bytes": 1926,
+      "sha256": "bb8cffca91ced4ca0dab0af5bdf12dc0bb0b70d8b6ae3bf9c9a42317297424f7",
+      "meta": "Assets/Scripts/Contracts/PhotoEvidence.cs.meta",
+      "guid": "2197117e7fe88244e91225350980dda7",
+      "declaredTypes": [
+        "BoardObservation",
+        "ImageEvidence",
+        "ImagePoint",
+        "LayoutCoordinateBasis",
+        "Rgb24"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/DemoSceneChecks.cs",
+        "Editor/PhotoScanTools.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Application/LayoutEditSession.cs",
+        "Scripts/Application/LevelSession.cs",
+        "Scripts/Application/PhotoScanSession.cs",
+        "Scripts/Contracts/Models.cs",
+        "Scripts/Infrastructure/PhotoPixels.cs",
+        "Scripts/Infrastructure/ScanReportStore.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs",
+        "Scripts/Vision/PhotoModels.cs",
+        "Scripts/Vision/PlainBackgroundRecognizer.cs",
+        "ThirdParty/Colourful/NormalizedLab.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Domain/BattleSimulation.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 11301,
+      "sha256": "669f219d018e4fb4e8a170531388abb1b62ecc509b027a9a9cbbfdb4bfb0721e",
+      "meta": "Assets/Scripts/Domain/BattleSimulation.cs.meta",
+      "guid": "9e3bcf23bd96429580063a9e87c1ac69",
+      "declaredTypes": [
+        "BattleSimulation",
+        "Enemy",
+        "Tower"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Editor/DemoSceneChecks.cs",
+        "Scripts/Application/BattleSession.cs",
+        "Scripts/Application/LayoutEditSession.cs",
+        "Scripts/Contracts/Models.cs",
+        "Scripts/Domain/ExampleScans.cs",
+        "Scripts/Domain/GridPathfinder.cs",
+        "Scripts/Domain/LevelPipeline.cs",
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/CombatView.cs",
+        "Scripts/Presentation/DemoUI.cs",
+        "Scripts/Presentation/LevelView.cs",
+        "Scripts/Presentation/SoftStrategyTheme.cs",
+        "Scripts/Vision/PhotoModels.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Domain/BrickDefense.Domain.asmdef",
+      "category": "直接复用",
+      "reason": "保留现有程序集边界及第三方内部可见性；新增依赖按模块单独扩展。",
+      "bytes": 157,
+      "sha256": "7fb020b1fe5dd396a07cc1ee1508d635a9c8fff533bc0cd2826b8b9297e1433d",
+      "meta": "Assets/Scripts/Domain/BrickDefense.Domain.asmdef.meta",
+      "guid": "fc8d7872df74e7b4ab6e8aa5645a9780",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Scripts/Domain/ExampleScans.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 3483,
+      "sha256": "b572f906557836c36c32e9641b7b69c65ae041d3de28aeae01eb2055d2d774c6",
+      "meta": "Assets/Scripts/Domain/ExampleScans.cs.meta",
+      "guid": "2c37eb7e2e5b936409d3707c339503d3",
+      "declaredTypes": [
+        "ExampleScans"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Editor/DemoSceneChecks.cs",
+        "Scripts/Application/LevelSession.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Domain/GridPathfinder.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 6204,
+      "sha256": "f0a54240530e225093f990d32afdbf49352179f22ca8b5e94c410ba5a8a253c7",
+      "meta": "Assets/Scripts/Domain/GridPathfinder.cs.meta",
+      "guid": "3871ecc851072a142a2048cb997833d7",
+      "declaredTypes": [
+        "FrontierEntry",
+        "GridPathfinder",
+        "NavigationPath"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Domain/LevelPipeline.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Domain/LevelPipeline.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 16206,
+      "sha256": "250f99f9c00924489615fa6ee519bdceed14454f434843efd7c3083d84ce7243",
+      "meta": "Assets/Scripts/Domain/LevelPipeline.cs.meta",
+      "guid": "8f9be384c2f36244390fe5e43ae1ff54",
+      "declaredTypes": [
+        "GridMapper",
+        "LevelBuilder"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/PhotoScanTools.cs",
+        "Scripts/Application/LevelSession.cs",
+        "Scripts/Contracts/Models.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Infrastructure/BrickDefense.Infrastructure.asmdef",
+      "category": "直接复用",
+      "reason": "保留现有程序集边界及第三方内部可见性；新增依赖按模块单独扩展。",
+      "bytes": 162,
+      "sha256": "93340935087d7de1a8b688a7a00f91a8acbdd4b8bb4ea9a0c66b2794d25e3607",
+      "meta": "Assets/Scripts/Infrastructure/BrickDefense.Infrastructure.asmdef.meta",
+      "guid": "6e4bcf7e8171e264e8430cfb12d95dd2",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Scripts/Infrastructure/CameraCapture.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 3620,
+      "sha256": "2ce0246699b07da838ae36ca1aaada6cd235dd161e778c938b07f694adf0fe53",
+      "meta": "Assets/Scripts/Infrastructure/CameraCapture.cs.meta",
+      "guid": "459bf083c0ad987459e5c0cc0b95c74a",
+      "declaredTypes": [
+        "CameraCapture"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Infrastructure/LayoutReviewStore.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 4274,
+      "sha256": "781c4dde67ac9f818d7cbeaa5ef54e59fe2a38dfbba5359e265f5366081dcd71",
+      "meta": "Assets/Scripts/Infrastructure/LayoutReviewStore.cs.meta",
+      "guid": "9d3c8ecc064440ccbbce6acbea595644",
+      "declaredTypes": [
+        "Brick",
+        "Evidence",
+        "LayoutReviewStore",
+        "Operation",
+        "Point",
+        "ReviewData",
+        "Statistics"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/DemoSceneSetup.cs",
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/PhotoScanTools.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Application/LayoutEditSession.cs",
+        "Scripts/Contracts/LayoutReviewModels.cs",
+        "Scripts/Contracts/Models.cs",
+        "Scripts/Infrastructure/ScanReportStore.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Infrastructure/PhotoFileSource.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 2176,
+      "sha256": "b3e8477c32139f4d78014f2a178f0e68a2c81d0bb435e0a163e0148f56334226",
+      "meta": "Assets/Scripts/Infrastructure/PhotoFileSource.cs.meta",
+      "guid": "1ddfef500f13566409cbdb1711f14d55",
+      "declaredTypes": [
+        "ImportedPhoto",
+        "PhotoFileSource"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/DemoSceneChecks.cs",
+        "Editor/PhotoFilePicker.cs",
+        "Editor/PhotoScanTools.cs",
+        "Scripts/Infrastructure/ScanReportStore.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Infrastructure/PhotoPixels.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 2462,
+      "sha256": "6e2d965f1306d5508090d17846e1773b4e47cc4ea7763af0c70fb4093e24bfc9",
+      "meta": "Assets/Scripts/Infrastructure/PhotoPixels.cs.meta",
+      "guid": "3aea429379760454c96417a2dcdb6b26",
+      "declaredTypes": [
+        "PhotoPixels"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/PhotoScanTools.cs",
+        "Scripts/Infrastructure/CameraCapture.cs",
+        "Scripts/Infrastructure/PhotoFileSource.cs",
+        "Scripts/Infrastructure/ScanReportStore.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Infrastructure/PhotoProfileStore.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 2710,
+      "sha256": "cd98aa3a53ebe246323ae804dec25c5c60fb6c1bfb499f49e53ae9311dd3a07a",
+      "meta": "Assets/Scripts/Infrastructure/PhotoProfileStore.cs.meta",
+      "guid": "931769e866d959346a24dc58c5c72919",
+      "declaredTypes": [
+        "CalibrationData",
+        "PhotoProfileStore",
+        "PhotoScanSettingsData"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/DemoSceneChecks.cs",
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/PhotoScanTools.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Infrastructure/ScanReportStore.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Infrastructure/ScanReportStore.cs",
+      "category": "需要修改",
+      "reason": "在独立实验记录工作合入后增量扩展帧/GT/预测/事件/投影时间关联。",
+      "bytes": 5384,
+      "sha256": "de1b561898fa2a17a4aa82a787051763438c80f941e3c3fc0a9895ca08ab2119",
+      "meta": "Assets/Scripts/Infrastructure/ScanReportStore.cs.meta",
+      "guid": "7ae48c8fe12a02045a85a392b2e7896f",
+      "declaredTypes": [
+        "PhotoScanRecord",
+        "ReportBrick",
+        "ReportCell",
+        "ReportIssue",
+        "ReportPoint",
+        "ScanReport",
+        "ScanReportStore"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/DemoSceneChecks.cs",
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Infrastructure/WindowsPhotoFilePicker.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 3650,
+      "sha256": "29bf27327289fbe29bfb1515de62565111fab6f232d3b05d71e90049d883564a",
+      "meta": "Assets/Scripts/Infrastructure/WindowsPhotoFilePicker.cs.meta",
+      "guid": "41777567639548cc902312106f3d573b",
+      "declaredTypes": [
+        "OpenFileName",
+        "WindowsPhotoFilePicker"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Infrastructure/PhotoFileSource.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/BattlePanel.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 10109,
+      "sha256": "545e1b9964d225976054f1e1e8c2fe89c957daf02a33dfcfeead989192802256",
+      "meta": "Assets/Scripts/Presentation/BattlePanel.cs.meta",
+      "guid": "aee3a6f52c494f0db3c4d91cc7a0b88d",
+      "declaredTypes": [
+        "BattlePanel"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Scripts/Presentation/BrickDefenseDemo.cs",
+        "Scripts/Presentation/DemoUI.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/BoardOrbitCamera.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 2749,
+      "sha256": "9759877941bce39418e06f067fd9dc95edf4b13384a4994df24c69b8973568ac",
+      "meta": "Assets/Scripts/Presentation/BoardOrbitCamera.cs.meta",
+      "guid": "719b04561360459587a1a3ae6e568c35",
+      "declaredTypes": [
+        "BoardOrbitCamera"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Presentation/LevelView.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/BoardTouchControls.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 5209,
+      "sha256": "82e1c7f85127ffa65648794e1297353b12ee9bc03879dc72d57f6999671cf0b8",
+      "meta": "Assets/Scripts/Presentation/BoardTouchControls.cs.meta",
+      "guid": "d772e54812af4f9795ec9f40ce870a0b",
+      "declaredTypes": [
+        "BoardTouchControls"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Presentation/DemoUI.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/BoardUiLayout.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 1275,
+      "sha256": "5a17063ea3c5e4be15ade9406334766a310c39c28f18026ab1df99fbf58b153a",
+      "meta": "Assets/Scripts/Presentation/BoardUiLayout.cs.meta",
+      "guid": "493fa1c71bf047f88f63105f5171ffae",
+      "declaredTypes": [
+        "BoardUiLayout"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/DemoUI.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/BrickDefense.Presentation.asmdef",
+      "category": "直接复用",
+      "reason": "保留现有程序集边界及第三方内部可见性；新增依赖按模块单独扩展。",
+      "bytes": 229,
+      "sha256": "841aa2728adaf33f3aaca4012af4bafade395b2d26a133a00085e28daaff0357",
+      "meta": "Assets/Scripts/Presentation/BrickDefense.Presentation.asmdef.meta",
+      "guid": "35ad9fdea31b99a4087e86ecf564ea49",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Scripts/Presentation/BrickDefenseDemo.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 1830,
+      "sha256": "4c21cb2cc3d2b927800e9f0ed731c4556fedd6813ade8f5e8a008008cc392063",
+      "meta": "Assets/Scripts/Presentation/BrickDefenseDemo.cs.meta",
+      "guid": "a06e35e61e9f8da40a7b9e932cda660f",
+      "declaredTypes": [
+        "BrickDefenseDemo"
+      ],
+      "guidReferences": [
+        "Scenes/BrickDefenseDemo.unity"
+      ],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Editor/DemoSceneChecks.cs",
+        "Editor/DemoSceneSetup.cs",
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/OrbitCameraChecks.cs",
+        "Editor/PhotoOverlayChecks.cs",
+        "Editor/SoftStrategyUiChecks.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/ChineseUi.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 3823,
+      "sha256": "0ed3c78c6dfa5965ae374b39935f4375b9c49482430fb4a90802b3127c46cce6",
+      "meta": "Assets/Scripts/Presentation/ChineseUi.cs.meta",
+      "guid": "67083b28946c4190965f8e08fd47acbc",
+      "declaredTypes": [
+        "ChineseUi"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/CombatView.cs",
+      "category": "需要修改",
+      "reason": "复用显示逻辑，适配统一坐标和渲染层，避免敌人与射程标记进入感知输入。",
+      "bytes": 6908,
+      "sha256": "b55aa250f392056558f2130d371a3e044b1798e14a89c6b42e976844ea4473ca",
+      "meta": "Assets/Scripts/Presentation/CombatView.cs.meta",
+      "guid": "e18b03b900dc488b9833be8027feabd2",
+      "declaredTypes": [
+        "CombatView",
+        "EnemyVisual"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/BrickDefenseDemo.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/DemoUI.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 10195,
+      "sha256": "186f28c3a4048ea8e5cf7663d1bdaa5279380aca9d828ec63aafc313d703869e",
+      "meta": "Assets/Scripts/Presentation/DemoUI.cs.meta",
+      "guid": "2a78656fc2364114c8b3822edd12c12c",
+      "declaredTypes": [
+        "DemoUI"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Editor/OrbitCameraChecks.cs",
+        "Scripts/Presentation/BoardOrbitCamera.cs",
+        "Scripts/Presentation/BrickDefenseDemo.cs",
+        "Scripts/Presentation/LevelView.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/LayoutReviewPanel.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 16761,
+      "sha256": "a2d31e786b0f6a18b6937f0cba1b84e4dd7a81ddd6be956e50fc6020d5343cbe",
+      "meta": "Assets/Scripts/Presentation/LayoutReviewPanel.cs.meta",
+      "guid": "06ca40b98d0943959cfa03bef6103f62",
+      "declaredTypes": [
+        "LayoutReviewPanel"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/LevelView.cs",
+      "category": "需要修改",
+      "reason": "分离关卡绘制与相机/全局光照设置，统一坐标变换并隔离感知可见层。",
+      "bytes": 9547,
+      "sha256": "90c76e376c45d18e1b312fc75fef2de2f12168c150f07b259317c4a4688d14ac",
+      "meta": "Assets/Scripts/Presentation/LevelView.cs.meta",
+      "guid": "5ebad5ba5e199ed48a1af5cc1df48dff",
+      "declaredTypes": [
+        "LevelView"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Editor/OrbitCameraChecks.cs",
+        "Scripts/Presentation/BrickDefenseDemo.cs",
+        "Scripts/Presentation/DemoUI.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/PhotoScanPanel.cs",
+      "category": "暂时保留",
+      "reason": "支撑旧 Demo、照片 Baseline、回归或调试；新仿真主线不直接依赖其旧流程。",
+      "bytes": 22147,
+      "sha256": "dfcd02c12ac78e986edf937775baac32d4e1d2fbcb6718ecd02e5258e38fb8d5",
+      "meta": "Assets/Scripts/Presentation/PhotoScanPanel.cs.meta",
+      "guid": "941db8b07f137724899e9dfd7b9e8894",
+      "declaredTypes": [
+        "PhotoScanPanel"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/BattleChecks.cs",
+        "Editor/DemoSceneChecks.cs",
+        "Editor/LayoutReviewUiChecks.cs",
+        "Editor/OrbitCameraChecks.cs",
+        "Editor/PhotoOverlayChecks.cs",
+        "Editor/SoftStrategyUiChecks.cs",
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/BrickDefenseDemo.cs",
+        "Scripts/Presentation/DemoUI.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Presentation/SoftStrategyTheme.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 7382,
+      "sha256": "5f5a1543bb7a7db3f3ffda2da78b7f460223ad1b3d8a9a313aae997085ad6d2b",
+      "meta": "Assets/Scripts/Presentation/SoftStrategyTheme.cs.meta",
+      "guid": "e53137eb1ece4116b7d3289ed8de8bc4",
+      "declaredTypes": [
+        "SoftStrategyTheme"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Presentation/BattlePanel.cs",
+        "Scripts/Presentation/CombatView.cs",
+        "Scripts/Presentation/DemoUI.cs",
+        "Scripts/Presentation/LayoutReviewPanel.cs",
+        "Scripts/Presentation/LevelView.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Vision/BrickDefense.Vision.asmdef",
+      "category": "直接复用",
+      "reason": "保留现有程序集边界及第三方内部可见性；新增依赖按模块单独扩展。",
+      "bytes": 157,
+      "sha256": "f7df3faf6e4b246e700d9604654156eee411d3ffefef0027c3d64c018eb6a990",
+      "meta": "Assets/Scripts/Vision/BrickDefense.Vision.asmdef.meta",
+      "guid": "f5ff3790b2aaef04789f541874b49617",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/Scripts/Vision/PhotoModels.cs",
+      "category": "需要修改",
+      "reason": "复用 RGB 帧，分离颜色标定与角色映射；增加独立仿真输入配置。",
+      "bytes": 3849,
+      "sha256": "1aab0972def4ddc1d3492f6730d2db05015000144e5751b3f1f6a2d5bfa7df80",
+      "meta": "Assets/Scripts/Vision/PhotoModels.cs.meta",
+      "guid": "774b949ed5d6fa54b9884e529cee27f7",
+      "declaredTypes": [
+        "CaptureSet",
+        "ColorCalibration",
+        "ImageFrame",
+        "PhotoScanSettings"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/DemoSceneChecks.cs",
+        "Editor/PhotoScanTools.cs",
+        "Scripts/Application/PhotoScanSession.cs",
+        "Scripts/Infrastructure/CameraCapture.cs",
+        "Scripts/Infrastructure/PhotoFileSource.cs",
+        "Scripts/Infrastructure/PhotoPixels.cs",
+        "Scripts/Infrastructure/PhotoProfileStore.cs",
+        "Scripts/Infrastructure/ScanReportStore.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs",
+        "Scripts/Vision/PlainBackgroundRecognizer.cs"
+      ]
+    },
+    {
+      "path": "Assets/Scripts/Vision/PlainBackgroundRecognizer.cs",
+      "category": "需要修改",
+      "reason": "旧实现保留作 Baseline；新增固定网格识别适配，不再以检测边界决定新主线原点。",
+      "bytes": 16340,
+      "sha256": "7f28edc35ab89622ee05f551d15728acf6cebc9e9770a81454662dadf0639c78",
+      "meta": "Assets/Scripts/Vision/PlainBackgroundRecognizer.cs.meta",
+      "guid": "db03b798be4b4684db7294143d5ced6e",
+      "declaredTypes": [
+        "Piece",
+        "PlainBackgroundRecognizer",
+        "Region"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Editor/PhotoScanTools.cs",
+        "Scripts/Application/LayoutEditSession.cs",
+        "Scripts/Application/PhotoScanSession.cs",
+        "Scripts/Contracts/PhotoEvidence.cs",
+        "Scripts/Infrastructure/LayoutReviewStore.cs",
+        "Scripts/Infrastructure/ScanReportStore.cs",
+        "Scripts/Presentation/PhotoScanPanel.cs"
+      ]
+    },
+    {
+      "path": "Assets/ThirdParty/AssemblyInfo.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 148,
+      "sha256": "d149b3de3aef0a493959b1ac2d31ded19fee62c84c99a4baed13d96df48f5896",
+      "meta": "Assets/ThirdParty/AssemblyInfo.cs.meta",
+      "guid": "b28768080bd3a4b4ebed638af3086db4",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/ThirdParty/BrickDefense.Algorithms.asmdef",
+      "category": "直接复用",
+      "reason": "保留现有程序集边界及第三方内部可见性；新增依赖按模块单独扩展。",
+      "bytes": 129,
+      "sha256": "62c9cdc046e3a0ab90501abe99ceccc330ab75bc84ac4394e004a391dd507d59",
+      "meta": "Assets/ThirdParty/BrickDefense.Algorithms.asmdef.meta",
+      "guid": "d9e968f5ad152e547b063c3f74e3c71b",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/ThirdParty/Colourful/LICENSE.txt",
+      "category": "直接复用",
+      "reason": "字体及在用第三方代码的许可证/来源随所属资源保留。",
+      "bytes": 1084,
+      "sha256": "af6a80a8992a7ec7f06c166ed5642849d31de9a55aecf5b8d746abf82229a9b5",
+      "meta": "Assets/ThirdParty/Colourful/LICENSE.txt.meta",
+      "guid": "55b800fb3111c524e918a20435eb3e4f",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/ThirdParty/Colourful/NormalizedLab.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 2078,
+      "sha256": "8346dfbd9b2dc2966a045dca49ca4638574ccae9586924f71d888a7a4df3f849",
+      "meta": "Assets/ThirdParty/Colourful/NormalizedLab.cs.meta",
+      "guid": "21cc20bac06df33409753fbfb19f80a3",
+      "declaredTypes": [
+        "NormalizedLab"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Vision/PlainBackgroundRecognizer.cs"
+      ]
+    },
+    {
+      "path": "Assets/ThirdParty/NotoSansSC/OFL.txt",
+      "category": "直接复用",
+      "reason": "字体及在用第三方代码的许可证/来源随所属资源保留。",
+      "bytes": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "meta": "Assets/ThirdParty/NotoSansSC/OFL.txt.meta",
+      "guid": "943874259afa4a62922e867216e638b5",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/ThirdParty/NotoSansSC/SOURCE.md",
+      "category": "直接复用",
+      "reason": "字体及在用第三方代码的许可证/来源随所属资源保留。",
+      "bytes": 822,
+      "sha256": "da69532af5907e885786b02a3de7e699b998b38ddb200f3d1197926626124f74",
+      "meta": "Assets/ThirdParty/NotoSansSC/SOURCE.md.meta",
+      "guid": "0394f981739d4745b44597d08bf4812a",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/ThirdParty/RoyTAStar/LICENSE.txt",
+      "category": "直接复用",
+      "reason": "字体及在用第三方代码的许可证/来源随所属资源保留。",
+      "bytes": 1061,
+      "sha256": "f605b27a124e387f54ae35c9f40db94097f6b37c86f719b4ad4b4b1b01879512",
+      "meta": "Assets/ThirdParty/RoyTAStar/LICENSE.txt.meta",
+      "guid": "bb96de72d2cfca747bf4e6546e4ee15b",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    },
+    {
+      "path": "Assets/ThirdParty/RoyTAStar/MinHeap.cs",
+      "category": "直接复用",
+      "reason": "保持现有实现，通过新入口或适配模块调用；适用边界详见报告。",
+      "bytes": 3712,
+      "sha256": "dc5bcefc9c9df9668cba65e2cad953c58342c334c9c6cc7b95b0af3a8148b933",
+      "meta": "Assets/ThirdParty/RoyTAStar/MinHeap.cs.meta",
+      "guid": "6bf6d64d3712ac44d872d2a02a86aa5b",
+      "declaredTypes": [
+        "MinHeap"
+      ],
+      "guidReferences": [],
+      "lexicalSourceReferences": [
+        "Scripts/Domain/GridPathfinder.cs"
+      ]
+    },
+    {
+      "path": "Assets/ThirdParty/RoyTAStar/UPSTREAM-LICENSE.txt",
+      "category": "直接复用",
+      "reason": "字体及在用第三方代码的许可证/来源随所属资源保留。",
+      "bytes": 1079,
+      "sha256": "f8e6d6a23281cfa8fe400715755f3f1c6ce4fb94377ecdaef23fa6d7f34573e7",
+      "meta": "Assets/ThirdParty/RoyTAStar/UPSTREAM-LICENSE.txt.meta",
+      "guid": "a8e80ceeedd5cd44cbb574ebe2c48edd",
+      "declaredTypes": [],
+      "guidReferences": [],
+      "lexicalSourceReferences": []
+    }
+  ]
+}

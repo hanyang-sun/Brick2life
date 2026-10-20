@@ -1,0 +1,52 @@
+screen=1024x768 checks=51
+PASS editor enabled
+PASS larger configured palette initializes
+PASS one generated button per palette entry: 20
+PASS template remains hidden
+PASS button selects index 0
+PASS button label from configuration 0
+PASS button selects index 1
+PASS button label from configuration 1
+PASS button selects index 2
+PASS button label from configuration 2
+PASS button selects index 3
+PASS button label from configuration 3
+PASS button selects index 4
+PASS button label from configuration 4
+PASS button selects index 5
+PASS button label from configuration 5
+PASS button selects index 6
+PASS button label from configuration 6
+PASS button selects index 7
+PASS button label from configuration 7
+PASS button selects index 8
+PASS button label from configuration 8
+PASS button selects index 9
+PASS button label from configuration 9
+PASS button selects index 10
+PASS button label from configuration 10
+PASS button selects index 11
+PASS button label from configuration 11
+PASS button selects index 12
+PASS button label from configuration 12
+PASS button selects index 13
+PASS button label from configuration 13
+PASS button selects index 14
+PASS button label from configuration 14
+PASS button selects index 15
+PASS button label from configuration 15
+PASS button selects index 16
+PASS button label from configuration 16
+PASS button selects index 17
+PASS button label from configuration 17
+PASS button selects index 18
+PASS button label from configuration 18
+PASS button selects index 19
+PASS button label from configuration 19
+PASS new color ID saved in layout
+PASS new color uses configured material
+PASS drag preserves new color and brick ID
+PASS delete new color
+PASS palette layout has usable dimensions
+PASS large palette overflows into scroll content
+PASS last color reachable by scrolling

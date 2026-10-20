@@ -1,0 +1,21 @@
+screen=1346x922 checks=20
+PASS PNG and JSON share frame ID and image filename
+PASS timestamp and Unity frame describe this capture
+PASS schema, image dimensions and board dimensions are recorded
+PASS fixed coordinates and cell ordering are explicit
+PASS all 100 cells match the initial layout, including empty cells
+PASS repeated captures create new pairs without changing layout
+PASS added yellow brick and version appear in Ground Truth
+PASS paired RGB changes with the added brick
+PASS drag preview preserves both true state and RGB until drop
+PASS drop moves occupancy while preserving brick ID and color
+PASS delete clears the saved cell
+PASS earlier JSON remains an immutable record of the earlier version
+PASS empty board saves 100 explicit empty cells
+PASS Ground Truth accepts a color ID outside the preset colors
+PASS UI confirms both output files
+PASS missing layout source reports failure without orphan output
+PASS capture rejects a layout change during rendering
+PASS saving recovers after a rejected capture
+PASS failed second publish cleans owned files and preserves an existing file
+PASS successful and rejected captures leave no temporary output files

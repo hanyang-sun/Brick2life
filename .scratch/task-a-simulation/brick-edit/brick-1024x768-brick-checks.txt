@@ -1,0 +1,22 @@
+screen=1024x768 passed=21
+PASS import the three scene bricks
+PASS add chosen color to empty cell
+PASS occupied add changes nothing
+PASS drag outline follows board grid; max corner error=0.0000px
+PASS drag preview preserves true state and RGB
+PASS drop updates position, stable ID and RGB together
+PASS occupied drop preserves source and RGB
+PASS sidebar drop cancels
+PASS outside board drop cancels
+PASS focus loss cancels drag
+PASS tool switch cancels drag
+PASS same-cell drop is a no-op
+PASS delete clears occupancy
+PASS delete empty cell is a no-op
+PASS tools and EventSystem are present
+PASS persistent button SelectTool_0
+PASS persistent button SelectTool_1
+PASS persistent button SelectTool_2
+PASS persistent button SelectColor_0
+PASS persistent button SelectColor_1
+PASS persistent button SelectColor_2
