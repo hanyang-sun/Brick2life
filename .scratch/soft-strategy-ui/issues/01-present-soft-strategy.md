@@ -3,7 +3,7 @@ Completion: complete (2026-10-11)
 
 # 实施柔和策略界面
 
-按 spec.md 完成 GitHub 检索、共享主题、地图材质、主界面和照片页排版，并记录实际 Unity 验证结果。
+按当时确认的范围完成 GitHub 检索、共享主题、地图材质、主界面和照片页排版，并记录实际 Unity 验证结果。
 
 ## Comments
 

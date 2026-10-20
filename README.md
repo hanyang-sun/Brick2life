@@ -8,6 +8,8 @@ Brick2Life 是一个基于 Unity 的实体积木交互与虚实融合塔防项�
 
 > 当前处于开发阶段。截至 2026-10-19，`main` 保留可运行的单张照片塔防原型；Brick2Life 单层仿真工作台位于 `feat/task-a-unity-bricks-camera` 分支。固定桌面坐标下的识别、布局变化检测与投影反馈尚未接通。
 
+2026-10-19 仿真扩展：顶置采集相机采用透视投影；Play 后点击右侧“光照：双侧 · 标准”，可选择左侧/右侧/双侧白光、三档亮度、左右强度比例、环境光倍数和阴影开关。默认双侧标准亮度、比例 50:50、环境 1 倍，小窗口可滚动操作。采集 JSON 顶层 schema 3、光照 schema 2 同时记录请求设置与实际生效值；使用方式与验证边界见 [光照说明](docs/task-a-lighting-guide.md)、[相机元数据说明](docs/task-a-camera-metadata-guide.md) 与 [项目功能汇总](docs/implemented-features-2026-10-18.md)。
+
 ## 项目目标
 
 ```text

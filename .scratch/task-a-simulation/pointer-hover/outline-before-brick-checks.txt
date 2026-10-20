@@ -1,0 +1,4 @@
+PASS import the three scene bricks
+PASS add chosen color to empty cell
+PASS occupied add changes nothing
+FAIL drag outline follows board grid; max corner error=24.1611px

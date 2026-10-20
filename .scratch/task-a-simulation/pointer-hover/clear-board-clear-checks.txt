@@ -1,0 +1,15 @@
+screen=1024x768 checks=14
+PASS three initial scene bricks are present
+PASS add a fourth color before clearing
+PASS a drag is active before clear
+PASS button clears model and object mapping without resetting version
+PASS all 100 cells are available
+PASS all old objects are inactive immediately, before end-of-frame destruction
+PASS clearing cancels the drag and its preview
+PASS clear switches to Add with the chosen color
+PASS board, grid and fixed camera are preserved
+PASS same-frame export saves an all-empty Ground Truth
+PASS all 100 cell centers in the saved RGB are empty white board
+PASS repeated clear on an empty board changes no layout state
+PASS a cleared cell accepts a new brick immediately
+PASS single deletion still works through the shared deletion path

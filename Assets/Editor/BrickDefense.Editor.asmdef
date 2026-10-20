@@ -6,7 +6,8 @@
     "BrickDefense.Vision",
     "BrickDefense.Application",
     "BrickDefense.Infrastructure",
-    "BrickDefense.Presentation"
+    "BrickDefense.Presentation",
+    "Brick2Life.Simulation"
   ],
   "noEngineReferences": false,
   "includePlatforms": [

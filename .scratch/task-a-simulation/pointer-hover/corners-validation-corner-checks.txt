@@ -1,0 +1,18 @@
+PASS default 512x512: four corners and explicit pixel-center convention
+PASS default 512x512: grid-boundary and world-coordinate pairs keep their order
+PASS default 512x512: exported image coordinates recover all four world corners
+PASS default 512x512: metadata matches PNG dimensions
+PASS default 512x512: corner-derived centers sample the correct colors in all 100 PNG cells
+PASS default board includes the actual image margin rather than assuming full-image coverage
+PASS rotated 640x384: four corners and explicit pixel-center convention
+PASS rotated 640x384: grid-boundary and world-coordinate pairs keep their order
+PASS rotated 640x384: exported image coordinates recover all four world corners
+PASS rotated 640x384: metadata matches PNG dimensions
+PASS rotated 640x384: corner-derived centers sample the correct colors in all 100 PNG cells
+PASS invalid camera depth rejects capture without orphan files
+PASS camera change during rendering rejects stale calibration
+PASS restored 512x512: four corners and explicit pixel-center convention
+PASS restored 512x512: grid-boundary and world-coordinate pairs keep their order
+PASS restored 512x512: exported image coordinates recover all four world corners
+PASS restored 512x512: metadata matches PNG dimensions
+PASS restored 512x512: corner-derived centers sample the correct colors in all 100 PNG cells

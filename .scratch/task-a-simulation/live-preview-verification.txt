@@ -1,0 +1,3 @@
+PASS
+RGB pixel counts=4034,4094,4157
+Screen=982x730

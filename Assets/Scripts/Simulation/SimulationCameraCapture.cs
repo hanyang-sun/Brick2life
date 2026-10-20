@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,13 +27,16 @@ namespace Brick2Life.Simulation
                     throw new InvalidOperationException("请配置顶置相机、RenderTexture 和积木编辑器。");
                 DateTime capturedAt = DateTime.UtcNow;
                 string frameId = "rgb_" + capturedAt.ToString("yyyyMMdd_HHmmssfff", CultureInfo.InvariantCulture) + "_" + Guid.NewGuid().ToString("N");
-                Matrix4x4 view = sourceCamera.worldToCameraMatrix, projection = sourceCamera.projectionMatrix;
+                RenderTexture target = sourceCamera.targetTexture;
                 GroundTruth truth = Snapshot(frameId, capturedAt);
                 byte[] png = ReadCurrentRgb();
                 if (truth.layoutVersion != brickEditor.LayoutVersion)
                     throw new InvalidOperationException("拍摄期间积木状态发生变化，请重新保存。");
-                if (view != sourceCamera.worldToCameraMatrix || projection != sourceCamera.projectionMatrix)
+                if (sourceCamera.targetTexture != target ||
+                    truth.cameraConfigurationId != ConfigurationId(SnapshotCamera(target)))
                     throw new InvalidOperationException("拍摄期间相机参数发生变化，请重新保存。");
+                if (truth.lightingConfigurationId != ConfigurationId(SimulationLightingConfiguration.SnapshotScene(), SimulationLightingConfiguration.IdPrefix))
+                    throw new InvalidOperationException("拍摄期间光照参数发生变化，请重新保存。");
                 string directory = Application.isEditor
                     ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", FolderName))
                     : Path.Combine(Application.persistentDataPath, FolderName);
@@ -60,8 +64,12 @@ namespace Brick2Life.Simulation
                 capturedAtUtc = capturedAt.ToString("O", CultureInfo.InvariantCulture),
                 unityFrame = Time.frameCount, layoutVersion = brickEditor.LayoutVersion,
                 imageWidth = target.width, imageHeight = target.height,
+                cameraConfiguration = SnapshotCamera(target),
+                lightingConfiguration = SimulationLightingConfiguration.SnapshotScene(),
                 cells = new GroundTruthCell[SimulationLayout.Size * SimulationLayout.Size]
             };
+            truth.cameraConfigurationId = ConfigurationId(truth.cameraConfiguration);
+            truth.lightingConfigurationId = ConfigurationId(truth.lightingConfiguration, SimulationLightingConfiguration.IdPrefix);
             truth.boardCorners = SnapshotBoardCorners(truth);
             for (int y = 0; y < SimulationLayout.Size; y++)
                 for (int x = 0; x < SimulationLayout.Size; x++)
@@ -73,6 +81,62 @@ namespace Brick2Life.Simulation
                 cell.colorId = brick.ColorId; cell.layer = brick.Layer;
             }
             return truth;
+        }
+
+        private CameraConfiguration SnapshotCamera(RenderTexture target)
+        {
+            Vector3 position = sourceCamera.transform.position;
+            Quaternion rotation = sourceCamera.transform.rotation;
+            Rect rect = sourceCamera.rect;
+            return new CameraConfiguration
+            {
+                unityVersion = Application.unityVersion,
+                projectionType = sourceCamera.orthographic ? "orthographic" : "perspective",
+                imageWidth = target.width, imageHeight = target.height,
+                worldPosition = new Vector3(Finite(position.x), Finite(position.y), Finite(position.z)),
+                worldRotation = new Quaternion(Finite(rotation.x), Finite(rotation.y), Finite(rotation.z), Finite(rotation.w)),
+                verticalFieldOfViewDegrees = Finite(sourceCamera.fieldOfView),
+                orthographicSize = Finite(sourceCamera.orthographicSize),
+                aspect = Finite(sourceCamera.aspect),
+                nearClipPlane = Finite(sourceCamera.nearClipPlane),
+                farClipPlane = Finite(sourceCamera.farClipPlane),
+                viewport = new CameraViewport
+                {
+                    x = Finite(rect.x), y = Finite(rect.y),
+                    width = Finite(rect.width), height = Finite(rect.height)
+                },
+                usePhysicalProperties = sourceCamera.usePhysicalProperties,
+                focalLengthMillimeters = Finite(sourceCamera.focalLength),
+                sensorSizeMillimeters = new Vector2(Finite(sourceCamera.sensorSize.x), Finite(sourceCamera.sensorSize.y)),
+                lensShift = new Vector2(Finite(sourceCamera.lensShift.x), Finite(sourceCamera.lensShift.y)),
+                gateFit = sourceCamera.gateFit.ToString(),
+                worldToCameraMatrix = MatrixValues(sourceCamera.worldToCameraMatrix),
+                projectionMatrix = MatrixValues(sourceCamera.projectionMatrix)
+            };
+        }
+
+        private static float Finite(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+                throw new InvalidOperationException("相机配置含无效数值，无法保存采集参数。");
+            return value == 0 ? 0 : value;
+        }
+
+        private static float[] MatrixValues(Matrix4x4 matrix)
+        {
+            var values = new float[16];
+            for (int row = 0; row < 4; row++)
+                for (int column = 0; column < 4; column++)
+                    values[row * 4 + column] = Finite(matrix[row, column]);
+            return values;
+        }
+
+        private static string ConfigurationId(object configuration, string prefix = "camera-v1-")
+        {
+            // Fixed schema and Unity serializer; frame/time/layout are intentionally outside this DTO.
+            byte[] bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(configuration));
+            using (SHA256 hash = SHA256.Create())
+                return prefix + BitConverter.ToString(hash.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
         }
 
         private BoardCorner[] SnapshotBoardCorners(GroundTruth truth)
@@ -133,9 +197,13 @@ namespace Brick2Life.Simulation
 
         [Serializable] private sealed class GroundTruth
         {
-            public int schemaVersion = 1;
+            public int schemaVersion = 3;
             public string frameId, imageFile, capturedAtUtc;
             public int unityFrame, layoutVersion, imageWidth, imageHeight;
+            public string cameraConfigurationId;
+            public CameraConfiguration cameraConfiguration;
+            public string lightingConfigurationId;
+            public SimulationLightingConfiguration lightingConfiguration;
             public int gridWidth = SimulationLayout.Size, gridHeight = SimulationLayout.Size;
             public Vector3 worldOrigin = Vector3.zero;
             public float cellSize = 1;
@@ -145,6 +213,29 @@ namespace Brick2Life.Simulation
             public string boardCornerPixelConvention = "top-left origin; integer pixel centers; x=viewportX*imageWidth-0.5; y=(1-viewportY)*imageHeight-0.5";
             public BoardCorner[] boardCorners;
             public GroundTruthCell[] cells;
+        }
+
+        [Serializable] private sealed class CameraConfiguration
+        {
+            public int schemaVersion = 1;
+            public string unityVersion, projectionType;
+            public int imageWidth, imageHeight;
+            public Vector3 worldPosition;
+            public Quaternion worldRotation;
+            public float verticalFieldOfViewDegrees, orthographicSize, aspect, nearClipPlane, farClipPlane;
+            public CameraViewport viewport;
+            public bool usePhysicalProperties;
+            public float focalLengthMillimeters;
+            public Vector2 sensorSizeMillimeters, lensShift;
+            public string gateFit;
+            public string matrixOrder = "row-major; values[row * 4 + column]";
+            public string cameraSpaceConvention = "Unity worldToCameraMatrix: right=+X; up=+Y; forward=-Z; clip=projectionMatrix*worldToCameraMatrix*worldPoint";
+            public float[] worldToCameraMatrix, projectionMatrix;
+        }
+
+        [Serializable] private sealed class CameraViewport
+        {
+            public float x, y, width, height;
         }
 
         [Serializable] private sealed class BoardCorner

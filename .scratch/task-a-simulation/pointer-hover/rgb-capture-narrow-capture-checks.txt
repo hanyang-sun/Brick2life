@@ -1,0 +1,15 @@
+screen=748x911 checks=14
+PASS button saves a PNG file
+PASS export stays in project SimulationCaptures directory
+PASS save restores active RenderTexture and preserves camera target
+PASS PNG uses RGB color type, without alpha
+PASS export uses full 512x512 camera resolution
+PASS all exported pixels match the top camera, with correct orientation and no UI overlay
+PASS red scene brick stays at the bottom of the saved view
+PASS repeated saves create distinct files
+PASS repeated save preserves the first file
+PASS same-frame edit is included in a new capture
+PASS capture preserves editable layout
+PASS success appears in preview status
+PASS missing camera reports failure without a new file
+PASS capture recovers after configuration is restored
