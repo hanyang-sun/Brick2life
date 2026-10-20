@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/BrickDefenseDemo.unity
-    guid: 4bb27bfa10a0926458bd732d5d95644b
+    path: Assets/Scenes/Brick2LifeSimulation.unity
+    guid: f2bf99e5ecf7ac044bb3350dfa51056c
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

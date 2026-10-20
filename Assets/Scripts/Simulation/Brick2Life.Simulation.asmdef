@@ -1,6 +1,7 @@
 {
   "name": "Brick2Life.Simulation",
   "references": [
+    "Brick2Life.Core",
     "UnityEngine.UI"
   ]
 }

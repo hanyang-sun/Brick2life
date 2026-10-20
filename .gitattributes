@@ -1,0 +1,2 @@
+# Preserve retired files byte-for-byte so manifest SHA-256 values survive cloning.
+Archive/BrickDefense/** -text

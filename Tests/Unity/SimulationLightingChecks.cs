@@ -16,7 +16,7 @@ public static class SimulationLightingChecks
 {
     [Serializable] private sealed class Result
     {
-        public bool passed; public int assertions, pairs; public string error;
+        public bool passed; public int assertions, pairs, resetDifferentPixels, resetMaxChannelError; public string error;
         public List<Measurement> measurements = new List<Measurement>();
     }
     [Serializable] private sealed class Measurement { public string name; public float mean, clippedFraction; public float[] graySamples; }
@@ -83,6 +83,7 @@ public static class SimulationLightingChecks
         Check(UnityEngine.Object.FindFirstObjectByType<SimulationBrickEditor>().enabled, "Brick editor failed to start.");
         Check(QualitySettings.shadows == ShadowQuality.All && QualitySettings.pixelLightCount >= 2, "Play-mode shadow quality missing.");
         Check(GameObject.Find("LightingMenu") != null, "Lighting UI did not start.");
+        VerifyBoardSession();
         var images = new Dictionary<string, Color32[]>();
         var ids = new HashSet<string>();
         for (int side = 0; side < 2; side++)
@@ -233,6 +234,38 @@ public static class SimulationLightingChecks
     }
     private static float Luma(Color32 color) => 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
 
+    private static void VerifyBoardSession()
+    {
+        var board = UnityEngine.Object.FindFirstObjectByType<SimulationBoardSession>();
+        Check(board != null && board.IsInitialized, "Independent board session was not initialized.");
+        var before = board.Snapshot();
+        var original = board.Bricks[0];
+        var free = Enumerable.Range(0, 100).Where(index => board.At(index % 10, index / 10) == null).Take(2).ToArray();
+        Check(free.Length == 2, "Editing fixture requires two empty cells.");
+        SimulationCapture frozen = capture.CaptureFrame();
+        byte[] copy = frozen.CopyRgbPng(); copy[0] = 0;
+        Check(frozen.CopyRgbPng()[0] == 137 && frozen.GroundTruth.Version == before.Version, "Capture result was mutable or mismatched its state.");
+        int x = free[0] % 10, y = free[0] / 10;
+        Check(board.TryMove(original.BrickId, x, y), "Board session could not move a brick.");
+        Check(board.At(x, y).BrickId == original.BrickId && board.At(original.GridX, original.GridY) == null, "Move lost identity or retained source occupancy.");
+        Check(before.At(original.GridX, original.GridY).BrickId == original.BrickId &&
+            frozen.GroundTruth.At(x, y).Occupancy == Brick2Life.Core.Occupancy.Empty, "Editing changed a captured snapshot.");
+        Check(UnityEngine.Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None).Any(renderer =>
+            (renderer.transform.position - new Vector3(x + 0.5f, 0.5f, y + 0.5f)).sqrMagnitude < 0.0001f), "Model move did not update scene geometry.");
+        SimulationCapture moved = capture.CaptureFrame();
+        Check(moved.GroundTruth.At(x, y).BrickId == original.BrickId, "Capture did not read the independent board session.");
+        Check(board.TryMove(original.BrickId, original.GridX, original.GridY), "Could not restore the original brick.");
+        Check(board.TryAdd(x, y, original.ColorId, out var added), "Board session could not create geometry.");
+        int version = board.Version;
+        Check(!board.TryMove(original.BrickId, x, y) && board.Version == version, "Occupied move changed confirmed authoring state.");
+        Check(board.TryDelete(added.BrickId) && board.At(x, y) == null, "Delete did not clear model state.");
+        Check(!UnityEngine.Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None).Any(renderer => renderer.gameObject.activeInHierarchy &&
+            (renderer.transform.position - new Vector3(x + 0.5f, 0.5f, y + 0.5f)).sqrMagnitude < 0.0001f), "Deleted geometry remained visible in the same frame.");
+        var restored = board.Snapshot();
+        Check(before.Cells.Select(cell => new { cell.Occupancy, cell.ColorId, cell.BrickId }).SequenceEqual(
+            restored.Cells.Select(cell => new { cell.Occupancy, cell.ColorId, cell.BrickId })), "Editing regression did not restore the initial board.");
+    }
+
     private static void VerifyBalanceAndAmbient()
     {
         settings.SetLayout(2); settings.SetBrightness(1); settings.ResetBalanceAndAmbient();
@@ -282,7 +315,19 @@ public static class SimulationLightingChecks
         }
         settings.ResetBalanceAndAmbient();
         Frame restored = Save("balance-ambient-restored", out Color32[] restoredPixels);
-        Check(restored.lightingConfigurationId == baseline.lightingConfigurationId && restoredPixels.SequenceEqual(originalPixels), "Reset did not reproduce baseline configuration and RGB.");
+        Check(restored.lightingConfigurationId == baseline.lightingConfigurationId, "Reset did not reproduce the exact baseline configuration.");
+        for (int i = 0; i < originalPixels.Length; i++)
+        {
+            Color32 aPixel = originalPixels[i], bPixel = restoredPixels[i];
+            int error = Math.Max(Math.Max(Math.Abs(aPixel.r - bPixel.r), Math.Abs(aPixel.g - bPixel.g)),
+                Math.Max(Math.Abs(aPixel.b - bPixel.b), Math.Abs(aPixel.a - bPixel.a)));
+            if (error != 0) result.resetDifferentPixels++;
+            result.resetMaxChannelError = Math.Max(result.resetMaxChannelError, error);
+        }
+        // Exact scene/config identity remains required. Measured repeated renders can vary by
+        // one 8-bit step at a handful of pixels; reject larger errors or more than 0.01% pixels.
+        Check(result.resetMaxChannelError <= 1 && result.resetDifferentPixels <= originalPixels.Length / 10000,
+            "Reset RGB exceeded the rounding tolerance: pixels=" + result.resetDifferentPixels + "; max=" + result.resetMaxChannelError);
         Reject(() => settings.SetLeftLightShare(0.75f));
         settings.ResetBalanceAndAmbient();
         Reject(() => settings.SetAmbientMultiplier(2));

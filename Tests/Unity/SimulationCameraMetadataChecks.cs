@@ -13,7 +13,7 @@ public static class SimulationCameraMetadataChecks
     private static int assertions;
     private static Camera camera;
     private static SimulationCameraCapture capture;
-    private static SimulationLayout layout;
+    private static SimulationBoardSession layout;
     private static string output;
 
     [Serializable] private sealed class Result { public bool passed; public int assertions; public string error; }
@@ -71,20 +71,22 @@ public static class SimulationCameraMetadataChecks
         camera.targetTexture = new RenderTexture(128, 128, 24);
         camera.targetTexture.Create();
 
-        layout = new SimulationLayout();
+        var root = new GameObject("MetadataTestBricks");
+        layout = new GameObject("MetadataTestBoard").AddComponent<SimulationBoardSession>();
+        layout.Initialize(root.transform, new[]
+        {
+            new SimulationBoardSession.PaletteEntry { colorId = "red", label = "red", material = Material(Color.red) },
+            new SimulationBoardSession.PaletteEntry { colorId = "blue", label = "blue", material = Material(Color.blue) },
+            new SimulationBoardSession.PaletteEntry { colorId = "green", label = "green", material = Material(Color.green) }
+        });
         layout.TryAdd(3, 4, "red", out _);
-        var editor = new GameObject("MetadataTestEditor").AddComponent<SimulationBrickEditor>();
-        Set(editor, "layout", layout);
-        capture = editor.gameObject.AddComponent<SimulationCameraCapture>();
+        capture = new GameObject("MetadataTestCapture").AddComponent<SimulationCameraCapture>();
         Set(capture, "sourceCamera", camera);
-        Set(capture, "brickEditor", editor);
+        capture.Bind(layout);
 
         var board = GameObject.CreatePrimitive(PrimitiveType.Plane);
         board.transform.position = new Vector3(5, 0, 5);
         board.GetComponent<Renderer>().sharedMaterial = Material(Color.gray);
-        var brick = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        brick.transform.position = new Vector3(3.5f, 0.5f, 4.5f);
-        brick.GetComponent<Renderer>().sharedMaterial = Material(Color.red);
     }
 
     private static Material Material(Color color)

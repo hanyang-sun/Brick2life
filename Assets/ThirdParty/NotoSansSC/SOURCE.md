@@ -9,5 +9,5 @@
 - SHA-256：`faa6c9df652116dde789d351359f3d7e5d2285a2b2a1f04a2d7244df706d5ea9`
 - 授权：SIL Open Font License 1.1，完整授权见同目录 `OFL.txt`。
 
-未修改字形、名称、格式或字体二进制。仅将字体作为 Unity 动态字体加载到现有 IMGUI 主题。
+未修改字形、名称、格式或字体二进制。当前字体用于 Brick2Life 仿真工作台的 uGUI 中文文字。
 完整许可证也保存在 `Assets/Resources/Fonts/NotoSansSC-OFL.txt`，随播放器资源打包；原字体版权和授权 metadata 保留在字体内。

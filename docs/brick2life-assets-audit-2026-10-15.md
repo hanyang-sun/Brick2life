@@ -1,5 +1,7 @@
 # Brick2Life 方向调整后的 Assets 模块梳理
 
+> 历史核对记录。2026-10-20 已实施旧系统退役与 Core/Application 重构；当前目录和状态以 [架构说明](architecture.md) 为准。
+
 日期：2026-10-15。
 
 **建议保留现有塔防核心，在同一工程增加独立的仿真场景和感知链路。当前没有必须立即删除的运行时文件；先整理模块接入方式，再处理少量旧工具。**
@@ -179,7 +181,7 @@ BrickDefenseDemo.Start
 - `SoftStrategyTheme` 通过 `Resources.Load<Font>("Fonts/NotoSansSC-Regular")` 读取字体。
 - `PhotoProfileStore` 通过 `Resources.Load<TextAsset>("photo-scan-settings")` 读取参数。
 - `LevelView`、`CombatView` 动态 `Shader.Find("Standard")`，CombatView 还使用 `Sprites/Default`。
-- `Resources/BrickSurface.mat` 虽没有直接加载调用，但用于保留 Standard 构建依赖。此前 Windows Player 曾实际出现 shader 为空，添加该资源后修复，依据见 [运行时着色器修复记录](research/windows-runtime-shaders-github.md)。
+- `Resources/BrickSurface.mat` 虽没有直接加载调用，但用于保留 Standard 构建依赖。此前 Windows Player 曾实际出现 shader 为空，添加该资源后修复，依据见 [运行时着色器修复记录](../Archive/BrickDefense/docs/research/windows-runtime-shaders-github.md)。
 - `ThirdParty/AssemblyInfo.cs` 的 `InternalsVisibleTo` 是现有内部算法类型跨程序集访问的一部分。
 
 因此不建议按“没有 Inspector 引用”“没有 `Resources.Load` 调用”或“名称看起来旧”执行批量删除。

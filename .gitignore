@@ -29,3 +29,9 @@
 /.scratch/color-recognition/debug/*.rgb
 # Runtime exports from the simulation camera.
 /SimulationCaptures/
+
+# Generated isolated Unity validation projects (local evidence stays on disk).
+/.scratch/camera-metadata-validation/
+/.scratch/lighting-validation/
+/.scratch/grid-render-probe/
+/.scratch/light-balance-validation/

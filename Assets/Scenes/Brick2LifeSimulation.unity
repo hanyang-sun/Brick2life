@@ -227,6 +227,8 @@ GameObject:
   - component: {fileID: 54039462}
   - component: {fileID: 54039463}
   - component: {fileID: 54039464}
+  - component: {fileID: 920000001}
+  - component: {fileID: 920000002}
   m_Layer: 0
   m_Name: SimulationRoot
   m_TagString: Untagged
@@ -290,20 +292,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationBrickEditor
   pointer: {fileID: 54039463}
-  bricksRoot: {fileID: 889534993}
-  palette:
-  - colorId: red
-    label: "\u7EA2\u8272"
-    material: {fileID: 2100000, guid: fe73a14aeaa5d844c844927cf6091ba0, type: 2}
-  - colorId: green
-    label: "\u7EFF\u8272"
-    material: {fileID: 2100000, guid: 8e8d591c912287447944dfb11e71c4b3, type: 2}
-  - colorId: blue
-    label: "\u84DD\u8272"
-    material: {fileID: 2100000, guid: e4e0b5dc6647e284ab96907bed220bdc, type: 2}
-  - colorId: yellow
-    label: "\u9EC4\u8272"
-    material: {fileID: 2100000, guid: 0c1766735c2c8324b852437960bcd061, type: 2}
   toolButtons:
   - {fileID: 451828810}
   - {fileID: 109084275}
@@ -3100,7 +3088,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationCameraCapture
   sourceCamera: {fileID: 1356387076}
-  brickEditor: {fileID: 54039464}
   statusLabel: {fileID: 875255856}
 --- !u!1 &1452470341
 GameObject:
@@ -5017,6 +5004,47 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &920000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54039461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39f75aedc6954d3fa97cd44ec719eae9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationBoardSession
+  bricksRoot: {fileID: 889534993}
+  palette:
+  - colorId: red
+    label: "\u7EA2\u8272"
+    material: {fileID: 2100000, guid: fe73a14aeaa5d844c844927cf6091ba0, type: 2}
+  - colorId: green
+    label: "\u7EFF\u8272"
+    material: {fileID: 2100000, guid: 8e8d591c912287447944dfb11e71c4b3, type: 2}
+  - colorId: blue
+    label: "\u84DD\u8272"
+    material: {fileID: 2100000, guid: e4e0b5dc6647e284ab96907bed220bdc, type: 2}
+  - colorId: yellow
+    label: "\u9EC4\u8272"
+    material: {fileID: 2100000, guid: 0c1766735c2c8324b852437960bcd061, type: 2}
+--- !u!114 &920000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54039461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e39fc9e33e554e7cb9cf72345ca91fc7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationBootstrap
+  board: {fileID: 920000001}
+  editor: {fileID: 54039464}
+  capture: {fileID: 1356387077}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

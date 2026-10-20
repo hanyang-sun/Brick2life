@@ -1,0 +1,8 @@
+{
+  "name": "BrickDefense.Vision",
+  "references": [
+    "BrickDefense.Contracts",
+    "BrickDefense.Algorithms"
+  ],
+  "noEngineReferences": true
+}

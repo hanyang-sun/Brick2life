@@ -1,0 +1,892 @@
+[
+  {
+    "Path": "Assets\\Scripts\\Contracts\\BrickDefense.Contracts.asmdef",
+    "Bytes": 94,
+    "SHA256": "953FDC2A489141D42B3B2F65AE3EF8789ACE83865DA1DEE106150B46CA0D3FBE"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\BrickDefense.Contracts.asmdef.meta",
+    "Bytes": 166,
+    "SHA256": "A9FF2E18CF224B549206A499EFEA1533B08D9942B3E64BFA84120B1E486A48EE"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\CombatModels.cs",
+    "Bytes": 3923,
+    "SHA256": "A88563542EDD6B9265FEA33FEC369C2EEB8FC29188747EA9B6171B9E6701CF36"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\CombatModels.cs.meta",
+    "Bytes": 60,
+    "SHA256": "45A46B861C3ED751EB354A08C58A70674A03660BD8514354BB00AFB92B9F9895"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\LayoutReviewModels.cs",
+    "Bytes": 2494,
+    "SHA256": "E5AE88B2376DFF550EDB9684DCE535E53743B62DD2A275CFE3CB6E4052FC35F0"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\LayoutReviewModels.cs.meta",
+    "Bytes": 240,
+    "SHA256": "8B538BDE1C74F987B85431CA50763BF7C5EC0735FAA2C5527DA56357027CE291"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\Models.cs",
+    "Bytes": 8991,
+    "SHA256": "1219264BCCD82A16CC058D74E526BB2A211E2519D7F0A921A2B329A7878A529A"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\Models.cs.meta",
+    "Bytes": 59,
+    "SHA256": "4A083B83D02A41FF2BA41B19E48008CDF5D28F164DE431ED8B9BE62BBA91C192"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\PhotoEvidence.cs",
+    "Bytes": 1926,
+    "SHA256": "BB8CFFCA91CED4CA0DAB0AF5BDF12DC0BB0B70D8B6AE3BF9C9A42317297424F7"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts\\PhotoEvidence.cs.meta",
+    "Bytes": 59,
+    "SHA256": "75BE3539D99C4C4224A654D89E1AA83F1B3C752445B6446CB4A7C199BF90F7D5"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\BattleSimulation.cs",
+    "Bytes": 11301,
+    "SHA256": "669F219D018E4FB4E8A170531388ABB1B62ECC509B027A9A9CBBFDB4BFB0721E"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\BattleSimulation.cs.meta",
+    "Bytes": 60,
+    "SHA256": "462BD94F3A0249FDEC13CF0DCBEE6A423523A43CAD7FA106A0D9DDB4D4725402"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\BrickDefense.Domain.asmdef",
+    "Bytes": 157,
+    "SHA256": "7FB020B1FE5DD396A07CC1EE1508D635A9C8FFF533BC0CD2826B8B9297E1433D"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\BrickDefense.Domain.asmdef.meta",
+    "Bytes": 166,
+    "SHA256": "0A2F71E7113E72DCCFFEE9A9194CF65078C9E5ED15DFE429489D1553C0B8C599"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\ExampleScans.cs",
+    "Bytes": 3483,
+    "SHA256": "B572F906557836C36C32E9641B7B69C65AE041D3DE28AEAE01EB2055D2D774C6"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\ExampleScans.cs.meta",
+    "Bytes": 59,
+    "SHA256": "9528C522B92869B13B9E22212974522E66449E46DD77A1D3CBC9C1AC5AD3767E"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\GridPathfinder.cs",
+    "Bytes": 6204,
+    "SHA256": "F0A54240530E225093F990D32AFDBF49352179F22CA8B5E94C410BA5A8A253C7"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\GridPathfinder.cs.meta",
+    "Bytes": 59,
+    "SHA256": "A4B50552D9F97B06A2321848311771D039BA99A799A2AD84A329FF69F8AFD232"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\LevelPipeline.cs",
+    "Bytes": 16206,
+    "SHA256": "250F99F9C00924489615FA6EE519BDCEED14454F434843EFD7C3083D84CE7243"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain\\LevelPipeline.cs.meta",
+    "Bytes": 59,
+    "SHA256": "DF308DCB4E73012292FA3644A3507F14BC2131BC36810147CCA670D8C598EE2C"
+  },
+  {
+    "Path": "Assets\\Scripts\\Vision\\BrickDefense.Vision.asmdef",
+    "Bytes": 157,
+    "SHA256": "F7DF3FAF6E4B246E700D9604654156EEE411D3FFEFEF0027C3D64C018EB6A990"
+  },
+  {
+    "Path": "Assets\\Scripts\\Vision\\BrickDefense.Vision.asmdef.meta",
+    "Bytes": 166,
+    "SHA256": "BA7CFF26DF9A1EB098385CEA3D8D781CB1917EE3692B1DBBF3742A2C9B93BC78"
+  },
+  {
+    "Path": "Assets\\Scripts\\Vision\\PhotoModels.cs",
+    "Bytes": 3849,
+    "SHA256": "1AAB0972DEF4DDC1D3492F6730D2DB05015000144E5751B3F1F6A2D5BFA7DF80"
+  },
+  {
+    "Path": "Assets\\Scripts\\Vision\\PhotoModels.cs.meta",
+    "Bytes": 59,
+    "SHA256": "1B4F38ECB30E151509EE49F66A05526EC3D635ABBC3B14A2115588D5BC714175"
+  },
+  {
+    "Path": "Assets\\Scripts\\Vision\\PlainBackgroundRecognizer.cs",
+    "Bytes": 16340,
+    "SHA256": "7F28EDC35AB89622EE05F551D15728ACF6CEBC9E9770A81454662DADF0639C78"
+  },
+  {
+    "Path": "Assets\\Scripts\\Vision\\PlainBackgroundRecognizer.cs.meta",
+    "Bytes": 59,
+    "SHA256": "43F77EF83DCA504271989ADA059441EA6BF2885B4A044CA90047B1965AAB083B"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\BattleSession.cs",
+    "Bytes": 3204,
+    "SHA256": "A84776D1B728AC1A7AF2D9A9AF1D3CBB7957397AF3D0D515BFB05C27C0E0161E"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\BattleSession.cs.meta",
+    "Bytes": 60,
+    "SHA256": "B176061E5DB5A2D517DC071786698B430BA4C601C5EF4CEAACB8CBAFBC0D2008"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\BrickDefense.Application.asmdef",
+    "Bytes": 186,
+    "SHA256": "0A0445130C4DF10413F9F6DC094117A620C312DA64F4D3B41E294E1DF05BD3B2"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\BrickDefense.Application.asmdef.meta",
+    "Bytes": 166,
+    "SHA256": "596CA162B3D499FD079FCADD9CCB69D49E3EDA8AD47DCC81E9A69A9F5A861585"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\LayoutEditSession.cs",
+    "Bytes": 12010,
+    "SHA256": "C5158396EB08A505A64CAEEFAA6D478053BA81628AB3EC09E8C6F30C32B29AF1"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\LayoutEditSession.cs.meta",
+    "Bytes": 240,
+    "SHA256": "E18F280F3CCF088D915EE25B027211EB478EDD5854E16428E1B4A6FEC405B1B3"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\LevelSession.cs",
+    "Bytes": 5842,
+    "SHA256": "1D1387D72C455F373CA64978DDEEEC4C6C23483B52286F2BEE97CBB4AF41EE1D"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\LevelSession.cs.meta",
+    "Bytes": 59,
+    "SHA256": "10194DB058C8CE4E3DDA62A4882B12DBABC45A4311CD64D5029FABB87800F70D"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\PhotoScanSession.cs",
+    "Bytes": 3516,
+    "SHA256": "F59C1827D8D8931017115A72865485FB2415339BA442C016DDF72E0A47E26E04"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application\\PhotoScanSession.cs.meta",
+    "Bytes": 59,
+    "SHA256": "D7B7E1D5ED5196A52DDF52E2618BE16A2E2E7A96D405A7725A3E71DA47D29AB5"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\BrickDefense.Infrastructure.asmdef",
+    "Bytes": 162,
+    "SHA256": "93340935087D7DE1A8B688A7A00F91A8ACBDD4B8BB4EA9A0C66B2794D25E3607"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\BrickDefense.Infrastructure.asmdef.meta",
+    "Bytes": 166,
+    "SHA256": "C379CC3AC52D9B69BADF505B03C5451EB95A69320895F4F850FC60EDB1FFADFD"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\CameraCapture.cs",
+    "Bytes": 3620,
+    "SHA256": "2CE0246699B07DA838AE36CA1AAADA6CD235DD161E778C938B07F694ADF0FE53"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\CameraCapture.cs.meta",
+    "Bytes": 59,
+    "SHA256": "F9A990EC4E5D144F20EC92C4CD139FB7119B221265A22D56C20B00D320793571"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\LayoutReviewStore.cs",
+    "Bytes": 4274,
+    "SHA256": "781C4DDE67AC9F818D7CBEAA5EF54E59FE2A38DFBBA5359E265F5366081DCD71"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\LayoutReviewStore.cs.meta",
+    "Bytes": 240,
+    "SHA256": "83F8D46E1AFB3DD9338CC4EF1A819341D9C3E95820E3A452AE6A086E08CBCF3A"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\PhotoFileSource.cs",
+    "Bytes": 2176,
+    "SHA256": "B3E8477C32139F4D78014F2A178F0E68A2C81D0BB435E0A163E0148F56334226"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\PhotoFileSource.cs.meta",
+    "Bytes": 59,
+    "SHA256": "5188F97B22C39FC380D1E7970CE296B72A3A12593D7BB511D50CD8AB4E09BEFE"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\PhotoPixels.cs",
+    "Bytes": 2462,
+    "SHA256": "6E2D965F1306D5508090D17846E1773B4E47CC4EA7763AF0C70FB4093E24BFC9"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\PhotoPixels.cs.meta",
+    "Bytes": 59,
+    "SHA256": "D9A309428DBCF923E22597CFB3452E45D0ACDD7A59D91E534B27D27CFBB216C8"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\PhotoProfileStore.cs",
+    "Bytes": 2710,
+    "SHA256": "CD98AA3A53EBE246323AE804DEC25C5C60FB6C1BFB499F49E53AE9311DD3A07A"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\PhotoProfileStore.cs.meta",
+    "Bytes": 59,
+    "SHA256": "3614C913F772A4A6C667E0C68D79E5D237CE5AC95EA20570579788B188A79C7E"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\ScanReportStore.cs",
+    "Bytes": 5384,
+    "SHA256": "DE1B561898FA2A17A4AA82A787051763438C80F941E3C3FC0A9895CA08AB2119"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\ScanReportStore.cs.meta",
+    "Bytes": 59,
+    "SHA256": "D76C40E3D2E4FA528018E689DE6D9030EE7F0633C266E8639EFFD0C0E754B14A"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\WindowsPhotoFilePicker.cs",
+    "Bytes": 3650,
+    "SHA256": "29BF27327289FBE29BFB1515DE62565111FAB6F232D3B05D71E90049D883564A"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure\\WindowsPhotoFilePicker.cs.meta",
+    "Bytes": 240,
+    "SHA256": "C2FC38579B7891EE6408E1E9EE5E38218EA27FBF1E2B2A21084D00675650B358"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BattlePanel.cs",
+    "Bytes": 10109,
+    "SHA256": "545E1B9964D225976054F1E1E8C2FE89C957DAF02A33DFCFEEAD989192802256"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BattlePanel.cs.meta",
+    "Bytes": 60,
+    "SHA256": "07165BD85C92FB989BCE90C0D8333918217048C9B74561059EB4C43163D22B16"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BoardOrbitCamera.cs",
+    "Bytes": 2749,
+    "SHA256": "9759877941BCE39418E06F067FD9DC95EDF4B13384A4994DF24C69B8973568AC"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BoardOrbitCamera.cs.meta",
+    "Bytes": 60,
+    "SHA256": "679EB6FA7DC23F11A00EC4A9982F6F2AA3652CA8B146CE88F788F16D87254F08"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BoardTouchControls.cs",
+    "Bytes": 5209,
+    "SHA256": "82E1C7F85127FFA65648794E1297353B12EE9BC03879DC72D57F6999671CF0B8"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BoardTouchControls.cs.meta",
+    "Bytes": 60,
+    "SHA256": "532985BDD4DCF32741D786F96EFF46CB10B9408E77FD231BA3749CAD33FD35CC"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BoardUiLayout.cs",
+    "Bytes": 1275,
+    "SHA256": "5A17063EA3C5E4BE15ADE9406334766A310C39C28F18026AB1DF99FBF58B153A"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BoardUiLayout.cs.meta",
+    "Bytes": 60,
+    "SHA256": "E8C12FAA9D6052626407970882C312DBE63EC9D16545123AF1BD33E2539A2116"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BrickDefense.Presentation.asmdef",
+    "Bytes": 229,
+    "SHA256": "841AA2728ADAF33F3AACA4012AF4BAFADE395B2D26A133A00085E28DAAFF0357"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BrickDefense.Presentation.asmdef.meta",
+    "Bytes": 166,
+    "SHA256": "2F4FBB97B632E3092626E5954DDFBCBC088FFAABF8AD6FC54D505EF6140FF190"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BrickDefenseDemo.cs",
+    "Bytes": 1830,
+    "SHA256": "4C21CB2CC3D2B927800E9F0ED731C4556FEDD6813ADE8F5E8A008008CC392063"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\BrickDefenseDemo.cs.meta",
+    "Bytes": 59,
+    "SHA256": "417C124186AE799DBF3D874D8204CD338977339F828CC3345581F5691429B75E"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\ChineseUi.cs",
+    "Bytes": 3823,
+    "SHA256": "0ED3C78C6DFA5965AE374B39935F4375B9C49482430FB4A90802B3127C46CCE6"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\ChineseUi.cs.meta",
+    "Bytes": 60,
+    "SHA256": "069711160945D6874935B2D2032BE0E87D08DD404073967EC2D118BF9A3BDCA7"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\CombatView.cs",
+    "Bytes": 6908,
+    "SHA256": "B55AA250F392056558F2130D371A3E044B1798E14A89C6B42E976844EA4473CA"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\CombatView.cs.meta",
+    "Bytes": 60,
+    "SHA256": "2F379DD85B013B1103FBB05F074177EC1C53FB1A0F009876BB17AB287D15FBC9"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\DemoUI.cs",
+    "Bytes": 10195,
+    "SHA256": "186F28C3A4048EA8E5CF7663D1BDAA5279380ACA9D828EC63AAFC313D703869E"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\DemoUI.cs.meta",
+    "Bytes": 59,
+    "SHA256": "8B55104BE7EC219F5254EA004339080B3A7198DCE6F7B98730518CFC575CD858"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\LayoutReviewPanel.cs",
+    "Bytes": 16761,
+    "SHA256": "A2D31E786B0F6A18B6937F0CBA1B84E4DD7A81DDD6BE956E50FC6020D5343CBE"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\LayoutReviewPanel.cs.meta",
+    "Bytes": 240,
+    "SHA256": "AA64713EB1E7F92A40B2BF8B964BA4231EA2EB8548DD451EE74F170E4B3ADE4F"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\LevelView.cs",
+    "Bytes": 9547,
+    "SHA256": "90C76E376C45D18E1B312FC75FEF2DE2F12168C150F07B259317C4A4688D14AC"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\LevelView.cs.meta",
+    "Bytes": 59,
+    "SHA256": "D73711BD2DC73B1DE24FECB1F22F9757EA14B18319D3B4E131B63707E842FFDF"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\PhotoScanPanel.cs",
+    "Bytes": 22147,
+    "SHA256": "DFCD02C12AC78E986EDF937775BAAC32D4E1D2FBCB6718ECD02E5258E38FB8D5"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\PhotoScanPanel.cs.meta",
+    "Bytes": 59,
+    "SHA256": "658AE95EC7E8A2986860B7B5DDA94C10645D6F8463C1A184FC8E29F9465BBF81"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\SoftStrategyTheme.cs",
+    "Bytes": 7382,
+    "SHA256": "5F5A1543BB7A7DB3F3FFDA2DA78B7F460223AD1B3D8A9A313AAE997085AD6D2B"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation\\SoftStrategyTheme.cs.meta",
+    "Bytes": 62,
+    "SHA256": "8922F8B8AE6D7D18EE83F7DEE596654667951673C28D11709212367E491A1F42"
+  },
+  {
+    "Path": "Assets\\Editor\\BattleChecks.cs",
+    "Bytes": 26538,
+    "SHA256": "443B316DDC9391FD5CC1732F779A17E835CEDA3E831BD50B6BD9EB0110D9BE96"
+  },
+  {
+    "Path": "Assets\\Editor\\BrickDefense.Editor.asmdef",
+    "Bytes": 360,
+    "SHA256": "DFD1CB8C8F34D027C31DC4121EAA951250BC0F231E15205584D4207BC19461E9"
+  },
+  {
+    "Path": "Assets\\Editor\\DemoSceneChecks.cs",
+    "Bytes": 19397,
+    "SHA256": "9A8795FDE9392B1C49826B09EF739A62CE1C8F56F42CD963092C745093819FCA"
+  },
+  {
+    "Path": "Assets\\Editor\\DemoSceneSetup.cs",
+    "Bytes": 961,
+    "SHA256": "2C4A6E7008369312D9B3FC0EF99CA4898AE4B33E2BF64A393F6494D527EB21BC"
+  },
+  {
+    "Path": "Assets\\Editor\\LayoutReviewUiChecks.cs",
+    "Bytes": 14279,
+    "SHA256": "E55B7502D217F8F1885014E1AFF6F14C2B549D6028AD917AE56CB643B8177680"
+  },
+  {
+    "Path": "Assets\\Editor\\OrbitCameraChecks.cs",
+    "Bytes": 29652,
+    "SHA256": "468A2F4E2D0DDF0CC55C2909CB89D47BE2FDFC90C9875F00BB9DA7F8D7CD2228"
+  },
+  {
+    "Path": "Assets\\Editor\\PhotoFilePicker.cs",
+    "Bytes": 295,
+    "SHA256": "01C3812C514D812472A85748B4E583AD7278F7A9D10104B347B28958080D9A10"
+  },
+  {
+    "Path": "Assets\\Editor\\PhotoOverlayChecks.cs",
+    "Bytes": 8231,
+    "SHA256": "465F6B9C134F653711CD678AC5814391F0AF211DC846B870B69B2290793C2F6D"
+  },
+  {
+    "Path": "Assets\\Editor\\PhotoScanTools.cs",
+    "Bytes": 2650,
+    "SHA256": "65B53006821E6DD662669EA3C0D16B2442A126A629DDD81677972AD199D6A9F7"
+  },
+  {
+    "Path": "Assets\\Editor\\SoftStrategyUiChecks.cs",
+    "Bytes": 20499,
+    "SHA256": "94720FD6724DE75DECC245ADE106FB5EBB7D361FCFA8C0A5893A4FEEE751BA69"
+  },
+  {
+    "Path": "Assets\\Scenes\\BrickDefenseDemo.unity",
+    "Bytes": 4847,
+    "SHA256": "667BF3962C486E3CC4AAF5262845816AC78CC2CA8B232C18584FD0EE889CF623"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\RoyTAStar\\LICENSE.txt",
+    "Bytes": 1061,
+    "SHA256": "F605B27A124E387F54AE35C9F40DB94097F6B37C86F719B4AD4B4B1B01879512"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\RoyTAStar\\LICENSE.txt.meta",
+    "Bytes": 158,
+    "SHA256": "6271D8F55A9FBFBC38194AD6BA519638B366A2D3F9D2596F06AC8738F2A518C7"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\RoyTAStar\\MinHeap.cs",
+    "Bytes": 3712,
+    "SHA256": "DC5BCEFC9C9DF9668CBA65E2CAD953C58342C334C9C6CC7B95B0AF3A8148B933"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\RoyTAStar\\MinHeap.cs.meta",
+    "Bytes": 59,
+    "SHA256": "18322E0029602C217F56272F0161DE0A31287E3081A9B1FF54FC1587EBD5A676"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\RoyTAStar\\UPSTREAM-LICENSE.txt",
+    "Bytes": 1079,
+    "SHA256": "F8E6D6A23281CFA8FE400715755F3F1C6CE4FB94377ECDAEF23FA6D7F34573E7"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\RoyTAStar\\UPSTREAM-LICENSE.txt.meta",
+    "Bytes": 158,
+    "SHA256": "67B9273A88EE858A6C5E9BAB7B82CFD0FE5F67998FEEC534F9CE2DDF18491A3D"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\Colourful\\LICENSE.txt",
+    "Bytes": 1084,
+    "SHA256": "AF6A80A8992A7EC7F06C166ED5642849D31DE9A55AECF5B8D746ABF82229A9B5"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\Colourful\\LICENSE.txt.meta",
+    "Bytes": 158,
+    "SHA256": "B3600BD2473F9CD7C759FEA139B051D0021DD29C7A7FA51344F9BFA520B0C7BC"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\Colourful\\NormalizedLab.cs",
+    "Bytes": 2078,
+    "SHA256": "8346DFBD9B2DC2966A045DCA49CA4638574CCAE9586924F71D888A7A4DF3F849"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\Colourful\\NormalizedLab.cs.meta",
+    "Bytes": 59,
+    "SHA256": "2A7AD63481D9C43B14D2A2DF2FD46B6520C4E0B331AEE051F3098939F372FEE3"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\AssemblyInfo.cs",
+    "Bytes": 148,
+    "SHA256": "D149B3DE3AEF0A493959B1AC2D31DED19FEE62C84C99A4BAED13D96DF48F5896"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\BrickDefense.Algorithms.asmdef",
+    "Bytes": 129,
+    "SHA256": "62C9CDC046E3A0AB90501ABE99CECCC330AB75BC84AC4394E004A391DD507D59"
+  },
+  {
+    "Path": "Assets\\Resources\\photo-scan-settings.json",
+    "Bytes": 198,
+    "SHA256": "B68E57D7E6B46732F944EC98FC0532DCC07928E8FCF76621EBAE24CCD93C6D72"
+  },
+  {
+    "Path": "Assets\\Resources\\BrickSurface.mat",
+    "Bytes": 1002,
+    "SHA256": "9FDEA6221A0FDF76F20C580595407E2E33172EE699430E6905CE4CDFA11D9CD8"
+  },
+  {
+    "Path": "Tests\\Fixtures\\generated-overhead-bricks-v1.md",
+    "Bytes": 2545,
+    "SHA256": "BBECADA60C7D831685B5308C46EE24985F960EF18CA36FF036690841F3D199A7"
+  },
+  {
+    "Path": "Tests\\Fixtures\\generated-overhead-bricks-v1.png",
+    "Bytes": 2413436,
+    "SHA256": "02B13B107B0AE81D77413E9C06ADCB7F44BDC828A3D662AE1F6732343FDF4376"
+  },
+  {
+    "Path": "Tests\\Fixtures\\generated-overhead-bricks-v1.rgb.gz",
+    "Bytes": 2851237,
+    "SHA256": "C6E863632CF5D270F928F7CF3C5FE626BD2265F07262001099DC5C5BB2ADEB32"
+  },
+  {
+    "Path": "Tests\\Fixtures\\generated-overhead-bricks-v1.rgb.md",
+    "Bytes": 850,
+    "SHA256": "3EAB02685BDAF9EA12FB05EB77A62B083AA618D21764E01B782DC3BDC8947C79"
+  },
+  {
+    "Path": "Tests\\Fixtures\\real-cropped-bricks-v1.jpg",
+    "Bytes": 131541,
+    "SHA256": "7362F71EBDD650D8A1A260C7C82761EC6238B4C8A2FCE83E77184C8D8F9FEB1A"
+  },
+  {
+    "Path": "Tests\\Fixtures\\real-cropped-bricks-v1.md",
+    "Bytes": 1117,
+    "SHA256": "5870E8F53BA4B01B24DF7177D29D93667EB0B7649974A8980842460A459A5766"
+  },
+  {
+    "Path": "Tests\\Fixtures\\real-cropped-bricks-v1.rgb.gz",
+    "Bytes": 1322538,
+    "SHA256": "5CE51A65B0D367086737F446DC5633923DBD00C4796700BF209176B79A19E08D"
+  },
+  {
+    "Path": "Tests\\Fixtures\\real-unmarked-bricks-v1.jpg",
+    "Bytes": 1476060,
+    "SHA256": "042C707DABAE705CF305F72527680874BC141AFF6E69D88A80A95C2792EB7696"
+  },
+  {
+    "Path": "Tests\\Fixtures\\real-unmarked-bricks-v1.md",
+    "Bytes": 1294,
+    "SHA256": "3CBEFB81F325178117D2E0437ECE1D9F6942B6A940FAE6085468681F7DD53E11"
+  },
+  {
+    "Path": "Tests\\Fixtures\\real-unmarked-bricks-v1.rgb.gz",
+    "Bytes": 3847784,
+    "SHA256": "587EED95AA4A7473C9824F6B3DF1BCAB58370516F26ABAC5B9BDC005319D8A69"
+  },
+  {
+    "Path": "Tests\\Fixtures\\synthetic-reference.png",
+    "Bytes": 14936,
+    "SHA256": "6102F6A2A6EC21FC88C6D5914DA9512C2C92F44CCBEA11B52B776EFBFD814CC4"
+  },
+  {
+    "Path": "Tests\\BrickDefense.Checks.csproj",
+    "Bytes": 1645,
+    "SHA256": "BB4593B149D953AB4E3C2F2C9E2160D4BB8F8880C61465AF033A20DB45A2A4DC"
+  },
+  {
+    "Path": "Tests\\CombatChecks.cs",
+    "Bytes": 9347,
+    "SHA256": "6397D8390D9C1C04F6B49931DC0FF4C46C38F4E87812D8DE30CC7DE380BCFEEF"
+  },
+  {
+    "Path": "Tests\\LayoutReviewChecks.cs",
+    "Bytes": 5803,
+    "SHA256": "7B5A3EA7DC410B2CE41CE725BA7EA10C1B022756782765CF4BBA5CBC81426E53"
+  },
+  {
+    "Path": "Tests\\MultipleSpawnChecks.cs",
+    "Bytes": 6787,
+    "SHA256": "0324FC7D91CF735E70BBE42C7630AD08098CC4299CA796299A7426295C50A395"
+  },
+  {
+    "Path": "Tests\\PlainBackgroundChecks.cs",
+    "Bytes": 7729,
+    "SHA256": "36B21D9189D35CDA94989534F461E8EFB0768E57BA2604B10D5456496582C57A"
+  },
+  {
+    "Path": "Tests\\Program.cs",
+    "Bytes": 6703,
+    "SHA256": "FC598BED0AB51CC0BE0B9B711F77C6796226F6D7C8DC79F5269E0F38FDE8494B"
+  },
+  {
+    "Path": "Tests\\RouteOracleChecks.cs",
+    "Bytes": 4974,
+    "SHA256": "FE0575ADE22FD6E33F769246D8F38475585A3AFCCB1CC62A26BA1B722E9C2E04"
+  },
+  {
+    "Path": "Tests\\ScanRejectionChecks.cs",
+    "Bytes": 3941,
+    "SHA256": "32AA5CEF6C281465C1033CB4C8D72A71311255BF9A220F314E9BA40D92748236"
+  },
+  {
+    "Path": "Tests\\ScanReplay.cs",
+    "Bytes": 2890,
+    "SHA256": "16CB6E8643876089E450BDCE8335A56DF1F624C885B8D850069E833AF2D2B7C5"
+  },
+  {
+    "Path": "Tests\\WorkflowChecks.cs",
+    "Bytes": 5542,
+    "SHA256": "23284E11831D47CAD0208D1472E0A83620A3D16E6FE7ADEDC60E275EDD5F7365"
+  },
+  {
+    "Path": "docs\\requirements-layout-review-v1.3.md",
+    "Bytes": 3381,
+    "SHA256": "21F328D777ED7C0FF68B952F697E7CC5061D3662D2D75117DE451C7ABE47BDF3"
+  },
+  {
+    "Path": "docs\\requirements-markerless-v1.1.md",
+    "Bytes": 2665,
+    "SHA256": "0A8E10FC83E45C24827AD5E14117A69A7ED2409BAACCD01DA0B49A9578D4A890"
+  },
+  {
+    "Path": "docs\\requirements-multiple-spawns.md",
+    "Bytes": 2078,
+    "SHA256": "4FF0AEAF83FC635F3FD080A0C20CD18429EEE9709B0B81E1668574CCD4C9466E"
+  },
+  {
+    "Path": "docs\\requirements-plain-only-v1.2.md",
+    "Bytes": 2104,
+    "SHA256": "1CF44258BABC76E154D439F6B866BD309708DBC2CC100D84A67C82280558E25F"
+  },
+  {
+    "Path": "docs\\requirements-v1.md",
+    "Bytes": 16989,
+    "SHA256": "EB7B996514499D5D6A0D9A5614102F0302A4B539071CCB22D76C9ED14B1486C3"
+  },
+  {
+    "Path": "docs\\releases\\v1.3.0-windows.md",
+    "Bytes": 2572,
+    "SHA256": "4F1FF4A3BE2E3895FD93792319661D1F0699F168A0A94EEEF609E3E5EFAAA8A8"
+  },
+  {
+    "Path": "docs\\releases\\v1.3.1-windows.md",
+    "Bytes": 2084,
+    "SHA256": "B86EC951BE74C7761595E548D41C2482845FA0264DB14DDC2B5C065366F4E281"
+  },
+  {
+    "Path": "docs\\research\\architecture-refactor-github.md",
+    "Bytes": 6278,
+    "SHA256": "81E0128863C7D34E1662E74F756736A82F67B99188A693153D3D8C4C348F6858"
+  },
+  {
+    "Path": "docs\\research\\chinese-ui-github.md",
+    "Bytes": 4530,
+    "SHA256": "F19205612F92BF6E0C423934381F3491E34987656D4E11720DD25271431133D6"
+  },
+  {
+    "Path": "docs\\research\\color-recognition-github.md",
+    "Bytes": 10593,
+    "SHA256": "844C138C2D5EFA76BCCD9839D0638BB7EF06331679C58D09BB140E62AD1E1BD8"
+  },
+  {
+    "Path": "docs\\research\\combat-a-github.md",
+    "Bytes": 4029,
+    "SHA256": "929508538553D32B78DB2E843253902940234836BF590EE2E662C08A9E10EA5C"
+  },
+  {
+    "Path": "docs\\research\\demo-switching-github.md",
+    "Bytes": 3889,
+    "SHA256": "7BB8A2681AC50A4DA4FA4D9CE0DBE7FFE0804BCABCF8D19BD97F4D0E5707AB62"
+  },
+  {
+    "Path": "docs\\research\\existing-milestone-github.md",
+    "Bytes": 7728,
+    "SHA256": "90A1BBDBEB3DD79AD887FA620FDCF3B1B683ECE72F077A54F440ABC01AAF5424"
+  },
+  {
+    "Path": "docs\\research\\layout-review-github.md",
+    "Bytes": 2820,
+    "SHA256": "21B7EC49FCCBED3B09CA30DC700AD8099AC73485268A032E6341EB144820C003"
+  },
+  {
+    "Path": "docs\\research\\markerless-photo-github.md",
+    "Bytes": 13034,
+    "SHA256": "630C4955E9BE3F809794EA9B0C26D44BE77929B3F171D40919F0D3D4D9FF254F"
+  },
+  {
+    "Path": "docs\\research\\multiple-spawns-github.md",
+    "Bytes": 3416,
+    "SHA256": "0F25DBB2180CAEF0225C283DD6260D34E07952245D330443AF3857DB62CC5F08"
+  },
+  {
+    "Path": "docs\\research\\orbit-camera-github.md",
+    "Bytes": 9989,
+    "SHA256": "9E0E60809DBE34F421EF48676B5D06330B105638E92E4EB318733174EF94C167"
+  },
+  {
+    "Path": "docs\\research\\photo-recognition-github.md",
+    "Bytes": 7680,
+    "SHA256": "421EC9979155CAED246B0E4BDCE6C736AD6173639DE54653BBBBBC284B479399"
+  },
+  {
+    "Path": "docs\\research\\plain-only-photo-github.md",
+    "Bytes": 3562,
+    "SHA256": "79F10A453F3A1A6A142691589E698BC8EB2FBC63375611AEF6EC9317DF69F16E"
+  },
+  {
+    "Path": "docs\\research\\scan-rejection-github.md",
+    "Bytes": 14093,
+    "SHA256": "07903FC085BAEB97FD1909732CCD68CB25F8634BA7D7F47F893271A5246B309B"
+  },
+  {
+    "Path": "docs\\research\\soft-strategy-ui-github.md",
+    "Bytes": 10589,
+    "SHA256": "3B5BE313A5C201D8D07509BCB2EB795653B5DD9CEBFD6FA947EAC1391297AD16"
+  },
+  {
+    "Path": "docs\\research\\touch-zoom-github.md",
+    "Bytes": 6774,
+    "SHA256": "7D2F700E761429D2090DA8CA65DB63F4CAE261996EC21226CCF8B8D6FDB65F0A"
+  },
+  {
+    "Path": "docs\\research\\windows-photo-picker-github.md",
+    "Bytes": 3730,
+    "SHA256": "D93F332D10873ADC99E090FCB6A689F63F742F9206001F7287820A62C5110FAE"
+  },
+  {
+    "Path": "docs\\research\\windows-runtime-shaders-github.md",
+    "Bytes": 2872,
+    "SHA256": "83E5C1AF30C85868C6743A3D09FFD3C32DCE0FA52665C09D11997E79B275AF6E"
+  },
+  {
+    "Path": "Assets\\Editor.meta",
+    "Bytes": 172,
+    "SHA256": "935224F3EE845CF2ACB0313A34342AA9DBC8B1AB1D4D7B26AE0EFF310FA75A80"
+  },
+  {
+    "Path": "Assets\\Resources.meta",
+    "Bytes": 172,
+    "SHA256": "6E6F1B09A80D346EEC4239FFD385A6C96EF24BCC41801E6495C7FCA4E0FE8245"
+  },
+  {
+    "Path": "Assets\\Scenes.meta",
+    "Bytes": 172,
+    "SHA256": "89FEF258F743AB18C6F6AF7030F9D5ADEEC57641A9654609E55B0D08AA479E6D"
+  },
+  {
+    "Path": "Assets\\Scripts.meta",
+    "Bytes": 172,
+    "SHA256": "AC591F2EA596216661F74B4CD5923C5104CED65F204FD2827D4EE81A0650444F"
+  },
+  {
+    "Path": "Assets\\ThirdParty.meta",
+    "Bytes": 172,
+    "SHA256": "31E3C868FC1426ADC3C6517197C2918AF753632B3CBF0F8B397A2DEA44BC1B90"
+  },
+  {
+    "Path": "Assets\\Editor\\BattleChecks.cs.meta",
+    "Bytes": 60,
+    "SHA256": "7929F2F44F05B01FAFF71B8B576FCD2C0268549DEBEE8576CE9E80D3CD92E65B"
+  },
+  {
+    "Path": "Assets\\Editor\\BrickDefense.Editor.asmdef.meta",
+    "Bytes": 166,
+    "SHA256": "A57BFED5533CD1745F46622384D257D3567F99E8255C439573053F3EB3B56FC2"
+  },
+  {
+    "Path": "Assets\\Editor\\DemoSceneChecks.cs.meta",
+    "Bytes": 59,
+    "SHA256": "5A59F1E99F993CB37B659E99824FFF22048EED8ADB44634D21C949592D6B5E2A"
+  },
+  {
+    "Path": "Assets\\Editor\\DemoSceneSetup.cs.meta",
+    "Bytes": 59,
+    "SHA256": "E508CD67B20B19EDE2D1891838CB51B182A6968847BF9F6CF836C4B7A0513057"
+  },
+  {
+    "Path": "Assets\\Editor\\LayoutReviewUiChecks.cs.meta",
+    "Bytes": 60,
+    "SHA256": "8B62D33E2AEE3C5A21D7CA61337C5C11AB63445A5808A1CE6AE0429699E32552"
+  },
+  {
+    "Path": "Assets\\Editor\\OrbitCameraChecks.cs.meta",
+    "Bytes": 60,
+    "SHA256": "40CB55D265D50B78F7E3EF4B218A7C849FA54FE96E4668E9773162FB37A53CBB"
+  },
+  {
+    "Path": "Assets\\Editor\\PhotoFilePicker.cs.meta",
+    "Bytes": 59,
+    "SHA256": "7F981B4BDEB47C72794D0519FDDF7CA61581387EFED48C190F6407902659DDCF"
+  },
+  {
+    "Path": "Assets\\Editor\\PhotoOverlayChecks.cs.meta",
+    "Bytes": 59,
+    "SHA256": "619999BD134FE2EB2450EB6DABE2B93D7390673125554413451507DF75D5D494"
+  },
+  {
+    "Path": "Assets\\Editor\\PhotoScanTools.cs.meta",
+    "Bytes": 59,
+    "SHA256": "3B61846F4AED62BA748591DA44E760754E7B3805E54D8B2BD01585C5EE276B66"
+  },
+  {
+    "Path": "Assets\\Editor\\SoftStrategyUiChecks.cs.meta",
+    "Bytes": 62,
+    "SHA256": "9E557E2F9CD6E8922FEF3D1D92C008191D6524D885CFA4F199FD6DBF425F96AA"
+  },
+  {
+    "Path": "Assets\\Resources\\BrickSurface.mat.meta",
+    "Bytes": 185,
+    "SHA256": "F5C10E561B16BFEB24B1DDF0D5BF78AE6C013CD0CC06AE43EC96B93F504808E5"
+  },
+  {
+    "Path": "Assets\\Resources\\photo-scan-settings.json.meta",
+    "Bytes": 158,
+    "SHA256": "0FFDB514B94DF3AC4D85754BD2562A7E4D436C47C6556BE6F407F62D2C26DA45"
+  },
+  {
+    "Path": "Assets\\Scenes\\BrickDefenseDemo.unity.meta",
+    "Bytes": 155,
+    "SHA256": "0B1CC587AE30DB83971EFB92AD6A4E1E697907EE0B62B528C3D3C49AEC9F4563"
+  },
+  {
+    "Path": "Assets\\Scripts\\Application.meta",
+    "Bytes": 172,
+    "SHA256": "E9FA3DD6CA19FC10E3C4841A20B4BBC878A1F9B84B4C630CFEC55B4599F5AE8B"
+  },
+  {
+    "Path": "Assets\\Scripts\\Contracts.meta",
+    "Bytes": 172,
+    "SHA256": "5CCFE52FAED62108475A889BCA64A2A33C04E7962772C8E448B4DC212B211482"
+  },
+  {
+    "Path": "Assets\\Scripts\\Domain.meta",
+    "Bytes": 172,
+    "SHA256": "B4993D7B70480B2F25979B091A8860F5F340CEA8460DEA001DEE5C80AA95D8E8"
+  },
+  {
+    "Path": "Assets\\Scripts\\Infrastructure.meta",
+    "Bytes": 172,
+    "SHA256": "A74239D83D6043383F08E1BF2A7B0B749139D769CF26F95E28FDC7D9107DB72D"
+  },
+  {
+    "Path": "Assets\\Scripts\\Presentation.meta",
+    "Bytes": 172,
+    "SHA256": "8C0291C6571C9DBC882DA40C0166C7B84D5565197C040B41122A2852040DDF41"
+  },
+  {
+    "Path": "Assets\\Scripts\\Simulation.meta",
+    "Bytes": 172,
+    "SHA256": "CA29E876AE25872FB358F3E7F46E4E0ADB81EC76337BD17F057AFB027F6A6C7A"
+  },
+  {
+    "Path": "Assets\\Scripts\\Vision.meta",
+    "Bytes": 172,
+    "SHA256": "CD8575135B7EC943FBA5CC703E4228847BB017C6765EE39EA8B0592E9727B76D"
+  },
+  {
+    "Path": "Assets\\Scripts\\Simulation\\SimulationLayout.cs.meta",
+    "Bytes": 59,
+    "SHA256": "5A09A933866E706AF87DF71F8F92F66A77B0F47734185DA5C0E5A8800680A8E0"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\AssemblyInfo.cs.meta",
+    "Bytes": 59,
+    "SHA256": "FFC4E04211BF59080C3E12BE2AC3F3D322EE32066AEA76DC081345632BEF2A3E"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\BrickDefense.Algorithms.asmdef.meta",
+    "Bytes": 166,
+    "SHA256": "5B6C08032F13A5FA1B53C6FE596B1C7F55136DE08129737B4F3F3BFFAB478164"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\Colourful.meta",
+    "Bytes": 172,
+    "SHA256": "4626BC66CCBBC0F687DECFC5625166046760CA877FEA48F2B02DA92385E3C5BA"
+  },
+  {
+    "Path": "Assets\\ThirdParty\\RoyTAStar.meta",
+    "Bytes": 172,
+    "SHA256": "2D9DE5CEA67D48E67D1DB37A45C6D694249BFC3CCE09990B280480B59E48B278"
+  }
+]

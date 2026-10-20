@@ -1,9 +1,0 @@
-{
-  "name": "BrickDefense.Application",
-  "references": [
-    "BrickDefense.Contracts",
-    "BrickDefense.Domain",
-    "BrickDefense.Vision"
-  ],
-  "noEngineReferences": true
-}

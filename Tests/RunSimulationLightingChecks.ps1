@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $runPath = Join-Path $repoRoot ('.scratch\lighting-validation\run-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 New-Item -ItemType Directory -Path (Join-Path $runPath 'Assets\Editor'), (Join-Path $runPath 'Packages'), (Join-Path $runPath 'ProjectSettings') -Force | Out-Null
-foreach ($folder in @('Scripts\Simulation', 'Scenes', 'Materials', 'RenderTextures', 'Resources')) {
+foreach ($folder in @('Scripts\Core', 'Scripts\Application', 'Scripts\Simulation', 'Scenes', 'Materials', 'RenderTextures', 'Resources')) {
     $destination = Join-Path $runPath ('Assets\' + $folder)
     New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $repoRoot ('Assets\' + $folder)) -Destination $destination -Recurse
@@ -11,7 +11,7 @@ foreach ($folder in @('Scripts\Simulation', 'Scenes', 'Materials', 'RenderTextur
 foreach ($file in @('ProjectVersion.txt', 'QualitySettings.asset', 'GraphicsSettings.asset', 'ProjectSettings.asset')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot ('ProjectSettings\' + $file)) -Destination (Join-Path $runPath ('ProjectSettings\' + $file))
 }
-foreach ($file in @('SimulationLightingSetup.cs', 'SimulationLightingSetup.cs.meta')) {
+foreach ($file in @('SimulationLightingSetup.cs', 'SimulationLightingSetup.cs.meta', 'Brick2Life.Editor.asmdef', 'Brick2Life.Editor.asmdef.meta')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot ('Assets\Editor\' + $file)) -Destination (Join-Path $runPath ('Assets\Editor\' + $file))
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Unity\SimulationLightingChecks.cs') -Destination (Join-Path $runPath 'Assets\Editor\SimulationLightingChecks.cs')

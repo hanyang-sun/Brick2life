@@ -1,33 +1,25 @@
 using System;
 using System.Collections.Generic;
+using Brick2Life.Core;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityApplication = UnityEngine.Application;
 
 namespace Brick2Life.Simulation
 {
     [DisallowMultipleComponent]
     public sealed class SimulationBrickEditor : MonoBehaviour
     {
-        [Serializable] private struct PaletteEntry
-        {
-            public string colorId;
-            public string label;
-            public Material material;
-        }
-
         private enum Tool { Add, Delete, Move }
         [SerializeField] private SimulationGridPointer pointer;
-        [SerializeField] private Transform bricksRoot;
-        [Tooltip("每种颜色填写唯一 colorId、显示名称和独立材质；按钮按列表自动生成。")]
-        [SerializeField] private PaletteEntry[] palette;
         [SerializeField] private Button[] toolButtons;
         [SerializeField] private Button colorButtonTemplate;
         [SerializeField] private RectTransform colorButtonContainer;
         [SerializeField] private Text statusLabel;
 
-        private readonly Dictionary<string, GameObject> objects = new Dictionary<string, GameObject>();
         private Button[] colorButtons;
-        private SimulationLayout layout;
+        private SimulationBoardSession board;
+        private IReadOnlyList<SimulationBoardSession.PaletteEntry> palette => board.Palette;
         private Tool tool;
         private int colorIndex;
         private string draggedId;
@@ -35,39 +27,17 @@ namespace Brick2Life.Simulation
         private Vector2Int dragTarget;
         private bool hasDragTarget;
 
-        public IReadOnlyList<SimulationLayout.Brick> Bricks => layout.Bricks;
-        public int LayoutVersion => layout.Version;
+        public void Bind(SimulationBoardSession session) => board = session ?? throw new ArgumentNullException(nameof(session));
 
         private void Start()
         {
-            if (pointer == null || bricksRoot == null || statusLabel == null ||
-                palette == null || palette.Length == 0 || toolButtons == null || toolButtons.Length != 3 ||
+            if (board == null || !board.IsInitialized || pointer == null || statusLabel == null ||
+                palette.Count == 0 || toolButtons == null || toolButtons.Length != 3 ||
                 colorButtonTemplate == null || colorButtonContainer == null ||
                 colorButtonTemplate.GetComponentInChildren<Text>(true) == null)
             { ConfigurationError(); return; }
-            var colors = new HashSet<string>();
-            var materials = new HashSet<Material>();
-            for (int i = 0; i < palette.Length; i++)
-                if (palette[i].material == null || string.IsNullOrWhiteSpace(palette[i].colorId) ||
-                    string.IsNullOrWhiteSpace(palette[i].label) || !colors.Add(palette[i].colorId) ||
-                    !materials.Add(palette[i].material))
-                { ConfigurationError(); return; }
             foreach (Button button in toolButtons)
                 if (button == null) { ConfigurationError(); return; }
-
-            layout = new SimulationLayout();
-            foreach (Transform child in bricksRoot)
-            {
-                Renderer renderer = child.GetComponent<Renderer>();
-                int index = Array.FindIndex(palette, entry => renderer != null && entry.material == renderer.sharedMaterial);
-                Vector3 position = child.position;
-                int x = Mathf.FloorToInt(position.x), y = Mathf.FloorToInt(position.z);
-                if (index < 0 || child.GetComponent<Collider>() == null ||
-                    (position - new Vector3(x + 0.5f, 0.5f, y + 0.5f)).sqrMagnitude > 0.0001f ||
-                    !layout.TryAdd(x, y, palette[index].colorId, out SimulationLayout.Brick brick))
-                { ConfigurationError(); return; }
-                objects.Add(brick.BrickId, child.gameObject);
-            }
             CreateColorButtons();
             SelectTool(0);
         }
@@ -75,8 +45,8 @@ namespace Brick2Life.Simulation
         private void CreateColorButtons()
         {
             colorButtonTemplate.gameObject.SetActive(false);
-            colorButtons = new Button[palette.Length];
-            for (int i = 0; i < palette.Length; i++)
+            colorButtons = new Button[palette.Count];
+            for (int i = 0; i < palette.Count; i++)
             {
                 int index = i;
                 Button button = Instantiate(colorButtonTemplate, colorButtonContainer, false);
@@ -98,7 +68,7 @@ namespace Brick2Life.Simulation
 
         public void SelectTool(int index)
         {
-            if (index < 0 || index >= 3 || layout == null) return;
+            if (index < 0 || index >= 3 || board == null || !board.IsInitialized) return;
             CancelDrag();
             tool = (Tool)index;
             RefreshButtons();
@@ -108,18 +78,18 @@ namespace Brick2Life.Simulation
 
         public void SelectColor(int index)
         {
-            if (index < 0 || index >= palette.Length || layout == null) return;
+            if (board == null || !board.IsInitialized || index < 0 || index >= palette.Count) return;
             colorIndex = index;
             SelectTool((int)Tool.Add);
         }
 
         public void ClearBoard()
         {
-            if (layout == null) return;
+            if (board == null || !board.IsInitialized) return;
             SelectTool((int)Tool.Add);
-            int count = layout.Bricks.Count;
+            int count = board.Bricks.Count;
             for (int i = count - 1; i >= 0; i--)
-                DeleteBrick(layout.Bricks[i].BrickId);
+                DeleteBrick(board.Bricks[i].BrickId);
             statusLabel.text = count == 0 ? "棋盘已经为空，可以继续添加。" : $"已清空 {count} 块积木，可继续添加。";
         }
 
@@ -139,8 +109,8 @@ namespace Brick2Life.Simulation
 
         private void Update()
         {
-            if (layout == null) return;
-            if (!Application.isFocused) { CancelDrag(); return; }
+            if (board == null || !board.IsInitialized) return;
+            if (!UnityApplication.isFocused) { CancelDrag(); return; }
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
             { CancelDrag(); return; }
             Vector2 position = Input.mousePosition;
@@ -154,17 +124,11 @@ namespace Brick2Life.Simulation
         private void HandlePointerDown(Vector2 position)
         {
             if (!pointer.TryPickCell(position, out Vector2Int cell, out _)) return;
-            SimulationLayout.Brick brick = layout.At(cell.x, cell.y);
+            BoardLayout.Brick brick = board.At(cell.x, cell.y);
             if (tool == Tool.Add)
             {
-                if (!layout.TryAdd(cell.x, cell.y, palette[colorIndex].colorId, out var added))
+                if (!board.TryAdd(cell.x, cell.y, palette[colorIndex].colorId, out var added))
                 { statusLabel.text = "目标格已有积木，请选择空格。"; return; }
-                GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                instance.name = "Brick_" + added.ColorId;
-                instance.transform.SetParent(bricksRoot, false);
-                instance.transform.position = Position(added);
-                instance.GetComponent<Renderer>().sharedMaterial = palette[colorIndex].material;
-                objects.Add(added.BrickId, instance);
                 statusLabel.text = $"已添加 {palette[colorIndex].label}：({cell.x}, {cell.y})";
             }
             else if (tool == Tool.Delete)
@@ -181,16 +145,7 @@ namespace Brick2Life.Simulation
             }
         }
 
-        private bool DeleteBrick(string id)
-        {
-            GameObject instance = objects[id];
-            if (!layout.TryDelete(id)) return false;
-            objects.Remove(id);
-            // Destroy 延迟到帧末；立即停用，避免本帧射线再次命中已删除的积木。
-            instance.SetActive(false);
-            Destroy(instance);
-            return true;
-        }
+        private bool DeleteBrick(string id) => board.TryDelete(id);
 
         private void UpdateDrag(Vector2 position)
         {
@@ -199,9 +154,9 @@ namespace Brick2Life.Simulation
             {
                 Vector3 center = ground + grabOffset;
                 dragTarget = new Vector2Int(Mathf.FloorToInt(center.x), Mathf.FloorToInt(center.z));
-                hasDragTarget = SimulationLayout.Contains(dragTarget.x, dragTarget.y);
+                hasDragTarget = BoardLayout.Contains(dragTarget.x, dragTarget.y);
             }
-            bool valid = hasDragTarget && layout.CanPlace(dragTarget.x, dragTarget.y, draggedId);
+            bool valid = hasDragTarget && board.CanPlace(dragTarget.x, dragTarget.y, draggedId);
             pointer.SetDragPreview(hasDragTarget ? dragTarget : new Vector2Int(-1, -1), valid);
             statusLabel.text = !hasDragTarget ? "目标在棋盘外或界面上，松开将取消移动。" :
                 valid ? $"拖拽到 ({dragTarget.x}, {dragTarget.y})，松开放置。" : "目标格已有积木，松开将取消移动。";
@@ -211,14 +166,10 @@ namespace Brick2Life.Simulation
         {
             UpdateDrag(position);
             string id = draggedId;
-            bool moved = hasDragTarget && layout.TryMove(id, dragTarget.x, dragTarget.y);
-            if (moved) objects[id].transform.position = new Vector3(dragTarget.x + 0.5f, 0.5f, dragTarget.y + 0.5f);
+            bool moved = hasDragTarget && board.TryMove(id, dragTarget.x, dragTarget.y);
             CancelDrag();
             statusLabel.text = moved ? $"已放置：({dragTarget.x}, {dragTarget.y})" : "移动已取消，积木保持原位。";
         }
-
-        private static Vector3 Position(SimulationLayout.Brick brick) =>
-            new Vector3(brick.GridX + 0.5f, brick.Layer + 0.5f, brick.GridY + 0.5f);
 
         private void CancelDrag()
         {
