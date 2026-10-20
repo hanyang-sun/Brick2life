@@ -84,6 +84,7 @@ public static class SimulationLightingChecks
         Check(QualitySettings.shadows == ShadowQuality.All && QualitySettings.pixelLightCount >= 2, "Play-mode shadow quality missing.");
         Check(GameObject.Find("LightingMenu") != null, "Lighting UI did not start.");
         VerifyBoardSession();
+        VerifyLayoutReplacementAndWriter();
         var images = new Dictionary<string, Color32[]>();
         var ids = new HashSet<string>();
         for (int side = 0; side < 2; side++)
@@ -264,6 +265,44 @@ public static class SimulationLightingChecks
         var restored = board.Snapshot();
         Check(before.Cells.Select(cell => new { cell.Occupancy, cell.ColorId, cell.BrickId }).SequenceEqual(
             restored.Cells.Select(cell => new { cell.Occupancy, cell.ColorId, cell.BrickId })), "Editing regression did not restore the initial board.");
+    }
+
+    private static void VerifyLayoutReplacementAndWriter()
+    {
+        var board = UnityEngine.Object.FindFirstObjectByType<SimulationBoardSession>();
+        var before = board.Snapshot();
+        var candidate = new Brick2Life.Core.BoardLayout(board.Definition);
+        string color = board.Palette.Last().colorId;
+        Check(candidate.TryAdd(9, 9, color, out var added), "Could not prepare replacement layout.");
+        int version = board.Version;
+        board.ReplaceLayout(candidate.Snapshot());
+        Check(board.Version == version + 1 && board.Bricks.Count == 1 && board.At(9, 9).BrickId == added.BrickId, "Replacement lost content/identity or local version.");
+        Check(UnityEngine.Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None).Count(renderer => renderer.GetComponent<BoxCollider>() != null && renderer.gameObject.name.StartsWith("Brick_")) == 1,
+            "Replaced bricks remained active in scene geometry.");
+        SimulationCapture frame = capture.CaptureFrame();
+        Check(frame.GroundTruth.At(9, 9).ColorId == color && frame.GroundTruth.Cells.Count(cell => cell.Occupancy == Brick2Life.Core.Occupancy.Occupied) == 1, "Immediate capture did not see the replacement.");
+        bool rejected = false;
+        try { board.ReplaceLayout(new Brick2Life.Core.BoardLayout(new Brick2Life.Core.BoardDefinition("wrong-board")).Snapshot()); }
+        catch (ArgumentException) { rejected = true; }
+        Check(rejected && board.Version == version + 1 && board.Bricks.Count == 1, "Failed replacement mutated the board.");
+        board.ReplaceLayout(before);
+        Check(board.Version == version + 2 && before.Cells.Select(cell => cell.BrickId).SequenceEqual(board.Snapshot().Cells.Select(cell => cell.BrickId)), "Snapshot restore lost IDs or reset the local version.");
+
+        string directory = Path.Combine(output, "writer-checks");
+        string image = SimulationCaptureWriter.Save(directory, frame);
+        byte[] original = File.ReadAllBytes(image);
+        rejected = false;
+        try { SimulationCaptureWriter.Save(directory, frame); } catch (IOException) { rejected = true; }
+        Check(rejected && original.SequenceEqual(File.ReadAllBytes(image)) && File.Exists(Path.ChangeExtension(image, ".json")), "Writer overwrote an existing pair.");
+        Check(!Directory.GetFiles(directory, "*.tmp").Any(), "Duplicate-pair failure left temporary files.");
+        string blocked = Path.Combine(output, "writer-rollback-checks");
+        Directory.CreateDirectory(blocked);
+        string existingJson = Path.Combine(blocked, frame.FrameId + ".json");
+        File.WriteAllText(existingJson, "keep-existing-file");
+        rejected = false;
+        try { SimulationCaptureWriter.Save(blocked, frame); } catch (IOException) { rejected = true; }
+        Check(rejected && !File.Exists(Path.ChangeExtension(existingJson, ".png")) && File.ReadAllText(existingJson) == "keep-existing-file", "Pair rollback damaged existing data or left an orphan PNG.");
+        Check(!Directory.GetFiles(blocked, "*.tmp").Any(), "Pair rollback left temporary files.");
     }
 
     private static void VerifyBalanceAndAmbient()

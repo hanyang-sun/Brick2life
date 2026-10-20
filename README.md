@@ -19,7 +19,7 @@ git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-su
 | 模块 | 当前职责 | 分工 |
 | --- | --- | --- |
 | Core | 固定棋盘定义、布局、不可变快照、观测与差异；无 Unity 依赖 | A 基础合同，B 差异 |
-| Application | 确认会话、帧/标定校验、过期拒绝与失败保留；无 Unity 依赖 | 集成负责人 |
+| Application | 确认会话、帧/标定校验、有限测试集布局计划；无 Unity 依赖 | 集成负责人 |
 | Simulation | 独立棋盘会话、编辑界面、相机/光照采集和场景接线 | A |
 | Vision | 待接入：RGB 与公开标定到固定格位观测 | B |
 | Projection | 待接入：确认状态到暴露底板的反馈及坐标映射 | C |
@@ -34,9 +34,11 @@ Vision/Projection 尚无具体实现或空程序集。Core 的 `Contracts/` 是�
 
 GT 仅用于导出和评价。B 接收图像与约定公开配置，C 消费视觉确认状态。遮挡/未知不视为空格，相同布局不会产生新的确认版本。详见 [相机元数据](docs/task-a-camera-metadata-guide.md)、[光照控制](docs/task-a-lighting-guide.md)。采集数据及 Unity 验证缓存保存在本机。
 
+菜单 **Brick2Life → Dataset Generator** 可自动生成日常识别测试集，默认 **20 个不同布局 × 5 种光照 = 100 张**，支持数量、种子、布局类型和取消。后台使用独立采集工程；配对图像、GT 及运行清单输出到 `SimulationCaptures/Datasets/`。也可执行 `pwsh -File Tests/GenerateDataset.ps1`。详见 [测试集生成指南](docs/task-a-dataset-generation-guide.md)。
+
 ## 检查与构建
 
-纯 C# 检查需要 .NET 10 SDK，默认包含布局、快照及确认会话：
+纯 C# 检查需要 .NET 10 SDK，默认包含布局、快照、确认会话及数据集计划：
 
 ```powershell
 dotnet run --project Tests/Brick2Life.Checks.csproj
