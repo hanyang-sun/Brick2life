@@ -17,7 +17,7 @@ namespace Brick2Life.Simulation
         }
         [SerializeField] private Transform bricksRoot;
         [SerializeField] private PaletteEntry[] palette;
-        private readonly Dictionary<string, GameObject> objects = new Dictionary<string, GameObject>();
+        private Dictionary<string, GameObject> objects = new Dictionary<string, GameObject>();
         private BoardLayout layout;
         private IReadOnlyList<PaletteEntry> readOnlyPalette = Array.Empty<PaletteEntry>();
         public IReadOnlyList<PaletteEntry> Palette => readOnlyPalette;
@@ -66,6 +66,42 @@ namespace Brick2Life.Simulation
         public BoardSnapshot Snapshot() => RequireLayout().Snapshot();
         public BoardLayout.Brick At(int x, int y) => RequireLayout().At(x, y);
         public bool CanPlace(int x, int y, string movingId = null) => RequireLayout().CanPlace(x, y, movingId);
+
+        // Validate and prepare the complete view before replacing the live model. Local versions remain monotonic.
+        public void ReplaceLayout(BoardSnapshot snapshot)
+        {
+            var current = RequireLayout();
+            if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
+            if (!current.Definition.IsCompatible(snapshot.Definition)) throw new ArgumentException("Incompatible board definition.", nameof(snapshot));
+            foreach (BoardCell cell in snapshot.Cells)
+                if (!cell.IsKnown) throw new ArgumentException("Simulation requires a fully known layout.", nameof(snapshot));
+            var candidate = new BoardLayout(new BoardSnapshot(current.Definition, checked(current.Version + 1), snapshot.Cells, SnapshotSource.Simulation));
+            var prepared = new Dictionary<string, GameObject>();
+            try
+            {
+                foreach (BoardLayout.Brick brick in candidate.Bricks)
+                {
+                    int index = Array.FindIndex(palette, entry => entry.colorId == brick.ColorId);
+                    if (index < 0) throw new ArgumentException("Layout uses a color without a simulation material.", nameof(snapshot));
+                    GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    prepared.Add(brick.BrickId, instance);
+                    instance.SetActive(false);
+                    instance.name = "Brick_" + brick.ColorId;
+                    instance.transform.SetParent(bricksRoot, false);
+                    instance.transform.position = new Vector3(brick.GridX + 0.5f, 0.5f, brick.GridY + 0.5f);
+                    instance.GetComponent<Renderer>().sharedMaterial = palette[index].material;
+                }
+            }
+            catch
+            {
+                foreach (GameObject instance in prepared.Values) { instance.SetActive(false); Destroy(instance); }
+                throw;
+            }
+            var previousObjects = objects;
+            objects = prepared; layout = candidate;
+            foreach (GameObject instance in previousObjects.Values) { instance.SetActive(false); Destroy(instance); }
+            foreach (GameObject instance in objects.Values) instance.SetActive(true);
+        }
 
         public bool TryAdd(int x, int y, string colorId, out BoardLayout.Brick added)
         {

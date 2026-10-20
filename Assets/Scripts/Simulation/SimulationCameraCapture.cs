@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
@@ -30,9 +29,7 @@ namespace Brick2Life.Simulation
                 string directory = UnityApplication.isEditor
                     ? Path.GetFullPath(Path.Combine(UnityApplication.dataPath, "..", FolderName))
                     : Path.Combine(UnityApplication.persistentDataPath, FolderName);
-                Directory.CreateDirectory(directory);
-                string path = Path.Combine(directory, frame.FrameId + ".png");
-                SavePair(path, frame.CopyRgbPng(), Encoding.UTF8.GetBytes(frame.GroundTruthJson));
+                string path = SimulationCaptureWriter.Save(directory, frame);
                 LastSavedPath = path;
                 if (statusLabel != null)
                     statusLabel.text = $"已保存 PNG + JSON\n{FolderName}/";
@@ -173,38 +170,6 @@ namespace Brick2Life.Simulation
                 };
             }
             return corners;
-        }
-
-        private static void SavePair(string imagePath, byte[] png, byte[] json)
-        {
-            string jsonPath = Path.ChangeExtension(imagePath, ".json");
-            var created = new List<string>();
-            try
-            {
-                WriteNewFile(imagePath + ".tmp", png, created);
-                WriteNewFile(jsonPath + ".tmp", json, created);
-                File.Move(imagePath + ".tmp", imagePath); created.Add(imagePath);
-                // Publish the completed JSON last so readers can use it to find a complete pair.
-                File.Move(jsonPath + ".tmp", jsonPath); created.Add(jsonPath);
-            }
-            catch
-            {
-                foreach (string path in created)
-                {
-                    try { File.Delete(path); }
-                    catch (Exception error) { Debug.LogWarning("保存失败后的文件清理未完成：" + path + "；" + error.Message); }
-                }
-                throw;
-            }
-        }
-
-        private static void WriteNewFile(string path, byte[] bytes, List<string> created)
-        {
-            using (var file = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            {
-                created.Add(path);
-                file.Write(bytes, 0, bytes.Length);
-            }
         }
 
         [Serializable] private sealed class GroundTruth

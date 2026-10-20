@@ -11,6 +11,7 @@
     <Compile Include="SimulationLayoutChecks.cs" />
     <Compile Include="BoardContractChecks.cs" />
     <Compile Include="BoardSyncChecks.cs" />
+    <Compile Include="DatasetPlanChecks.cs" />
     <Compile Include="../Assets/Scripts/Core/**/*.cs" Link="Core/%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="../Assets/Scripts/Application/**/*.cs" Link="Application/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
