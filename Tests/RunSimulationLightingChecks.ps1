@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $runPath = Join-Path $repoRoot ('.scratch\lighting-validation\run-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 New-Item -ItemType Directory -Path (Join-Path $runPath 'Assets\Editor'), (Join-Path $runPath 'Packages'), (Join-Path $runPath 'ProjectSettings') -Force | Out-Null
-foreach ($folder in @('Scripts\Core', 'Scripts\Application', 'Scripts\Simulation', 'Scenes', 'Materials', 'RenderTextures', 'Resources')) {
+foreach ($folder in @('Scripts\Core', 'Scripts\Application', 'Scripts\Vision', 'Scripts\Simulation', 'Scenes', 'Materials', 'RenderTextures', 'Resources')) {
     $destination = Join-Path $runPath ('Assets\' + $folder)
     New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $repoRoot ('Assets\' + $folder)) -Destination $destination -Recurse

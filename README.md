@@ -1,6 +1,6 @@
 # Brick2Life
 
-Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层积木工作台、固定透视相机、可配置光照以及 RGB/真值配对采集。识别和投影由 B/C 后续接入，图像驱动的完整闭环尚未完成。
+Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层积木工作台、固定透视相机、可配置光照、RGB/真值配对采集，以及根据顶置相机 RGB 的固定格位识别和增删移动事件。投影反馈仍待接入。
 
 ## 运行
 
@@ -10,7 +10,7 @@ Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层
 git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-sun/Brick2life.git Brick2Life
 ```
 
-在 Unity Hub 添加工程，打开默认场景 `Assets/Scenes/Brick2LifeSimulation.unity`，点击 Play。侧栏支持选择颜色、添加、删除、拖拽移动、清空棋盘和保存 RGB + 标注。操作相机与实验相机彼此独立。
+在 Unity Hub 添加工程，打开默认场景 `Assets/Scenes/Brick2LifeSimulation.unity`，点击 Play。侧栏支持选择颜色、添加、删除、拖拽移动、清空棋盘和保存 RGB + 标注。画面下方显示当前帧 10×10 识别矩阵、与真值对照的准确率，以及连续三帧确认后的增加、删除和移动。操作相机与实验相机彼此独立。
 
 “光照”面板提供左右/双侧白光、亮度、左右强度比例、环境光倍数和阴影开关。默认双侧标准亮度、50:50、环境 1 倍。顶置实验相机使用 Perspective、FOV 50。
 
@@ -21,7 +21,7 @@ git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-su
 | Core | 固定棋盘定义、布局、不可变快照、观测与差异；无 Unity 依赖 | A 基础合同，B 差异 |
 | Application | 确认会话、帧/标定校验、有限测试集布局计划；无 Unity 依赖 | 集成负责人 |
 | Simulation | 独立棋盘会话、编辑界面、相机/光照采集和场景接线 | A |
-| Vision | 待接入：RGB 与公开标定到固定格位观测 | B |
+| Vision | 顶面采样、颜色分类、连续帧确认和变化事件；无 Unity 依赖 | B |
 | Projection | 待接入：确认状态到暴露底板的反馈及坐标映射 | C |
 
 Vision/Projection 尚无具体实现或空程序集。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。

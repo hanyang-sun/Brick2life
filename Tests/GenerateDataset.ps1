@@ -31,7 +31,7 @@ function Save-Launcher {
 Save-Launcher
 try {
     New-Item -ItemType Directory -Path (Join-Path $workDirectoryPath 'Assets\Editor'), (Join-Path $workDirectoryPath 'Packages'), (Join-Path $workDirectoryPath 'ProjectSettings') -Force | Out-Null
-    foreach ($folder in @('Scripts\Core', 'Scripts\Application', 'Scripts\Simulation', 'Scenes', 'Materials', 'RenderTextures', 'Resources', 'Editor')) {
+    foreach ($folder in @('Scripts\Core', 'Scripts\Application', 'Scripts\Vision', 'Scripts\Simulation', 'Scenes', 'Materials', 'RenderTextures', 'Resources', 'Editor')) {
         $destination = Join-Path $workDirectoryPath ('Assets\' + $folder)
         if ($folder -eq 'Editor') {
             Get-ChildItem -LiteralPath (Join-Path $repoRoot 'Assets\Editor') -File | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $destination }

@@ -1,6 +1,6 @@
 # Brick2Life 架构
 
-更新：2026-10-20。当前实现独立仿真、公共棋盘核心和纯 C# 确认会话。视觉算法、投影输出及设备闭环仍待接入。
+更新：2026-10-23。视觉模块根据顶置相机 RGB 与公开投影输出固定格位观测，并用连续帧确认增删移动。投影输出及设备闭环仍待接入。
 
 ## 模块与依赖
 
@@ -13,16 +13,16 @@ flowchart TD
     Capture --> Session
     Session --> Core[Brick2Life.Core]
     App[Brick2Life.Application] --> Core
-    Vision[后续 Vision] -. 公共观测 .-> Core
+    Vision[FixedGridRecognizer] --> Core
     Projection[后续 Projection] -. 确认快照 .-> Core
 ```
 
 - Core 不引用 Unity 或其他项目模块。Contracts 集中公共类型，BoardLayout 维护可编辑布局，BoardDelta 计算格位变化。
 - Application 仅引用 Core。BoardSyncSession 拥有视觉确认状态；方法在同一线程调用，异步 B 的结果由集成入口切回所属线程。
-- Application 的 DatasetPlan 定义有限的日常测试布局、稳定种子及逻辑内容分组；它不修改公共棋盘合同。Editor 负责隔离采集任务，Simulation 继续只依赖 Core。
-- Simulation 引用 Core 和 Unity UI，承担引擎具体实现。Bootstrap 组装棋盘、编辑界面与采集；后续识别/反馈也由组合入口接线。
-- Editor 引用 Core、Application、Simulation 和 Unity UI，仅 Editor 编译，承载灯光配置、依赖检查与构建。
-- Vision/Projection 随具体实现加入，本轮不建立空程序集，也没有引入推理、网络或依赖注入框架。
+- Application 的 DatasetPlan 定义有限的日常测试布局、稳定种子及逻辑内容分组；它不修改公共棋盘合同。Editor 负责隔离采集任务。
+- Simulation 引用 Core、Application、Vision 和 Unity UI。Bootstrap 组装棋盘、编辑界面、采集和识别面板。
+- Editor 引用 Core、Application、Vision、Simulation 和 Unity UI，仅 Editor 编译，承载灯光配置、依赖检查与构建。
+- Vision 不引用 Unity。它把顶面采样分类为 `FrameObservation`，并在连续相同帧之后给出增加、删除和移动。Projection 仍待接入。
 
 Awake 顺序为棋盘会话 -200、接线 -100，随后编辑界面 Start。已有按钮方法与 MonoBehaviour GUID 保留；原场景的布局、材质和调色板迁入棋盘会话。
 

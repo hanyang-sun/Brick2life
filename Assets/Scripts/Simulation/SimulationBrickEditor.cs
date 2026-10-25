@@ -129,13 +129,13 @@ namespace Brick2Life.Simulation
             {
                 if (!board.TryAdd(cell.x, cell.y, palette[colorIndex].colorId, out var added))
                 { statusLabel.text = "目标格已有积木，请选择空格。"; return; }
-                statusLabel.text = $"已添加 {palette[colorIndex].label}：({cell.x}, {cell.y})";
+                statusLabel.text = $"已添加 {palette[colorIndex].label}：({cell.x + 1}, {cell.y + 1})";
             }
             else if (tool == Tool.Delete)
             {
                 if (brick == null) { statusLabel.text = "这里没有积木。"; return; }
                 if (!DeleteBrick(brick.BrickId)) return;
-                statusLabel.text = $"已删除：({cell.x}, {cell.y})";
+                statusLabel.text = $"已删除：({cell.x + 1}, {cell.y + 1})";
             }
             else if (brick != null && pointer.TryProjectToBoard(position, out Vector3 ground))
             {
@@ -159,7 +159,7 @@ namespace Brick2Life.Simulation
             bool valid = hasDragTarget && board.CanPlace(dragTarget.x, dragTarget.y, draggedId);
             pointer.SetDragPreview(hasDragTarget ? dragTarget : new Vector2Int(-1, -1), valid);
             statusLabel.text = !hasDragTarget ? "目标在棋盘外或界面上，松开将取消移动。" :
-                valid ? $"拖拽到 ({dragTarget.x}, {dragTarget.y})，松开放置。" : "目标格已有积木，松开将取消移动。";
+                valid ? $"拖拽到 ({dragTarget.x + 1}, {dragTarget.y + 1})，松开放置。" : "目标格已有积木，松开将取消移动。";
         }
 
         private void EndDrag(Vector2 position)
@@ -168,7 +168,7 @@ namespace Brick2Life.Simulation
             string id = draggedId;
             bool moved = hasDragTarget && board.TryMove(id, dragTarget.x, dragTarget.y);
             CancelDrag();
-            statusLabel.text = moved ? $"已放置：({dragTarget.x}, {dragTarget.y})" : "移动已取消，积木保持原位。";
+            statusLabel.text = moved ? $"已放置：({dragTarget.x + 1}, {dragTarget.y + 1})" : "移动已取消，积木保持原位。";
         }
 
         private void CancelDrag()
