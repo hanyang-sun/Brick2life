@@ -1,0 +1,9 @@
+{
+  "name": "Brick2Life.Feedback",
+  "references": [
+    "Brick2Life.Core",
+    "Brick2Life.Application",
+    "Brick2Life.Simulation",
+    "UnityEngine.UI"
+  ]
+}

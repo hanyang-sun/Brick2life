@@ -1,5 +1,5 @@
-{
+﻿{
   "name": "Brick2Life.Editor",
-  "references": ["Brick2Life.Core", "Brick2Life.Application", "Brick2Life.Simulation", "UnityEngine.UI"],
+  "references": ["Brick2Life.Core", "Brick2Life.Application", "Brick2Life.Simulation", "Brick2Life.Feedback", "UnityEngine.UI"],
   "includePlatforms": ["Editor"]
 }

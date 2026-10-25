@@ -1,6 +1,6 @@
 # Brick2Life
 
-Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层积木工作台、固定透视相机、可配置光照以及 RGB/真值配对采集。识别和投影由 B/C 后续接入，图像驱动的完整闭环尚未完成。
+Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层积木工作台、固定透视相机、可配置光照、RGB/真值配对采集，以及任务 C 的关卡反馈与虚拟投影（由确认事件驱动）。视觉识别（B）仍待接入，图像驱动的完整闭环尚未完成。
 
 ## 运行
 
@@ -22,9 +22,9 @@ git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-su
 | Application | 确认会话、帧/标定校验、有限测试集布局计划；无 Unity 依赖 | 集成负责人 |
 | Simulation | 独立棋盘会话、编辑界面、相机/光照采集和场景接线 | A |
 | Vision | 待接入：RGB 与公开标定到固定格位观测 | B |
-| Projection | 待接入：确认状态到暴露底板的反馈及坐标映射 | C |
+| Feedback | 关卡语义映射（颜色→核心/城墙/塔）、游戏对象更新、表面贴合的虚拟投影与场景分层；只消费 `BoardUpdate` | C |
 
-Vision/Projection 尚无具体实现或空程序集。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。
+Vision 尚无具体实现；任务 C 见 [反馈指南](docs/task-c-feedback-guide.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。
 
 ## 采集数据
 
@@ -38,7 +38,7 @@ GT 仅用于导出和评价。B 接收图像与约定公开配置，C 消费视�
 
 ## 检查与构建
 
-纯 C# 检查需要 .NET 10 SDK，默认包含布局、快照、确认会话及数据集计划：
+纯 C# 检查需要 .NET 10 SDK，默认包含布局、快照、确认会话、数据集计划及任务 C 的关卡语义／投影计划／反馈会话（共 463 项断言）：
 
 ```powershell
 dotnet run --project Tests/Brick2Life.Checks.csproj

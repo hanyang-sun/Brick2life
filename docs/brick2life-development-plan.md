@@ -38,3 +38,10 @@ Core、Application 无 Unity 引用。公共合同放在 Core/Contracts，不单
 - 中心和边缘测试点独立于拟合点；仿真误差与真实设备实测分别报告，不将独立显示窗口作为实体投影对齐通过。
 
 实际目录、确认接口与当前验证结果以 [架构说明](architecture.md) 为准。
+
+## 进展（2026-10-25）
+
+- 任务 C 的独立投影仿真与关卡反馈已实现：Application 侧 `LevelSemantics` / `ProjectionPlan` / `LevelFeedbackSession`，引擎侧 `Brick2Life.Feedback`（Bootstrap、Adapter、LevelView、ProjectionSimulator）与 Editor 安装菜单；`Brick2LifeGame`(30) / `Brick2LifeProjection`(31) 分层，顶置相机排除游戏层、包含投影层。
+- 依据 `.scratch/task-a-simulation/spec.md` 第 2 阶段，C 现由“人工目标”驱动可独立演示；接入 B 后禁用演示组件，按“B 输出 FrameObservation → BoardSyncSession → Apply”联调。
+- 已通过：纯 C# 463 项断言、Unity 2022.3 程序集编译基线。未执行：Unity 6.3 中的运行验收、投影开关图像对照、构建。详见 [任务 C 手册](task-c-feedback-guide.md)。
+
