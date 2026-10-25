@@ -99,7 +99,7 @@ B 接通后：
 - 投影是“贴在可见表面上的面片 + alpha 混合”，不是光学投影仿真：没有镜头畸变、亮度衰减、梯形校正、投影阴影；因此它只能支持“投影颜色干扰识别”这类实验，不能宣称真实投影设备的表现。升级路径是官方 Built-in `Projector` 组件（正交、Ignore Layers）+ 投影贴图，只替换 `ProjectionSimulator` 的渲染层，Application 层接口不变。
 - 单层 10×10、等大积木；多层、遮挡、隐藏层不在本轮范围。
 - 关卡只做“唯一核心”判定，不包含寻路、波次、战斗；塔防运行时在归档的 `Archive/BrickDefense` 中，本任务不重建它。
-- 本轮没有在 Unity 6.3 中实际运行（本机只有 2022.3.62f3c1）。已执行的是纯 C# 断言与 2022.3 程序集上的编译基线，运行时行为需按第 6 节核对。
+- 本轮没有在 Unity 6.3 中实际运行（本机只有 2022.3.62f3c1），但在 **2022.3 的适配副本**上完成了运行时验证，见第 10 节与 `.scratch/task-c-feedback/verification/README.md`；目标版本验收仍需按第 6 节执行。
 
 ## 9. 验证命令
 
@@ -109,3 +109,16 @@ dotnet run --project Tests/Brick2Life.Checks.csproj
 ```
 
 Unity 侧（有 6000.3.24f1 的机器）按第 6 节执行，并记录：面片中心与格位中心偏差、投影开/关的顶置图像差异、顶置相机是否拍到游戏对象。
+
+## 10. 在 Unity 2022.3 上试运行（非目标版本）
+
+如果没有 6.3、又想在真实编辑器里验证任务 C，可以做一个**适配副本**（不要改仓库本身）：
+
+1. 复制 `Assets`、`Packages`、`ProjectSettings` 到新目录，例如 `E:\Brick2Life-2022`。
+2. `ProjectSettings/ProjectVersion.txt` 改成 `2022.3.62f3c1`。
+3. `Packages/manifest.json`：`com.unity.ugui` 改为 `1.0.0`；删除 `com.unity.modules.accessibility`、`com.unity.modules.adaptiveperformance`、`com.unity.modules.vectorgraphics`（2022.3 没有这些模块）；删掉 `packages-lock.json`。
+4. 用 2022.3 打开该副本，打开 `Assets/Scenes/Brick2LifeSimulation.unity`，运行菜单 `Brick2Life/Simulation/Install feedback`，进 Play 按 F5/F6/F7。
+
+2026-10-25 在本机按此流程得到的实测结果（详见验证记录）：关卡对象 3 个、投影面片 134 个、对齐误差 0、顶置相机看不到游戏对象但能看到投影（开/关图像差 25136 像素）、隐藏游戏对象后顶置图像 0 像素变化。
+
+限制：`2022.3` 没有 uGUI 2.0.0，也没有 Unity 6 的部分序列化/渲染行为，所以副本只用于“逻辑 + 接线 + 分层 + 投影可见性”的验证，不能替代 6.3 的编译、运行时与构建验收；副本也不要拿去覆盖仓库。

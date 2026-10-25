@@ -52,6 +52,42 @@ UNITY_BASELINE_COMPILE_OK
 - `Assets/Scenes/Brick2LifeSimulation.unity`：`TopCamera` 的 `m_Bits` 由 `4294967295` 改为 `3221225471`（= 全层去掉 bit 30）；`WorkspaceCamera` 保持 `4294967263`（= 全层去掉 bit 5/UI），因此包含 30/31。
 - 新增 12 个 `.meta`（Feedback 目录、5 个脚本、1 个 asmdef、Editor 安装脚本），GUID 均为随机生成，无重复。
 
+## 4. Unity 2022.3 副本上的运行时验证（2026-10-25 21:50 前后）
+
+目标编辑器不可得，因此把工程复制到 `E:\Brick2Life-2022`（不动仓库），仅做版本适配后在本机 2022.3.62f3c1 上真实运行：
+
+- `ProjectSettings/ProjectVersion.txt` → `2022.3.62f3c1`；
+- `Packages/manifest.json`：`com.unity.ugui` 2.0.0 → 1.0.0，删除 2022.3 不存在的 `com.unity.modules.accessibility`、`com.unity.modules.adaptiveperformance`、`com.unity.modules.vectorgraphics`；删除 `packages-lock.json` 让其重新解析。
+
+随后用编辑器自动化脚本执行：打开 `Brick2LifeSimulation` 场景 → 调用安装菜单 `SimulationFeedbackSetup.Install()` → 进入 Play（关闭域/场景重载）→ 提交两次人工目标样例 → 采集指标与顶置相机图像。实测输出：
+
+```text
+任务 C 反馈已安装：SimulationFeedback（关卡视图、投影、适配器、人工目标演示）；顶置相机排除 Brick2LifeGame、包含 Brick2LifeProjection。
+PROBE_SAMPLES_SUBMITTED sampleIndex=2
+PROBE_PLAY_OK view=3 marks=134 alignErr=0 topSeesGame=False topSeesProjection=True wsSeesGame=True
+  renderersGame=3 renderersProjection=134 cameraDiffProjection=25136 cameraDiffGameObjects=0
+  outcome=Changed level=核心 1 · 城墙 0 · 防御塔 2 · 格点 121 · 高亮 3 · 变更 10
+```
+
+| 指标 | 实测 | 结论 |
+| --- | --- | --- |
+| `view` | 3 | 人工目标（核心 1 + 塔 2）在关卡视图生成 3 个游戏对象 |
+| `marks` | 134 | 投影面片 = 格点 121 + 角色高亮 3 + 变更提示 10 |
+| `alignErr` | 0 | 134 个面片中心与格位中心最大偏差为 0（构造对齐成立） |
+| `topSeesGame` | False | 顶置相机掩码排除 `Brick2LifeGame`(30) |
+| `topSeesProjection` | True | 顶置相机包含 `Brick2LifeProjection`(31) |
+| `wsSeesGame` | True | 操作相机能看到游戏对象 |
+| `cameraDiffProjection` | 25136 | 投影开/关时顶置 512×512 图像有 25136 像素不同 → 投影确实进入相机可见表面 |
+| `cameraDiffGameObjects` | 0 | 隐藏数字游戏对象后顶置图像零像素变化 → 虚拟建筑完全不会被拍进 RGB |
+| `outcome` / `level` | Changed / 核心1、塔2、变更10 | 第二次人工目标触发 Changed 与 10 个变更格 |
+
+这次真实运行暴露并修复了两个只有运行时才会出现的缺陷（已提交）：
+
+1. `SimulationFeedbackSetup` 在编辑模式要求 `SimulationBoardSession.IsInitialized`，而该会话只在 `Awake`（Play）初始化，导致安装菜单必然抛异常；改为通过 `SerializedObject` 读取序列化的 `palette` 生成颜色规则。
+2. `ProjectionSimulator` 把 `new MaterialPropertyBlock()` 放在字段初始化器里，Unity 报 `CreateImpl is not allowed to be called from a MonoBehaviour constructor` 并打断投影刷新；改为在 `Awake` 创建，并在 `Place` 兜底。
+
+需要强调：这是 **2022.3.62f3c1 上的运行结果**，证明逻辑、接线、分层与投影可见性成立；它不替代 `6000.3.24f1` 的目标版本验收。
+
 ## 未执行（缺少 Unity 6000.3.24f1）
 
 1. 在目标编辑器中编译与进入 Play。

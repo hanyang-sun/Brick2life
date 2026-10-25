@@ -33,7 +33,8 @@ namespace Brick2Life.Feedback
         [SerializeField] private bool visible = true;
 
         private readonly List<GameObject> pool = new List<GameObject>();
-        private readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
+        // Unity objects cannot be constructed in field initializers; created in Awake instead.
+        private MaterialPropertyBlock properties;
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private Material runtimeMaterial;
 
@@ -48,6 +49,7 @@ namespace Brick2Life.Feedback
         {
             ProjectionLayer = ResolveLayer(projectionLayerName, fallbackProjectionLayer);
             if (marksRoot == null) marksRoot = transform;
+            properties = new MaterialPropertyBlock();
         }
 
         private void Start() => WarnIfCameraMissesProjection();
@@ -120,6 +122,7 @@ namespace Brick2Life.Feedback
 
         private void Place(GameObject quad, ProjectionMark mark, Material material)
         {
+            if (properties == null) properties = new MaterialPropertyBlock();
             float surface = mark.Surface == ProjectionSurface.BrickTop ? brickTopHeight : tableHeight;
             quad.SetActive(visible);
             quad.transform.position = new Vector3(mark.CenterX, surface + surfaceOffset, mark.CenterY);

@@ -30,8 +30,12 @@ namespace Brick2Life.Editor
             if (scene.name != SceneName)
                 throw new InvalidOperationException("请先打开 " + SceneName + " 场景。");
             SimulationBoardSession board = FindFirst<SimulationBoardSession>();
-            if (board == null || !board.IsInitialized)
-                throw new InvalidOperationException("仿真场景缺少已初始化的 SimulationBoardSession。");
+            if (board == null)
+                throw new InvalidOperationException("仿真场景缺少 SimulationBoardSession。");
+            // The board session only initializes its palette in Awake, so edit mode must read the serialized field.
+            string[] paletteColors = ReadPaletteColors(board);
+            if (paletteColors.Length == 0)
+                throw new InvalidOperationException("SimulationBoardSession 没有序列化的调色板，无法生成颜色→角色规则。");
             Camera topCamera = CameraByName("TopCamera");
             Camera workspaceCamera = CameraByName("WorkspaceCamera");
 
@@ -59,7 +63,7 @@ namespace Brick2Life.Editor
             ConfigureProjection(projector, projectionRoot, topCamera, projectionMaterial);
 
             SimulationLevelAdapter adapter = EnsureComponent<SimulationLevelAdapter>(root);
-            ConfigureAdapter(adapter, view, projector, board);
+            ConfigureAdapter(adapter, view, projector, paletteColors);
 
             SimulationFeedbackDemo demo = EnsureComponent<SimulationFeedbackDemo>(root);
 
@@ -139,25 +143,39 @@ namespace Brick2Life.Editor
         }
 
         private static void ConfigureAdapter(SimulationLevelAdapter adapter, SimulationLevelView view,
-            ProjectionSimulator projector, SimulationBoardSession board)
+            ProjectionSimulator projector, string[] paletteColors)
         {
             var serialized = new SerializedObject(adapter);
             serialized.FindProperty("levelView").objectReferenceValue = view;
             serialized.FindProperty("projection").objectReferenceValue = projector;
             SerializedProperty rules = serialized.FindProperty("rules");
-            var palette = board.Palette;
-            rules.arraySize = palette.Count;
-            for (int i = 0; i < palette.Count; i++)
+            rules.arraySize = paletteColors.Length;
+            for (int i = 0; i < paletteColors.Length; i++)
             {
                 SerializedProperty entry = rules.GetArrayElementAtIndex(i);
-                entry.FindPropertyRelative("colorId").stringValue = palette[i].colorId;
-                entry.FindPropertyRelative("role").enumValueIndex = (int)RoleFor(palette, i);
+                entry.FindPropertyRelative("colorId").stringValue = paletteColors[i];
+                entry.FindPropertyRelative("role").enumValueIndex = (int)RoleFor(i);
             }
             serialized.ApplyModifiedProperties();
         }
 
+        // The board session only builds its palette in Awake; the installer reads the serialized array instead.
+        private static string[] ReadPaletteColors(SimulationBoardSession board)
+        {
+            var serialized = new SerializedObject(board);
+            SerializedProperty palette = serialized.FindProperty("palette");
+            if (palette == null || !palette.isArray) return Array.Empty<string>();
+            var colors = new string[palette.arraySize];
+            for (int i = 0; i < palette.arraySize; i++)
+            {
+                SerializedProperty color = palette.GetArrayElementAtIndex(i).FindPropertyRelative("colorId");
+                colors[i] = color != null ? color.stringValue : string.Empty;
+            }
+            return colors.Where(color => !string.IsNullOrWhiteSpace(color)).ToArray();
+        }
+
         // Deterministic default mapping: the first palette entry is the core, then wall, tower, wall, ...
-        private static GameRole RoleFor(IReadOnlyList<SimulationBoardSession.PaletteEntry> palette, int index)
+        private static GameRole RoleFor(int index)
         {
             if (index == 0) return GameRole.Core;
             if (index == 2) return GameRole.Tower;
