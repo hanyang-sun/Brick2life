@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $runPath = Join-Path $repoRoot ('.scratch\camera-metadata-validation\run-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 New-Item -ItemType Directory -Path (Join-Path $runPath 'Assets\Editor'), (Join-Path $runPath 'Packages'), (Join-Path $runPath 'ProjectSettings') -Force | Out-Null
-foreach ($folder in @('Core', 'Simulation')) {
+foreach ($folder in @('Core', 'Application', 'Vision', 'Simulation')) {
     $destination = Join-Path $runPath ('Assets\Scripts\' + $folder)
     New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $repoRoot ('Assets\Scripts\' + $folder)) -Destination $destination -Recurse
