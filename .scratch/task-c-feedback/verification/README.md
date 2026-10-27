@@ -88,6 +88,27 @@ PROBE_PLAY_OK view=3 marks=134 alignErr=0 topSeesGame=False topSeesProjection=Tr
 
 需要强调：这是 **2022.3.62f3c1 上的运行结果**，证明逻辑、接线、分层与投影可见性成立；它不替代 `6000.3.24f1` 的目标版本验收。
 
+## 5. 目标版本 6000.3.24f1 上的验收（2026-10-27）
+
+编辑器由团队成员通过云主机分享的 `Unity-6000.3.24f1-Windows-x64.zip` 提供（4,876,407,494 字节，SHA-256 `0AAC9B50…A003AD`，与本机校验一致），解压到 `D:\Unity\Editors\6000.3.24f1`（49,639 个文件、7.77 GiB），`Unity.exe` 自报版本 `6000.3.24f1_4e7b9b5b6244`。
+
+工程与编辑器版本、内置包完全对齐：`com.unity.ugui 2.0.0`、`com.unity.multiplayer.center 1.0.1` 都是 6.3 自带的内置包，因此首次导入不需要联网。
+
+1. **目标版本编译**：`Unity.exe -batchmode -quit -projectPath E:\Brick2Life`，175.8 s，exit 0；`Library/ScriptAssemblies` 生成 `Brick2Life.Core/Application/Simulation/Feedback/Editor` 五个程序集，日志无 `error CS`。
+2. **任务 C 运行时验收**（副本 `E:\Brick2Life-63test`：安装菜单 + Play + 两次人工目标 + 顶置相机对照）：
+
+```text
+PROBE_PLAY_OK view=3 marks=134 alignErr=0 topSeesGame=False topSeesProjection=True wsSeesGame=True
+  renderersGame=3 renderersProjection=134 cameraDiffProjection=25136 cameraDiffGameObjects=0
+  outcome=Changed level=核心 1 · 城墙 0 · 防御塔 2 · 格点 121 · 高亮 3 · 变更 10
+```
+
+与 2022.3 副本上的结果逐项一致：对齐误差 0、投影进入相机（25136 像素差异）、游戏对象对顶置图像零影响（0 像素差异）、分层掩码符合预期。
+
+3. **Windows x64 构建**：`-executeMethod Brick2Life.Editor.Brick2LifeBuild.Windows -quit` → `Build Finished, Result: Success.`、`BRICK2LIFE_BUILD_PASSED: E:\Brick2Life\Builds\Brick2Life\Brick2Life.exe`。
+
+至此 `docs/task-c-feedback-guide.md` 第 6 节的四项验收在目标版本上全部完成。
+
 ## 未执行（缺少 Unity 6000.3.24f1）
 
 1. 在目标编辑器中编译与进入 Play。
