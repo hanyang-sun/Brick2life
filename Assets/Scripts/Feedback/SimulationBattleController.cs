@@ -27,6 +27,7 @@ namespace Brick2Life.Feedback
         private LevelState frozenLevel;
         private BattleState lastState;
         private bool selectSpawns;
+        private GameObject visionCanvas;
 
         public WavePlan WavePlan { get; set; } = WavePlan.Trial;
         public TowerSettings TowerSettings { get; set; } = TowerSettings.Trial;
@@ -48,10 +49,13 @@ namespace Brick2Life.Feedback
                 selectSpawns = value;
                 if (value && brickEditor == null) brickEditor = FindFirstObjectByType<SimulationBrickEditor>();
                 if (brickEditor != null) brickEditor.enabled = !value;
+                // Hide the recognition panel while picking so the whole board stays clickable.
+                if (value || visionCanvas == null) visionCanvas = GameObject.Find("VisionRecognitionCanvas");
+                if (visionCanvas != null) visionCanvas.SetActive(!value);
                 LastMessage = value
-                    ? "入口选择已开启：在棋盘空格上点选，再点一次按钮退出"
+                    ? "入口选择已开启：在棋盘空格上点选，点“结束选择”退出"
                     : "入口选择已关闭";
-                if (panel != null) panel.Refresh(this);
+                if (panel != null) { panel.Refresh(this); panel.SetSelecting(value); }
             }
         }
 

@@ -93,7 +93,7 @@ namespace Brick2Life.Feedback
                 spawnMarkers[i].SetActive(active);
                 if (!active) continue;
                 GridPoint cell = cells[i];
-                spawnMarkers[i].transform.position = new Vector3(cell.X + 0.5f, 0.03f, cell.Y + 0.5f);
+                spawnMarkers[i].transform.position = new Vector3(cell.X + 0.5f, 0.45f, cell.Y + 0.5f);
             }
         }
 
@@ -111,12 +111,13 @@ namespace Brick2Life.Feedback
                 marker.name = "BattleEntrance";
                 marker.layer = gameLayer;
                 marker.transform.SetParent(root != null ? root : transform, false);
-                marker.transform.localScale = new Vector3(0.7f, 0.02f, 0.7f);
+                // A small pillar stays visible above the projection marks on the table surface.
+                marker.transform.localScale = new Vector3(0.22f, 0.45f, 0.22f);
                 var renderer = marker.GetComponent<Renderer>();
                 if (renderer != null)
                 {
                     renderer.material = new Material(Shader.Find("Sprites/Default"));
-                    renderer.material.color = new Color(0.2f, 0.9f, 1f, 0.85f);
+                    renderer.material.color = new Color(1f, 0.85f, 0.2f, 0.95f);
                     renderer.shadowCastingMode = ShadowCastingMode.Off;
                     renderer.receiveShadows = false;
                 }

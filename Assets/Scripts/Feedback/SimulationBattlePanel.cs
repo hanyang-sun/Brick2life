@@ -26,6 +26,9 @@ namespace Brick2Life.Feedback
         private int coreHealth = 100, towerDamage = 12;
         private float towerInterval = 0.45f;
         private bool synced;
+        private GameObject body;
+        private GameObject selectionBar;
+        private bool bodyVisibleBeforeSelect = true;
 
         public bool IsVisible => visible;
 
@@ -112,6 +115,7 @@ namespace Brick2Life.Feedback
 
             var panelObject = new GameObject("BattlePanel");
             panelObject.transform.SetParent(canvasObject.transform, false);
+            body = panelObject;
             var panel = panelObject.AddComponent<Image>();
             panel.color = new Color(0.07f, 0.08f, 0.10f, 0.93f);
             var rect = panel.rectTransform;
@@ -119,7 +123,7 @@ namespace Brick2Life.Feedback
             rect.anchorMin = new Vector2(0, 0);
             rect.anchorMax = new Vector2(0, 1);
             rect.pivot = new Vector2(0, 0.5f);
-            rect.sizeDelta = new Vector2(470, 0);
+            rect.sizeDelta = new Vector2(380, 0);
             rect.anchoredPosition = new Vector2(12, 0);
             var layout = panelObject.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(10, 10, 10, 10);
@@ -173,6 +177,51 @@ namespace Brick2Life.Feedback
             AddButton(startRow, "重试", () => { if (controller != null) controller.Restart(); });
 
             statusText = AddText(panelObject.transform, "选择入口后开始战斗", 14);
+
+            // Always-on top-left switch so the panel can be collapsed to see the whole board.
+            var toggle = AddButton(canvasObject.transform, "战斗面板 ▾", () => { if (body != null) body.SetActive(!body.activeSelf); });
+            var toggleRect = (RectTransform)toggle.transform;
+            toggleRect.anchorMin = new Vector2(0, 1); toggleRect.anchorMax = new Vector2(0, 1);
+            toggleRect.pivot = new Vector2(0, 1);
+            toggleRect.sizeDelta = new Vector2(130, 28);
+            toggleRect.anchoredPosition = new Vector2(12, -12);
+
+            var barObject = new GameObject("BattleSelectionBar");
+            barObject.transform.SetParent(canvasObject.transform, false);
+            var barImage = barObject.AddComponent<Image>();
+            barImage.color = new Color(0.10f, 0.12f, 0.16f, 0.92f);
+            var barRect = barImage.rectTransform;
+            barRect.anchorMin = new Vector2(0, 1); barRect.anchorMax = new Vector2(0, 1);
+            barRect.pivot = new Vector2(0, 1);
+            barRect.sizeDelta = new Vector2(430, 34);
+            barRect.anchoredPosition = new Vector2(12, -48);
+            var barRow = barObject.AddComponent<HorizontalLayoutGroup>();
+            barRow.padding = new RectOffset(10, 6, 4, 4);
+            barRow.spacing = 8;
+            barRow.childControlWidth = true; barRow.childControlHeight = true;
+            barRow.childForceExpandWidth = false; barRow.childForceExpandHeight = false;
+            AddText(barObject.transform, "点亮中：点棋盘空格选入口", 14).GetComponent<LayoutElement>().flexibleWidth = 1;
+            var endButton = AddButton(barObject.transform, "结束选择", () => { if (controller != null) controller.SelectSpawns = false; });
+            var endElement = endButton.GetComponent<LayoutElement>();
+            endElement.minWidth = 96; endElement.preferredWidth = 96; endElement.flexibleWidth = 0;
+            selectionBar = barObject;
+            selectionBar.SetActive(false);
+        }
+
+        /// <summary>Hides the parameter body while entrances are being picked, keeping a small hint bar.</summary>
+        public void SetSelecting(bool selecting)
+        {
+            if (selecting)
+            {
+                bodyVisibleBeforeSelect = body != null && body.activeSelf;
+                if (body != null) body.SetActive(false);
+                if (selectionBar != null) selectionBar.SetActive(true);
+            }
+            else
+            {
+                if (body != null) body.SetActive(bodyVisibleBeforeSelect);
+                if (selectionBar != null) selectionBar.SetActive(false);
+            }
         }
 
         private Text AddText(Transform parent, string content, int size, FontStyle style = FontStyle.Normal)
