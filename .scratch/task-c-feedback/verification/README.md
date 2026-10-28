@@ -166,15 +166,15 @@ PROBE_CAPTURE_GATE_OK gateRegistered=True visibleBefore=True marks=131
 
 识别主路径现在默认使用无投影取样（对 RQ3 的反向条件用 F8 或显式重载）。
 
-## 未执行（缺少 Unity 6000.3.24f1）
+## 仍未覆盖
 
-1. 在目标编辑器中编译与进入 Play。
-2. 面片与格位对齐的实测（`MeasureAlignmentError` 的运行值）。
-3. 投影开/关的顶置相机图像对照，以及顶置相机是否完全不拍到游戏对象。
-4. `Brick2Life/Simulation/Install feedback` 与 `Verify feedback layering` 的实际执行。
-5. Windows x64 Player 构建（`Brick2Life/Build/Windows x64`）。
+手册第 6 节的四项验收（安装菜单、Play、对齐、投影对照、构建）已在 6000.3.24f1 上全部完成，见第 5 节。以下仍未被覆盖，属于范围外或后续任务：
 
-以上均记录在 `docs/task-c-feedback-guide.md` 第 6 节，供有 Unity 6.3 的机器按步骤核对；在完成前，任务 C 只能声明“逻辑与规则已验证、引擎接线待实际运行验收”。
+1. 真实投影仪/相机的光学时序与设备延迟——仿真投影是面片，`projectionSettleFrames` 只是仿真层等待。
+2. 多层积木、遮挡与隐藏层（第一阶段明确不做）。
+3. Android 等其他平台构建——分享的编辑器只带 Windows 目标。
+4. 识别单帧的边缘未知格（当前 9 格），稳定帧后的确认布局正确；属 B 的后续精度优化。
+5. 战斗进新管线（原缺口第 5 项）——尚未开始。
 
 ## 本次改动文件
 
