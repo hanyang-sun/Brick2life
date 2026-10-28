@@ -6,4 +6,5 @@ LevelSemanticsChecks.Run();
 ProjectionPlanChecks.Run();
 LevelFeedbackChecks.Run();
 VisionChecks.Run();
+BattleChecks.Run();
 Console.WriteLine("BRICK2LIFE_CHECKS_PASSED");
