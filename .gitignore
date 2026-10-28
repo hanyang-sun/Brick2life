@@ -37,3 +37,7 @@
 /.scratch/grid-render-probe/
 /.scratch/light-balance-validation/
 /.scratch/dataset-generation/
+
+# Unity crash-recovery scenes
+/_Recovery/
+Assets/_Recovery/
