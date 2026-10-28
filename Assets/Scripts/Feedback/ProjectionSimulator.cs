@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Brick2Life.Application;
+using Brick2Life.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -11,7 +12,7 @@ namespace Brick2Life.Feedback
     /// so the overhead camera captures the projected color instead of a UI overlay.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ProjectionSimulator : MonoBehaviour
+    public sealed class ProjectionSimulator : MonoBehaviour, IProjectionGate
     {
         [Tooltip("投影面片的父节点。缺失时使用本组件所在对象。")]
         [SerializeField] private Transform marksRoot;
@@ -44,6 +45,14 @@ namespace Brick2Life.Feedback
         public float Intensity => intensity;
         public int ProjectionLayer { get; private set; }
         public Transform MarksRoot => marksRoot;
+
+        // Capture adapter sees the projector through this gate; no cross-assembly reference is needed.
+        bool IProjectionGate.IsProjectionVisible => visible;
+        void IProjectionGate.SetProjectionVisible(bool value) => SetVisible(value);
+
+        private void OnEnable() => ProjectionCaptureGate.Register(this);
+
+        private void OnDisable() => ProjectionCaptureGate.Unregister(this);
 
         private void Awake()
         {

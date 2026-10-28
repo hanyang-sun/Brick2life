@@ -76,7 +76,7 @@ SimulationBoardSession.ReplaceLayout 先校验定义并准备全部几何，再�
 
 Fail 用于采集/识别异常，Cancel 用于取消；ChangeCalibration 取消旧请求并保留旧确认状态供显示。第一阶段只有所有格位占用和颜色都确定才整体确认。应用无路等问题不属于视觉拒绝。
 
-投影清空、等待画面稳定和失败后的显示恢复，在具体 Projection 接入时由实际 Application 流程统一管理；当前纯确认会话尚未控制投影。
+投影与拍照的时序由 `IProjectionGate`（Simulation 程序集）连接：`ProjectionSimulator` 在实现该接口后于 `OnEnable` 注册到 `ProjectionCaptureGate`，`SimulationCameraCapture.CaptureObservationImage()` 在取样前关闭投影、按 `projectionSettleFrames` 追加渲染以等待画面稳定、取完立即恢复；`CaptureObservationImage(true)` 可保留投影，用于“投影干扰”对照。识别默认使用无投影取样（F8 可实时切换）。
 
 ### C：关卡与投影（2026-10-25）
 

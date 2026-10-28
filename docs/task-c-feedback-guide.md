@@ -58,6 +58,16 @@ C 不读 `SimulationBoardSession.Snapshot()`，不读 GT，也不创建观测。
 - 投影强度 `intensity` 乘到 alpha 上；`SetVisible(false)` 关闭全部面片，用于“投影开/关”对照采集。
 - 上限 `ProjectionOptions.MaxMarks`（默认 400）防止密集布局下标记爆炸；截断时 `ProjectionPlan.Truncated=true`。
 
+### 4.1 投影与拍照时序
+
+识别取样必须看到“没有投影的真实积木”，否则自己的投影会污染输入；研究“投影干扰”时又要能带投影取样。实现方式：
+
+- `IProjectionGate`（`Assets/Scripts/Simulation/ProjectionCaptureGate.cs`）定义 `IsProjectionVisible` 与 `SetProjectionVisible`；`ProjectionSimulator` 实现该接口并在 `OnEnable/OnDisable` 注册/注销到静态 `ProjectionCaptureGate.Current`（Simulation 程序集不依赖 Feedback）。
+- `SimulationCameraCapture.CaptureObservationImage()` 的默认行为：若 `captureWithoutProjection=true`（默认）且投影可见 → `SetProjectionVisible(false)` → 按 `projectionSettleFrames`（默认 2）追加 `sourceCamera.Render()` 等待画面稳定 → 取像素 → `finally` 立即恢复投影。
+- `CaptureObservationImage(true)` 保留投影，用于干扰对照；返回的 `SimulationObservationImage.ProjectionVisible` 记录本次取样是否带投影。
+- 运行时按 **F8** 实时切换“取样是否关闭投影”，日志会打印当前模式。
+- 注意：这是仿真层面的时序（关掉面片后手动渲染即可稳定）；真实投影仪需要按设备响应时间等待，届时把 `projectionSettleFrames` 换成实际延时即可。
+
 ## 5. 场景分层
 
 | 层 | 索引 | 内容 | 顶置相机 | 操作相机 |

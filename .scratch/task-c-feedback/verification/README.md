@@ -144,6 +144,28 @@ PROBE_INTEGRATION2_OK visionConnected=True demoEnabled=False rawScore=[occ 91/10
 
 即：识别颜色 10/10 正确、关卡合法（唯一核心）、C 生成 10 个游戏对象与 131 个投影面片、对齐误差 0、状态栏同步显示。纯 C# 断言 492 项通过（含 `VisionChecks` 29 项）。
 
+## 7. 投影与拍照时序（2026-10-28）
+
+新增 `IProjectionGate` + `ProjectionCaptureGate`（Simulation 程序集），`ProjectionSimulator` 实现并注册；`SimulationCameraCapture.CaptureObservationImage()` 默认“关投影 → 追加 2 帧渲染等待稳定 → 取样 → 恢复”，`CaptureObservationImage(true)` 保留投影用于干扰对照，F8 可实时切换。
+
+Unity 6000.3.24f1 副本实测（识别稳定、投影在场时）：
+
+```text
+PROBE_CAPTURE_GATE_OK gateRegistered=True visibleBefore=True marks=131
+  withFlag=True withoutFlag=False defaultFlag=False
+  diffPixels=21787 restoredAfterWith=True restoredAfterWithout=True visibleFinal=True
+```
+
+| 指标 | 实测 | 结论 |
+| --- | --- | --- |
+| `gateRegistered` | True | 投影组件已实现 `IProjectionGate` 并注册到静态网关 |
+| `marks` | 131 | 取样时投影确实有 131 个面片在场 |
+| `withFlag` / `withoutFlag` | True / False | `CaptureObservationImage(true)` 带投影取样，默认取样关闭投影，标志位如实记录 |
+| `diffPixels` | 21787 | 带投影与不带投影两张 512×512 取样相差 21787 像素，证明时序真的改变了相机图像 |
+| `restoredAfterWith/Without` | True / True | 每次取样后投影立即恢复，不会因为取图把投影留在关闭状态 |
+
+识别主路径现在默认使用无投影取样（对 RQ3 的反向条件用 F8 或显式重载）。
+
 ## 未执行（缺少 Unity 6000.3.24f1）
 
 1. 在目标编辑器中编译与进入 Play。

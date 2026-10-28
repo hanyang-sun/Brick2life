@@ -135,6 +135,12 @@ namespace Brick2Life.Simulation
         private void Update()
         {
             ScrollEventLogFromPointer();
+            // F8 switches between interference-free sampling and sampling that includes task C's projection.
+            if (Input.GetKeyDown(KeyCode.F8) && capture != null)
+            {
+                capture.CaptureWithoutProjection = !capture.CaptureWithoutProjection;
+                Debug.Log("识别取样" + (capture.CaptureWithoutProjection ? "关闭" : "保留") + "虚拟投影（F8 切换）。", this);
+            }
             if (!Automatic || board == null) return;
             elapsed += Time.unscaledDeltaTime;
             if (primed && elapsed < interval) return;
