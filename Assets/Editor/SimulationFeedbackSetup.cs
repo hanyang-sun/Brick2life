@@ -21,6 +21,14 @@ namespace Brick2Life.Editor
         private const string GameLayerName = "Brick2LifeGame";
         private const string ProjectionLayerName = "Brick2LifeProjection";
 
+        // Opens the simulation scene from the menu or from a command line launch without entering play mode.
+        [MenuItem("Brick2Life/Simulation/Open simulation scene")]
+        public static void OpenSimulationScene()
+        {
+            EditorSceneManager.OpenScene("Assets/Scenes/" + SceneName + ".unity", OpenSceneMode.Single);
+            Debug.Log("已打开场景：" + SceneName);
+        }
+
         // Batch-friendly wrapper: installs, saves the scene and assets, and logs a single completion line.
         [MenuItem("Brick2Life/Simulation/Install feedback and save scene")]
         public static void InstallAndSave()
