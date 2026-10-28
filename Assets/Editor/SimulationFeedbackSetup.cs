@@ -21,6 +21,16 @@ namespace Brick2Life.Editor
         private const string GameLayerName = "Brick2LifeGame";
         private const string ProjectionLayerName = "Brick2LifeProjection";
 
+        // Batch-friendly wrapper: installs, saves the scene and assets, and logs a single completion line.
+        [MenuItem("Brick2Life/Simulation/Install feedback and save scene")]
+        public static void InstallAndSave()
+        {
+            Install();
+            EditorSceneManager.SaveOpenScenes();
+            AssetDatabase.SaveAssets();
+            Debug.Log("任务 C 反馈已安装并保存场景：" + SceneName);
+        }
+
         [MenuItem("Brick2Life/Simulation/Install feedback")]
         public static void Install()
         {
@@ -28,7 +38,13 @@ namespace Brick2Life.Editor
                 throw new InvalidOperationException("请退出 Play Mode 后再配置任务 C 反馈。");
             var scene = EditorSceneManager.GetActiveScene();
             if (scene.name != SceneName)
-                throw new InvalidOperationException("请先打开 " + SceneName + " 场景。");
+            {
+                // Opening the scene directly keeps the menu usable from a fresh editor or -executeMethod.
+                string path = "Assets/Scenes/" + SceneName + ".unity";
+                if (!System.IO.File.Exists(System.IO.Path.Combine(UnityEngine.Application.dataPath, "Scenes", SceneName + ".unity")))
+                    throw new InvalidOperationException("请先打开 " + SceneName + " 场景。");
+                scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+            }
             SimulationBoardSession board = FindFirst<SimulationBoardSession>();
             if (board == null)
                 throw new InvalidOperationException("仿真场景缺少 SimulationBoardSession。");
