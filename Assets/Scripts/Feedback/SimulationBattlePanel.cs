@@ -59,7 +59,10 @@ namespace Brick2Life.Feedback
                     ? "\n核心 " + source.State.CoreHealth + " · 第 " + source.State.Wave + " 波 · 击杀 " +
                       source.State.Killed + " · 泄漏 " + source.State.Leaked + " · " + source.State.Phase
                     : "");
-            if (spawnText != null) spawnText.text = "入口：" + source.Spawns.Count + " 个";
+            if (spawnText != null)
+                spawnText.text = source.SelectSpawns
+                    ? "入口：" + source.Spawns.Count + " 个 · 点亮中，点棋盘空格"
+                    : "入口：" + source.Spawns.Count + " 个";
             if (pauseButton != null)
             {
                 var label = pauseButton.GetComponentInChildren<Text>();

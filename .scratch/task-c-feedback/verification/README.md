@@ -190,6 +190,23 @@ PROBE_BATTLE_OK controller=True panel=True level=核心 1 · 城墙 1 · 防御�
 | `victory` | Victory/wave2/killed2/hp100 | 两波清空后胜利，核心满血 |
 | `defeat` | Defeat/leaked1/hp0 | 无塔可打时泄漏一只即失败（核心 5 血、伤害 5） |
 
+### 8.1 入口选择（2026-10-28 补测）
+
+Unity 6000.3.24f1 副本实测：
+
+```text
+PROBE_ENTRANCE_OK level=[核心 1 · 城墙 1 · 防御塔 8] editorBefore=True editorDuring=False editorAfter=True
+  added=2 markers=2 markersAfterClear=2 message=[已选 2 个入口：(1,0) (3,0)]
+```
+
+| 指标 | 实测 | 结论 |
+| --- | --- | --- |
+| `editorDuring` | False | 选择入口期间积木编辑被关闭，点击不会误加积木（此前无法选入口的主要原因） |
+| `editorAfter` | True | 退出选择模式后编辑恢复 |
+| `added` / `markers` | 2 / 2 | 两次点选都成功，棋盘上出现 2 个青色入口圆环 |
+| `message` | 已选 2 个入口：(1,0) (3,0) | 状态栏给出坐标反馈 |
+
+`markersAfterClear=2` 是对象池计数（清空时标记被隐藏而非销毁），不影响显示。
 ## 仍未覆盖
 
 手册第 6 节的四项验收（安装菜单、Play、对齐、投影对照、构建）已在 6000.3.24f1 上全部完成，见第 5 节。以下仍未被覆盖，属于范围外或后续任务：

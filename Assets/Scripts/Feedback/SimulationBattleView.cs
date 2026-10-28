@@ -23,10 +23,12 @@ namespace Brick2Life.Feedback
 
         private readonly List<GameObject> enemyObjects = new List<GameObject>();
         private readonly List<LineRenderer> routeLines = new List<LineRenderer>();
+        private readonly List<GameObject> spawnMarkers = new List<GameObject>();
         private int gameLayer = 30;
 
         public int EnemyCount => enemyObjects.Count;
         public int RouteCount => routeLines.Count;
+        public int SpawnMarkerCount => spawnMarkers.Count;
 
         private void Awake()
         {
@@ -78,6 +80,50 @@ namespace Brick2Life.Feedback
         {
             foreach (GameObject item in enemyObjects) if (item != null) Destroy(item);
             enemyObjects.Clear();
+        }
+
+        /// <summary>Shows a flat ring on every chosen entrance so the pick is visible on the board.</summary>
+        public void SetSpawns(IReadOnlyList<GridPoint> cells)
+        {
+            if (cells == null) cells = Array.Empty<GridPoint>();
+            EnsureSpawnPool(cells.Count);
+            for (int i = 0; i < spawnMarkers.Count; i++)
+            {
+                bool active = i < cells.Count;
+                spawnMarkers[i].SetActive(active);
+                if (!active) continue;
+                GridPoint cell = cells[i];
+                spawnMarkers[i].transform.position = new Vector3(cell.X + 0.5f, 0.03f, cell.Y + 0.5f);
+            }
+        }
+
+        public void ClearSpawns()
+        {
+            foreach (GameObject marker in spawnMarkers) if (marker != null) Destroy(marker);
+            spawnMarkers.Clear();
+        }
+
+        private void EnsureSpawnPool(int count)
+        {
+            while (spawnMarkers.Count < count)
+            {
+                GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                marker.name = "BattleEntrance";
+                marker.layer = gameLayer;
+                marker.transform.SetParent(root != null ? root : transform, false);
+                marker.transform.localScale = new Vector3(0.7f, 0.02f, 0.7f);
+                var renderer = marker.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material = new Material(Shader.Find("Sprites/Default"));
+                    renderer.material.color = new Color(0.2f, 0.9f, 1f, 0.85f);
+                    renderer.shadowCastingMode = ShadowCastingMode.Off;
+                    renderer.receiveShadows = false;
+                }
+                var collider = marker.GetComponent<Collider>();
+                if (collider != null) Destroy(collider);
+                spawnMarkers.Add(marker);
+            }
         }
 
         public void ClearRoutes()
