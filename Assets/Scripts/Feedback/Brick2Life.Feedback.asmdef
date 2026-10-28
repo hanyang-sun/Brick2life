@@ -3,6 +3,7 @@
   "references": [
     "Brick2Life.Core",
     "Brick2Life.Application",
+    "Brick2Life.Battle",
     "Brick2Life.Simulation",
     "UnityEngine.UI"
   ]

@@ -1954,6 +1954,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1480744937}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &864833548
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 864833549}
+  - component: {fileID: 864833550}
+  m_Layer: 0
+  m_Name: BattlePanelRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &864833549
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864833548}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1480744937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &864833550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864833548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3594f6120532e8b42b3368f74e8f0ae0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationBattlePanel
+  controller: {fileID: 1730692415}
+  visible: 1
 --- !u!1 &875255854
 GameObject:
   m_ObjectHideFlags: 0
@@ -3162,6 +3208,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationCameraCapture
   sourceCamera: {fileID: 1356387076}
   statusLabel: {fileID: 875255856}
+  captureWithoutProjection: 1
+  projectionSettleFrames: 2
 --- !u!1 &1452470341
 GameObject:
   m_ObjectHideFlags: 0
@@ -3452,6 +3500,8 @@ Transform:
   m_Children:
   - {fileID: 863402294}
   - {fileID: 1579378318}
+  - {fileID: 1730692417}
+  - {fileID: 864833549}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1483085154
@@ -4191,6 +4241,74 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1660887073}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1730692414
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1730692417}
+  - component: {fileID: 1730692416}
+  - component: {fileID: 1730692415}
+  m_Layer: 0
+  m_Name: Battle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1730692415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730692414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c528cd09e5687a6448ccc689cd3fe045, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationBattleController
+  adapter: {fileID: 1480744934}
+  view: {fileID: 1730692416}
+  panel: {fileID: 864833550}
+  pointer: {fileID: 54039463}
+  autoStep: 1
+--- !u!114 &1730692416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730692414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceff8c7b05023a24b9e4443a8ab2d2c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationBattleView
+  root: {fileID: 1730692417}
+  enemyMaterial: {fileID: 2100000, guid: 99b581c8d263dcb4d84918f5c979d845, type: 2}
+  routeMaterial: {fileID: 2100000, guid: d5ab083804945494f9fb9f78df95af37, type: 2}
+  enemyScale: 0.45
+  routeWidth: 0.08
+  gameLayerName: Brick2LifeGame
+--- !u!4 &1730692417
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730692414}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1480744937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1835982914
 GameObject:
   m_ObjectHideFlags: 0

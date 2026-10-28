@@ -166,6 +166,30 @@ PROBE_CAPTURE_GATE_OK gateRegistered=True visibleBefore=True marks=131
 
 识别主路径现在默认使用无投影取样（对 RQ3 的反向条件用 F8 或显式重载）。
 
+## 8. 战斗进新管线（2026-10-28）
+
+`Brick2Life.Battle`（无 Unity 依赖）承接确认关卡：`BattleLevel` 映射 20×20 战斗格并校验入口，`RouteSearch` 四方向 A*，`BattleSimulation` 以 1/60 固定步长跑波次/塔/核心，支持暂停与重试。场景侧 `SimulationBattleController/View/Panel` 由安装菜单写入，纯 C# 断言 104 项（总 596 项）。
+
+Unity 6000.3.24f1 副本实测（关闭自动步进，手动推进以保证确定性）：
+
+```text
+PROBE_BATTLE_OK controller=True panel=True level=核心 1 · 城墙 1 · 防御塔 8
+  spawns=2 build=True started=True routes=2 spawnIndices=0,1 enemiesRendered=3 spawnedThisWave=3
+  pauseFrozen=True resumeAdvanced=True restarted=True
+  victory=Victory/wave2/killed2/leaked0/hp100
+  defeat=Defeat/wave1/killed0/leaked1/hp0
+```
+
+| 指标 | 实测 | 结论 |
+| --- | --- | --- |
+| `spawns` / `routes` | 2 / 2 | 多入口被接受并各生成一条路线 |
+| `spawnIndices` | 0,1 | 三只敌人按入口轮转（0、1、0） |
+| `enemiesRendered` | 3 | 视图按状态生成并渲染敌人 |
+| `pauseFrozen` / `resumeAdvanced` | True / True | 暂停冻结时钟，恢复后继续推进 |
+| `restarted` | True | 重试结束本局并回到可重新选入口/改参数的状态 |
+| `victory` | Victory/wave2/killed2/hp100 | 两波清空后胜利，核心满血 |
+| `defeat` | Defeat/leaked1/hp0 | 无塔可打时泄漏一只即失败（核心 5 血、伤害 5） |
+
 ## 仍未覆盖
 
 手册第 6 节的四项验收（安装菜单、Play、对齐、投影对照、构建）已在 6000.3.24f1 上全部完成，见第 5 节。以下仍未被覆盖，属于范围外或后续任务：

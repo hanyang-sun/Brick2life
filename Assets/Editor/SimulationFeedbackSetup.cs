@@ -100,6 +100,7 @@ namespace Brick2Life.Editor
             bootstrapObject.ApplyModifiedProperties();
 
             ApplyCameraMasks(topCamera, workspaceCamera);
+            EnsureBattleRig(root, adapter);
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("任务 C 反馈已安装：" + RootName + "（关卡视图、投影、适配器、人工目标演示）；" +
                 "顶置相机排除 " + GameLayerName + "、包含 " + ProjectionLayerName + "。", root);
@@ -123,8 +124,41 @@ namespace Brick2Life.Editor
                 "，操作相机包含两层=" + workspaceIncludesBoth + "；顶置相机掩码=" + topCamera.cullingMask);
         }
 
-        private static void ConfigureView(SimulationLevelView view, Transform levelRoot, Camera topCamera,
-            Material core, Material wall, Material tower)
+        // Battle rig: controller and view on a child object, the parameter panel on its own canvas object.
+        private static void EnsureBattleRig(GameObject root, SimulationLevelAdapter adapter)
+        {
+            Transform battleRoot = EnsureChild(root.transform, "Battle");
+            SimulationBattleView view = EnsureComponent<SimulationBattleView>(battleRoot.gameObject);
+            Material enemyMaterial = EnsureMaterial("Battle_Enemy.mat", Shader.Find("Standard"), new Color(0.85f, 0.25f, 0.2f));
+            Material routeMaterial = EnsureMaterial("Battle_Route.mat", Shader.Find("Sprites/Default"), new Color(0.2f, 0.9f, 1f, 0.9f));
+            var viewObject = new SerializedObject(view);
+            viewObject.FindProperty("root").objectReferenceValue = battleRoot;
+            viewObject.FindProperty("enemyMaterial").objectReferenceValue = enemyMaterial;
+            viewObject.FindProperty("routeMaterial").objectReferenceValue = routeMaterial;
+            viewObject.ApplyModifiedProperties();
+
+            SimulationBattleController controller = EnsureComponent<SimulationBattleController>(battleRoot.gameObject);
+            GameObject panelObject = GameObject.Find("BattlePanelRoot");
+            if (panelObject == null)
+            {
+                panelObject = new GameObject("BattlePanelRoot");
+                Undo.RegisterCreatedObjectUndo(panelObject, "Install battle panel");
+                panelObject.transform.SetParent(root.transform, false);
+            }
+            SimulationBattlePanel panel = EnsureComponent<SimulationBattlePanel>(panelObject);
+            var controllerObject = new SerializedObject(controller);
+            controllerObject.FindProperty("adapter").objectReferenceValue = adapter;
+            controllerObject.FindProperty("view").objectReferenceValue = view;
+            controllerObject.FindProperty("panel").objectReferenceValue = panel;
+            controllerObject.FindProperty("pointer").objectReferenceValue = FindFirst<SimulationGridPointer>();
+            controllerObject.ApplyModifiedProperties();
+            var panelSerialized = new SerializedObject(panel);
+            panelSerialized.FindProperty("controller").objectReferenceValue = controller;
+            panelSerialized.ApplyModifiedProperties();
+            Debug.Log("战斗装置已安装：Battle（控制器 + 视图）与 BattlePanelRoot（参数面板）。", root);
+        }
+
+        private static void ConfigureView(SimulationLevelView view, Transform levelRoot, Camera topCamera,            Material core, Material wall, Material tower)
         {
             var serialized = new SerializedObject(view);
             serialized.FindProperty("levelRoot").objectReferenceValue = levelRoot;

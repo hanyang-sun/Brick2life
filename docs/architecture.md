@@ -31,12 +31,11 @@ flowchart TD
 - Simulation 引用 Core、Application、Vision 和 Unity UI，承担引擎具体实现。Bootstrap 组装棋盘、编辑界面、采集，并在运行时挂载识别面板 `SimulationVisionMonitor`。
 - `Brick2Life.Vision` 不引用 Unity：`VisionCalibration`（调色板色样）、`CameraProjection`（固定格位采样）、`FixedGridRecognizer`（逐格色相分类）、`LayoutChangeTracker`（连续帧稳定与增删移动事件）、`RecognitionScore`（与真值对照的准确率）。
 - 识别面板 `SimulationVisionMonitor` 拥有唯一的 `BoardSyncSession`：每帧采样 → 识别 → 连续三帧稳定后 `BeginFrame/Confirm`，再通过 `UpdateApplied` 事件把 `BoardUpdate` 交给任务 C；面板底部另有一行显示任务 C 的关卡与投影摘要。
-- Feedback 引用 Core、Application、Vision、Simulation 和 Unity UI，是任务 C 的引擎侧：`SimulationFeedbackBootstrap` 在存在识别面板时共享其 `BoardSyncSession`（否则自建会话供人工目标演示），`SimulationLevelAdapter` 把 `BoardUpdate` 变成关卡对象与投影标记，`SimulationLevelView` 生成游戏对象，`ProjectionSimulator` 生成贴在表面上的投影面片。
-- Editor 引用 Core、Application、Vision、Simulation、Feedback 和 Unity UI，仅 Editor 编译，承载灯光配置、任务 C 安装与分层检查、依赖检查与构建。
+- Feedback 引用 Core、Application、Battle、Vision、Simulation 和 Unity UI，是任务 C 的引擎侧：`SimulationFeedbackBootstrap` 在存在识别面板时共享其 `BoardSyncSession`（否则自建会话供人工目标演示），`SimulationLevelAdapter` 把 `BoardUpdate` 变成关卡对象与投影标记，`SimulationLevelView` 生成游戏对象，`ProjectionSimulator` 生成贴在表面上的投影面片。
+- `Brick2Life.Battle` 不引用 Unity：`BattleLevel` 把确认关卡（10×10）映射成 20×20 战斗格并校验入口通路，`RouteSearch` 做四方向 A*，`BattleSimulation` 以 1/60 固定步长跑波次、塔与核心；`SimulationBattleController/View/Panel` 只负责驱动、渲染和参数输入。
+- Editor 引用 Core、Application、Battle、Vision、Simulation、Feedback 和 Unity UI，仅 Editor 编译，承载灯光配置、任务 C 安装与分层检查、战斗装置安装、依赖检查与构建。
 
-Awake 顺序为棋盘会话 -200、接线 -100、任务 C 反馈入口 -50，随后编辑界面 Start。已有按钮方法与 MonoBehaviour GUID 保留；原场景的布局、材质和调色板迁入棋盘会话。
-
-Awake 顺序为棋盘会话 -200、接线 -100，随后编辑界面 Start。已有按钮方法与 MonoBehaviour GUID 保留；原场景的布局、材质和调色板迁入棋盘会话。
+Awake 顺序为棋盘会话 -200、接线 -100、任务 C 反馈入口 -50，随后编辑界面 Start。战斗在 `开始` 的瞬间冻结当前确认关卡，局中识别变化不影响本局。
 
 ## 状态归属
 

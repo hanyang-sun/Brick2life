@@ -23,8 +23,9 @@ git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-su
 | Simulation | 独立棋盘会话、编辑界面、相机/光照采集和场景接线 | A |
 | Vision | 固定格位识别：调色板色样、逐格顶面采样与色相分类、连续帧稳定与增删移动事件、与真值的准确率对照；无 Unity 依赖 | B |
 | Feedback | 关卡语义映射（颜色→核心/城墙/塔）、游戏对象更新、表面贴合的虚拟投影与场景分层；只消费 `BoardUpdate` | C |
+| Battle | 关卡转 20×20 战斗格、A* 寻路、波次/塔/核心模拟与暂停重试；无 Unity 依赖 | 新管线 |
 
-任务 B 与任务 C 已接线：识别面板持有唯一的 `BoardSyncSession`，确认后的 `BoardUpdate` 同时驱动关卡对象与投影，人工目标演示在识别接入后自动停用。任务 C 见 [反馈指南](docs/task-c-feedback-guide.md)，任务 B 见 [识别说明](docs/task-b-recognition-changes.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。
+任务 B 与任务 C 已接线：识别面板持有唯一的 `BoardSyncSession`，确认后的 `BoardUpdate` 同时驱动关卡对象与投影，人工目标演示在识别接入后自动停用。战斗在任务 C 的确认关卡上开局（可多入口、参数全可调、支持暂停/重试）。任务 C 见 [反馈指南](docs/task-c-feedback-guide.md)，任务 B 见 [识别说明](docs/task-b-recognition-changes.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。
 
 ## 采集数据
 
