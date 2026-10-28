@@ -15,7 +15,9 @@
     <Compile Include="LevelSemanticsChecks.cs" />
     <Compile Include="ProjectionPlanChecks.cs" />
     <Compile Include="LevelFeedbackChecks.cs" />
+    <Compile Include="VisionChecks.cs" />
     <Compile Include="../Assets/Scripts/Core/**/*.cs" Link="Core/%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="../Assets/Scripts/Application/**/*.cs" Link="Application/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="../Assets/Scripts/Vision/**/*.cs" Link="Vision/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

@@ -114,7 +114,7 @@ namespace Brick2Life.Simulation
 
         private void ShowCell(Vector2Int cell, float surfaceHeight)
         {
-            cellLabel.text = dragPreview ? $"拖拽目标：({cell.x}, {cell.y})" : $"当前格位：({cell.x}, {cell.y})";
+            cellLabel.text = dragPreview ? $"拖拽目标：({cell.x + 1}, {cell.y + 1})" : $"当前格位：({cell.x + 1}, {cell.y + 1})";
             HoveredCell = cell;
             outlineRoot.gameObject.SetActive(true);
             Color color = !dragPreview ? new Color(1, 0.75f, 0.15f) :

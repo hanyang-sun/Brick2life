@@ -36,7 +36,7 @@ namespace Brick2Life.Feedback
         public void Bind(BoardSyncSession session)
         {
             if (session == null) throw new ArgumentNullException(nameof(session));
-            if (feedback != null) throw new InvalidOperationException("关卡适配器已绑定，不能重复绑定。");
+            // Task B may rebuild its session (new calibration); re-binding keeps the same rules and views.
             var pairs = new List<KeyValuePair<string, GameRole>>();
             foreach (RoleRule rule in rules)
             {
@@ -81,6 +81,13 @@ namespace Brick2Life.Feedback
         public void SetStatusText(string text)
         {
             if (statusLabel != null) statusLabel.text = text;
+        }
+
+        // Task B's panel owns an extra line; the composition entry hands it to the adapter.
+        public void SetStatusLabel(Text label)
+        {
+            statusLabel = label;
+            UpdateStatus(LastFrame);
         }
 
         private void UpdateStatus(FeedbackFrame frame)

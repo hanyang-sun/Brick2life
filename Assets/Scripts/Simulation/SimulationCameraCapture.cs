@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using Brick2Life.Core;
+using Brick2Life.Vision;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityApplication = UnityEngine.Application;
@@ -227,6 +228,82 @@ namespace Brick2Life.Simulation
             public int gridX, gridY, layer;
             public bool occupied;
             public string brickId = "", colorId = "";
+        }
+
+        // RGB and the public camera matrices only. Ground truth cells are not read.
+        public SimulationObservationImage CaptureObservationImage()
+        {
+            if (sourceCamera == null || sourceCamera.targetTexture == null)
+                throw new InvalidOperationException("请配置顶置相机和 RenderTexture。");
+            RenderTexture target = sourceCamera.targetTexture;
+            double[] view = Matrix(sourceCamera.worldToCameraMatrix);
+            double[] projection = Matrix(sourceCamera.projectionMatrix);
+            byte[] rgb = ReadTopDown(target);
+            if (sourceCamera.targetTexture != target)
+                throw new InvalidOperationException("拍摄期间相机目标纹理发生变化。");
+            return new SimulationObservationImage(target.width, target.height, rgb, DateTimeOffset.UtcNow, view, projection);
+        }
+
+        public GridSample[][] BuildTopSamples(BoardDefinition definition, VisionCalibration calibration, int imageWidth, int imageHeight)
+        {
+            if (sourceCamera == null || sourceCamera.targetTexture == null)
+                throw new InvalidOperationException("请配置顶置相机和 RenderTexture。");
+            if (imageWidth != sourceCamera.targetTexture.width || imageHeight != sourceCamera.targetTexture.height)
+                throw new InvalidOperationException("采样尺寸与相机画面不一致。");
+            return CameraProjection.CreateSamples(definition, calibration, ProjectTop);
+        }
+
+        private bool ProjectTop(double x, double y, double z, out double pixelX, out double pixelY)
+        {
+            Vector3 viewport = sourceCamera.WorldToViewportPoint(new Vector3((float)x, (float)y, (float)z));
+            int width = sourceCamera.targetTexture.width, height = sourceCamera.targetTexture.height;
+            pixelX = viewport.x * width - 0.5;
+            pixelY = (1.0 - viewport.y) * height - 0.5;
+            return viewport.z >= sourceCamera.nearClipPlane && viewport.z <= sourceCamera.farClipPlane;
+        }
+
+        private static double[] Matrix(Matrix4x4 matrix)
+        {
+            var values = new double[16];
+            for (int row = 0; row < 4; row++)
+                for (int column = 0; column < 4; column++)
+                    values[row * 4 + column] = matrix[row, column];
+            return values;
+        }
+
+        private byte[] ReadTopDown(RenderTexture target)
+        {
+            RenderTexture previous = RenderTexture.active;
+            Texture2D image = null;
+            try
+            {
+                sourceCamera.Render();
+                RenderTexture.active = target;
+                image = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);
+                image.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0, false);
+                image.Apply(false, false);
+                Color32[] pixels = image.GetPixels32();
+                int width = target.width, height = target.height;
+                var rgb = new byte[width * height * 3];
+                for (int y = 0; y < height; y++)
+                {
+                    int sourceRow = (height - 1 - y) * width;
+                    int targetIndex = y * width * 3;
+                    for (int x = 0; x < width; x++)
+                    {
+                        Color32 pixel = pixels[sourceRow + x];
+                        rgb[targetIndex++] = pixel.r;
+                        rgb[targetIndex++] = pixel.g;
+                        rgb[targetIndex++] = pixel.b;
+                    }
+                }
+                return rgb;
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                if (image != null) Destroy(image);
+            }
         }
 
         private byte[] ReadCurrentRgb()

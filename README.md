@@ -21,10 +21,10 @@ git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-su
 | Core | 固定棋盘定义、布局、不可变快照、观测与差异；无 Unity 依赖 | A 基础合同，B 差异 |
 | Application | 确认会话、帧/标定校验、有限测试集布局计划；无 Unity 依赖 | 集成负责人 |
 | Simulation | 独立棋盘会话、编辑界面、相机/光照采集和场景接线 | A |
-| Vision | 待接入：RGB 与公开标定到固定格位观测 | B |
+| Vision | 固定格位识别：调色板色样、逐格顶面采样与色相分类、连续帧稳定与增删移动事件、与真值的准确率对照；无 Unity 依赖 | B |
 | Feedback | 关卡语义映射（颜色→核心/城墙/塔）、游戏对象更新、表面贴合的虚拟投影与场景分层；只消费 `BoardUpdate` | C |
 
-Vision 尚无具体实现；任务 C 见 [反馈指南](docs/task-c-feedback-guide.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。
+任务 B 与任务 C 已接线：识别面板持有唯一的 `BoardSyncSession`，确认后的 `BoardUpdate` 同时驱动关卡对象与投影，人工目标演示在识别接入后自动停用。任务 C 见 [反馈指南](docs/task-c-feedback-guide.md)，任务 B 见 [识别说明](docs/task-b-recognition-changes.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。
 
 ## 采集数据
 

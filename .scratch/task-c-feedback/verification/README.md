@@ -109,6 +109,29 @@ PROBE_PLAY_OK view=3 marks=134 alignErr=0 topSeesGame=False topSeesProjection=Tr
 
 至此 `docs/task-c-feedback-guide.md` 第 6 节的四项验收在目标版本上全部完成。
 
+## 6. 接入任务 B 后的联调（2026-10-28）
+
+分支 `feat/task-c-integration`：合并 `feat/task-b-recognition`（`3279dbb`）与任务 C，冲突仅 5 个文件（Editor asmdef、README、architecture、Tests/Program、csproj），按“双方都保留”解决；合并后纯 C# 断言 492 项通过（原 463 + Vision 29）。
+
+改造点：
+
+- `SimulationVisionMonitor` 暴露 `Session`、`UpdateApplied`、`SessionRebuilt`、`UiReady` 与 `FeedbackText`，并在每次 `Confirm` 后把 `BoardUpdate` 交给订阅者；新增一行“任务 C 反馈”文本；
+- `SimulationFeedbackBootstrap` 发现识别面板时**共享其 BoardSyncSession**（不再自建），订阅更新并自动**停用人工目标演示**；没有面板时退回自建会话 + 演示；
+- `SimulationLevelAdapter.Bind` 允许重新绑定（识别面板重建标定/会话时）并新增 `SetStatusLabel`；
+- 在 `E:\Brick2Life-63int` 副本上按同一流程实测（安装菜单 → Play → 等识别稳定 → 读指标）：
+
+```text
+任务 C 已接入任务 B：共享 BoardSyncSession（calibration=fixed-grid-v1|red=224,64,64|...），识别确认后自动更新关卡与投影；人工目标演示=已停用
+PROBE_INTEGRATION2_OK visionConnected=True demoEnabled=False rawScore=[occ 100/100, exact 91/100, mismatches 9]
+  mismatches=[(1,1) 真值=红 预测=蓝 | (5,1) 真值=蓝 预测=红 | (8,5) 真值=红 预测=蓝 | ...]
+  truthColors=[red=8 green=1 blue=1] predictedColors=[blue=8 green=1 red=1] predictedRoles=[Tower=8 Wall=1 Core=1]
+  view=10 marks=140 alignErr=0 status=[关卡：核心 1 · 城墙 1 · 防御塔 8 · 格点 121 · 高亮 10 · 变更 9]
+```
+
+结论：**B→C 链路已通**（共享会话、更新转发、Demo 自动停用、状态上屏、10 个游戏对象 + 140 个投影面片、对齐误差 0）。
+
+同时暴露一个 **B 的识别缺陷**（不属于 C）：占用 100/100 正确，但 9 个红色格被分类成蓝色——真值 `red=8/blue=1`，预测 `blue=8/red=1`，即红↔蓝互换了 9 格。现场采样证实不是采样位置或像素通道问题：红色积木顶面像素为 `(140,55,55)…(159,64,64)`（色相 0.00），而红色色样色相也是 0.00；问题在 `FixedGridRecognizer` 只用色相（±20° 窗口 + 8° 余量）在阴影/环境光下把偏蓝的红判成蓝。修复方向：改用归一化 RGB/Lab 距离或以亮度加权的 RGB 距离作主判据，色相仅作辅助；修完后需同时通过 `VisionChecks` 与本次联调。
+
 ## 未执行（缺少 Unity 6000.3.24f1）
 
 1. 在目标编辑器中编译与进入 Play。
