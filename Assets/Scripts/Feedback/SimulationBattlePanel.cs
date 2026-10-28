@@ -1,6 +1,5 @@
 using System;
 using Brick2Life.Battle;
-using Brick2Life.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -58,7 +57,7 @@ namespace Brick2Life.Feedback
             if (statusText != null)
                 statusText.text = source.LastMessage + (source.State != null
                     ? "\n核心 " + source.State.CoreHealth + " · 第 " + source.State.Wave + " 波 · 击杀 " +
-                      source.State.Killed + " · 泄漏 " + source.State.Leaked + " · 阶段 " + source.State.Phase
+                      source.State.Killed + " · 泄漏 " + source.State.Leaked + " · " + source.State.Phase
                     : "");
             if (spawnText != null) spawnText.text = "入口：" + source.Spawns.Count + " 个";
             if (pauseButton != null)
@@ -72,7 +71,7 @@ namespace Brick2Life.Feedback
             if (spawnButton != null)
             {
                 var label = spawnButton.GetComponentInChildren<Text>();
-                if (label != null) label.text = source.SelectSpawns ? "点棋盘选入口（开）" : "点棋盘选入口";
+                if (label != null) label.text = source.SelectSpawns ? "选入口（开）" : "点棋盘选入口";
                 spawnButton.interactable = !source.Running;
             }
         }
@@ -103,40 +102,59 @@ namespace Brick2Life.Feedback
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 50;
             var scaler = canvasObject.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1600, 900);
+            // Fixed pixel scale keeps the panel legible in small game views; the scene stays visible beside it.
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+            scaler.scaleFactor = 1f;
             canvasObject.AddComponent<GraphicRaycaster>();
 
             var panelObject = new GameObject("BattlePanel");
             panelObject.transform.SetParent(canvasObject.transform, false);
             var panel = panelObject.AddComponent<Image>();
-            panel.color = new Color(0.08f, 0.09f, 0.11f, 0.86f);
+            panel.color = new Color(0.07f, 0.08f, 0.10f, 0.93f);
             var rect = panel.rectTransform;
-            rect.anchorMin = new Vector2(1, 0);
-            rect.anchorMax = new Vector2(1, 1);
-            rect.pivot = new Vector2(1, 0.5f);
-            rect.sizeDelta = new Vector2(360, 0);
-            rect.anchoredPosition = new Vector2(-12, 0);
+            // Left side: the recognition panel and the level UI both live on the right.
+            rect.anchorMin = new Vector2(0, 0);
+            rect.anchorMax = new Vector2(0, 1);
+            rect.pivot = new Vector2(0, 0.5f);
+            rect.sizeDelta = new Vector2(470, 0);
+            rect.anchoredPosition = new Vector2(12, 0);
             var layout = panelObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(12, 12, 12, 12);
-            layout.spacing = 4;
+            layout.padding = new RectOffset(10, 10, 10, 10);
+            layout.spacing = 3;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            AddText(panelObject.transform, "战斗参数", 22, FontStyle.Bold);
-            AddSlider(panelObject.transform, "波数", 1, BattleLimits.MaxWaves, waves, true, value => { waves = (int)value; ApplyParameters(); });
-            AddSlider(panelObject.transform, "每波数量", 1, BattleLimits.MaxEnemiesPerWave, perWave, true, value => { perWave = (int)value; ApplyParameters(); });
-            AddSlider(panelObject.transform, "敌人生命", 1, 500, health, true, value => { health = (int)value; ApplyParameters(); });
-            AddSlider(panelObject.transform, "敌人速度", (float)BattleLimits.MinEnemySpeed, 10, speed, false, value => { speed = value; ApplyParameters(); });
-            AddSlider(panelObject.transform, "核心伤害", 1, 100, coreDamage, true, value => { coreDamage = (int)value; ApplyParameters(); });
-            AddSlider(panelObject.transform, "出怪间隔", (float)BattleLimits.MinSpawnInterval, 5, interval, false, value => { interval = value; ApplyParameters(); });
-            AddSlider(panelObject.transform, "核心血量", 1, 500, coreHealth, true, value => { coreHealth = (int)value; ApplyParameters(); });
-            AddSlider(panelObject.transform, "塔伤害", 1, 100, towerDamage, true, value => { towerDamage = (int)value; ApplyParameters(); });
-            AddSlider(panelObject.transform, "塔攻击间隔", 0.1f, 5, towerInterval, false, value => { towerInterval = value; ApplyParameters(); });
+            AddText(panelObject.transform, "战斗参数", 20, FontStyle.Bold);
+            var grid = new GameObject("Grid");
+            grid.transform.SetParent(panelObject.transform, false);
+            var gridLayout = grid.AddComponent<VerticalLayoutGroup>();
+            gridLayout.spacing = 2;
+            gridLayout.childControlWidth = true;
+            gridLayout.childControlHeight = true;
+            gridLayout.childForceExpandWidth = true;
+            gridLayout.childForceExpandHeight = false;
+            Transform row = AddRow(grid.transform);
+            AddCell(row, "波数", 1, BattleLimits.MaxWaves, waves, true, value => { waves = (int)value; ApplyParameters(); });
+            AddCell(row, "每波数量", 1, BattleLimits.MaxEnemiesPerWave, perWave, true, value => { perWave = (int)value; ApplyParameters(); });
 
-            spawnText = AddText(panelObject.transform, "入口：0 个", 16);
+            row = AddRow(grid.transform);
+            AddCell(row, "敌人生命", 1, 500, health, true, value => { health = (int)value; ApplyParameters(); });
+            AddCell(row, "敌人速度", (float)BattleLimits.MinEnemySpeed, 10, speed, false, value => { speed = value; ApplyParameters(); });
+
+            row = AddRow(grid.transform);
+            AddCell(row, "核心伤害", 1, 100, coreDamage, true, value => { coreDamage = (int)value; ApplyParameters(); });
+            AddCell(row, "出怪间隔", (float)BattleLimits.MinSpawnInterval, 5, interval, false, value => { interval = value; ApplyParameters(); });
+
+            row = AddRow(grid.transform);
+            AddCell(row, "核心血量", 1, 500, coreHealth, true, value => { coreHealth = (int)value; ApplyParameters(); });
+            AddCell(row, "塔伤害", 1, 100, towerDamage, true, value => { towerDamage = (int)value; ApplyParameters(); });
+
+            row = AddRow(grid.transform);
+            AddCell(row, "塔攻击间隔", 0.1f, 5, towerInterval, false, value => { towerInterval = value; ApplyParameters(); });
+
+            spawnText = AddText(panelObject.transform, "入口：0 个", 15);
             var spawnRow = AddRow(panelObject.transform);
             spawnButton = AddButton(spawnRow, "点棋盘选入口", () => { if (controller != null) controller.SelectSpawns = !controller.SelectSpawns; });
             AddButton(spawnRow, "清空入口", () => { if (controller != null) { controller.ClearSpawns(); controller.SelectSpawns = false; } });
@@ -151,7 +169,7 @@ namespace Brick2Life.Feedback
             });
             AddButton(startRow, "重试", () => { if (controller != null) controller.Restart(); });
 
-            statusText = AddText(panelObject.transform, "选择入口后开始战斗", 15);
+            statusText = AddText(panelObject.transform, "选择入口后开始战斗", 14);
         }
 
         private Text AddText(Transform parent, string content, int size, FontStyle style = FontStyle.Normal)
@@ -162,8 +180,8 @@ namespace Brick2Life.Feedback
             text.font = font; text.fontSize = size; text.fontStyle = style;
             text.text = content; text.color = Color.white; text.alignment = TextAnchor.MiddleLeft;
             text.raycastTarget = false;
-            var layout = item.AddComponent<LayoutElement>();
-            layout.minHeight = size + 8;
+            var element = item.AddComponent<LayoutElement>();
+            element.minHeight = size + 6;
             return text;
         }
 
@@ -172,14 +190,93 @@ namespace Brick2Life.Feedback
             var row = new GameObject("Row");
             row.transform.SetParent(parent, false);
             var layout = row.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 6;
+            layout.spacing = 8;
             layout.childControlWidth = true;
             layout.childForceExpandWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandHeight = false;
-            var element = row.AddComponent<LayoutElement>();
-            element.minHeight = 34;
+            row.AddComponent<LayoutElement>().minHeight = 26;
             return row.transform;
+        }
+
+        // One slider cell: label + slider + value, sized to share a row between two cells.
+        private GameObject AddCell(Transform row, string label, float min, float max, float value, bool whole, Action<float> onChanged)
+        {
+            var cell = new GameObject("Cell_" + label);
+            cell.transform.SetParent(row, false);
+            var cellLayout = cell.AddComponent<HorizontalLayoutGroup>();
+            cellLayout.spacing = 4;
+            cellLayout.childControlWidth = true;
+            cellLayout.childControlHeight = true;
+            cellLayout.childForceExpandWidth = false;
+            cellLayout.childForceExpandHeight = false;
+            cell.AddComponent<LayoutElement>().flexibleWidth = 1;
+
+            var labelText = AddText(cell.transform, label, 13);
+            labelText.rectTransform.sizeDelta = new Vector2(70, 22);
+            var labelElement = labelText.GetComponent<LayoutElement>();
+            labelElement.minWidth = 70; labelElement.preferredWidth = 70;
+
+            var slider = CreateSlider(cell.transform, min, max, value, whole, onChanged);
+            var valueText = AddText(cell.transform, Format(value, whole), 13);
+            valueText.rectTransform.sizeDelta = new Vector2(42, 22);
+            var valueElement = valueText.GetComponent<LayoutElement>();
+            valueElement.minWidth = 42; valueElement.preferredWidth = 42;
+            valueText.alignment = TextAnchor.MiddleRight;
+            slider.onValueChanged.AddListener(current => valueText.text = Format(current, whole));
+            return cell;
+        }
+
+        private Slider CreateSlider(Transform parent, float min, float max, float value, bool whole, Action<float> onChanged)
+        {
+            var sliderObject = new GameObject("Slider");
+            sliderObject.transform.SetParent(parent, false);
+            var sliderElement = sliderObject.AddComponent<LayoutElement>();
+            sliderElement.flexibleWidth = 1; sliderElement.minHeight = 22;
+            var slider = sliderObject.AddComponent<Slider>();
+            slider.minValue = min; slider.maxValue = max; slider.wholeNumbers = whole; slider.value = value;
+            slider.direction = Slider.Direction.LeftToRight;
+
+            var background = new GameObject("Background", typeof(Image));
+            background.transform.SetParent(sliderObject.transform, false);
+            var backgroundImage = background.GetComponent<Image>();
+            backgroundImage.color = new Color(0.38f, 0.43f, 0.5f, 1f);
+            var backgroundRect = backgroundImage.rectTransform;
+            backgroundRect.anchorMin = new Vector2(0, 0.32f);
+            backgroundRect.anchorMax = new Vector2(1, 0.68f);
+            backgroundRect.offsetMin = Vector2.zero; backgroundRect.offsetMax = Vector2.zero;
+
+            var fillArea = new GameObject("Fill Area");
+            fillArea.transform.SetParent(sliderObject.transform, false);
+            var fillAreaRect = fillArea.AddComponent<RectTransform>();
+            fillAreaRect.anchorMin = new Vector2(0, 0.32f);
+            fillAreaRect.anchorMax = new Vector2(1, 0.68f);
+            fillAreaRect.offsetMin = new Vector2(2, 0); fillAreaRect.offsetMax = new Vector2(-2, 0);
+            var fill = new GameObject("Fill", typeof(Image));
+            fill.transform.SetParent(fillArea.transform, false);
+            var fillImage = fill.GetComponent<Image>();
+            fillImage.color = new Color(0.35f, 0.72f, 0.95f, 1f);
+            var fillRect = fillImage.rectTransform;
+            fillRect.anchorMin = Vector2.zero; fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero; fillRect.offsetMax = Vector2.zero;
+
+            var handleArea = new GameObject("Handle Slide Area");
+            handleArea.transform.SetParent(sliderObject.transform, false);
+            var handleAreaRect = handleArea.AddComponent<RectTransform>();
+            handleAreaRect.anchorMin = Vector2.zero; handleAreaRect.anchorMax = Vector2.one;
+            handleAreaRect.offsetMin = Vector2.zero; handleAreaRect.offsetMax = Vector2.zero;
+            var handle = new GameObject("Handle", typeof(Image));
+            handle.transform.SetParent(handleArea.transform, false);
+            var handleImage = handle.GetComponent<Image>();
+            handleImage.color = new Color(0.92f, 0.95f, 1f, 1f);
+            var handleRect = handleImage.rectTransform;
+            handleRect.sizeDelta = new Vector2(10, 0);
+
+            slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
+            slider.targetGraphic = handleImage;
+            slider.onValueChanged.AddListener(current => onChanged(current));
+            return slider;
         }
 
         private Button AddButton(Transform parent, string label, Action onClick)
@@ -190,47 +287,15 @@ namespace Brick2Life.Feedback
             image.color = new Color(0.22f, 0.28f, 0.36f, 1f);
             var button = item.AddComponent<Button>();
             button.targetGraphic = image;
+            item.AddComponent<LayoutElement>().minHeight = 26;
             button.onClick.AddListener(() => { onClick(); if (controller != null) Refresh(controller); });
-            var text = AddText(item.transform, label, 15);
+            var text = AddText(item.transform, label, 14);
             text.alignment = TextAnchor.MiddleCenter;
             var rect = text.rectTransform;
             rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
             rect.sizeDelta = Vector2.zero; rect.anchoredPosition = Vector2.zero;
+            text.GetComponent<LayoutElement>().minHeight = 24;
             return button;
-        }
-
-        private void AddSlider(Transform parent, string label, float min, float max, float value, bool whole, Action<float> onChanged)
-        {
-            var row = new GameObject("Slider_" + label);
-            row.transform.SetParent(parent, false);
-            var layout = row.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 6;
-            layout.childControlWidth = true;
-            layout.childForceExpandWidth = false;
-            layout.childControlHeight = true;
-            layout.childForceExpandHeight = false;
-            row.AddComponent<LayoutElement>().minHeight = 26;
-
-            var labelText = AddText(row.transform, label, 14);
-            labelText.rectTransform.sizeDelta = new Vector2(88, 24);
-            labelText.GetComponent<LayoutElement>().minWidth = 88;
-            labelText.GetComponent<LayoutElement>().preferredWidth = 88;
-
-            var sliderObject = new GameObject("Slider");
-            sliderObject.transform.SetParent(row.transform, false);
-            var slider = sliderObject.AddComponent<Slider>();
-            slider.minValue = min; slider.maxValue = max; slider.wholeNumbers = whole; slider.value = value;
-            sliderObject.AddComponent<LayoutElement>().flexibleWidth = 1;
-
-            var valueText = AddText(row.transform, Format(value, whole), 14);
-            valueText.rectTransform.sizeDelta = new Vector2(64, 24);
-            valueText.GetComponent<LayoutElement>().minWidth = 64;
-            valueText.alignment = TextAnchor.MiddleRight;
-            slider.onValueChanged.AddListener(current =>
-            {
-                valueText.text = Format(current, whole);
-                onChanged(current);
-            });
         }
 
         private static string Format(float value, bool whole) => whole ? ((int)value).ToString() : value.ToString("0.0#");
