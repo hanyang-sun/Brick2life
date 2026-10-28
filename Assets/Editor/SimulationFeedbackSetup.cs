@@ -150,12 +150,18 @@ namespace Brick2Life.Editor
             serialized.FindProperty("projection").objectReferenceValue = projector;
             SerializedProperty rules = serialized.FindProperty("rules");
             rules.arraySize = paletteColors.Length;
+            bool hasCore = false;
             for (int i = 0; i < paletteColors.Length; i++)
             {
+                GameRole role = RoleFor(paletteColors[i]);
+                if (role == GameRole.Core) hasCore = true;
                 SerializedProperty entry = rules.GetArrayElementAtIndex(i);
                 entry.FindPropertyRelative("colorId").stringValue = paletteColors[i];
-                entry.FindPropertyRelative("role").enumValueIndex = (int)RoleFor(i);
+                entry.FindPropertyRelative("role").enumValueIndex = (int)role;
             }
+            // A level needs exactly one core; if the palette has no known core color, promote the first entry.
+            if (!hasCore && paletteColors.Length > 0)
+                rules.GetArrayElementAtIndex(0).FindPropertyRelative("role").enumValueIndex = (int)GameRole.Core;
             serialized.ApplyModifiedProperties();
         }
 
@@ -174,12 +180,17 @@ namespace Brick2Life.Editor
             return colors.Where(color => !string.IsNullOrWhiteSpace(color)).ToArray();
         }
 
-        // Deterministic default mapping: the first palette entry is the core, then wall, tower, wall, ...
-        private static GameRole RoleFor(int index)
+        // Default semantics follow the task book example: blue is the core, red is a tower, green/yellow are walls.
+        private static GameRole RoleFor(string colorId)
         {
-            if (index == 0) return GameRole.Core;
-            if (index == 2) return GameRole.Tower;
-            return GameRole.Wall;
+            switch ((colorId ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "blue": return GameRole.Core;
+                case "red": return GameRole.Tower;
+                case "green": return GameRole.Wall;
+                case "yellow": return GameRole.Wall;
+                default: return GameRole.Wall;
+            }
         }
 
         private static Camera CameraByName(string name)

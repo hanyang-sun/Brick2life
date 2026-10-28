@@ -10,9 +10,11 @@ namespace Brick2Life.Vision
     {
         private const double MinimumBrightness = 0.045;
         private const double EmptySaturation = 0.16;
-        private const double MaximumHueDistance = 20.0 * Math.PI / 180.0;
-        private const double MinimumHueMargin = 8.0 * Math.PI / 180.0;
-        private const double DecisionFraction = 0.62;
+        // Normalized-RGB distance: a bright or shadowed top keeps its chromaticity, while hue alone drifts
+        // toward blue for shaded red under this ambient light.
+        private const double MaximumColorDistance = 0.35;
+        private const double MinimumColorMargin = 0.12;
+        private const double DecisionFraction = 0.58;
 
         public static FrameObservation Recognize(BoardDefinition definition, RgbImage image, CameraProjection camera,
             VisionCalibration calibration, string frameId, string sessionId, long sequence, DateTimeOffset capturedAtUtc)
@@ -47,7 +49,7 @@ namespace Brick2Life.Vision
             for (int i = 0; i < palette.Length; i++)
             {
                 ColorSwatch swatch = calibration.Colors[i];
-                palette[i] = new Swatch(swatch.Id, Hue(swatch.Value.R / 255.0, swatch.Value.G / 255.0, swatch.Value.B / 255.0));
+                palette[i] = Swatch.FromRgb(swatch.Id, swatch.Value.R / 255.0, swatch.Value.G / 255.0, swatch.Value.B / 255.0);
             }
 
             var cells = new ObservedCell[definition.CellCount];
@@ -100,30 +102,19 @@ namespace Brick2Life.Vision
             double min = Math.Min(red, Math.Min(green, blue));
             if (brightness < MinimumBrightness) return -2;
             if (brightness <= 0 || (brightness - min) / brightness < EmptySaturation) return -1;
-            double hue = Hue(red, green, blue);
+            // Chromaticity only: dividing by the brightest channel removes white-light scaling.
+            double nr = red / brightness, ng = green / brightness, nb = blue / brightness;
             int best = -1, second = -1;
             double bestDistance = double.MaxValue, secondDistance = double.MaxValue;
             for (int i = 0; i < palette.Length; i++)
             {
-                double distance = HueDistance(hue, palette[i].Hue);
+                double distance = palette[i].Distance(nr, ng, nb);
                 if (distance < bestDistance) { secondDistance = bestDistance; second = best; bestDistance = distance; best = i; }
                 else if (distance < secondDistance) { secondDistance = distance; second = i; }
             }
-            if (best < 0 || bestDistance > MaximumHueDistance) return -2;
-            if (second >= 0 && secondDistance - bestDistance < MinimumHueMargin) return -2;
+            if (best < 0 || bestDistance > MaximumColorDistance) return -2;
+            if (second >= 0 && secondDistance - bestDistance < MinimumColorMargin) return -2;
             return best;
-        }
-
-        // White-light scaling keeps hue, so a bright or shadowed top still matches its palette color.
-        private static double Hue(double red, double green, double blue)
-        {
-            return Math.Atan2(Math.Sqrt(3) * (green - blue), 2 * red - green - blue);
-        }
-
-        private static double HueDistance(double first, double second)
-        {
-            double difference = Math.Abs(first - second);
-            return difference > Math.PI ? 2 * Math.PI - difference : difference;
         }
 
         private static FrameObservation Reject(BoardDefinition definition, VisionCalibration calibration, string frameId,
@@ -135,8 +126,22 @@ namespace Brick2Life.Vision
         private sealed class Swatch
         {
             public readonly string Id;
-            public readonly double Hue;
-            public Swatch(string id, double hue) { Id = id; Hue = hue; }
+            private readonly double red, green, blue;
+            private Swatch(string id, double red, double green, double blue)
+            {
+                Id = id; this.red = red; this.green = green; this.blue = blue;
+            }
+            public static Swatch FromRgb(string id, double red, double green, double blue)
+            {
+                double max = Math.Max(red, Math.Max(green, blue));
+                if (max <= 0) return new Swatch(id, 0, 0, 0);
+                return new Swatch(id, red / max, green / max, blue / max);
+            }
+            public double Distance(double r, double g, double b)
+            {
+                double dr = r - red, dg = g - green, db = b - blue;
+                return Math.Sqrt(dr * dr + dg * dg + db * db);
+            }
         }
     }
 }
