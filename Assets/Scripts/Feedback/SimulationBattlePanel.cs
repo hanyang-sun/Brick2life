@@ -21,6 +21,7 @@ namespace Brick2Life.Feedback
         private Button pauseButton;
         private Button nextButton;
         private Button spawnButton;
+        private Button clearSpawnButton;
         private int waves = 3, perWave = 8, health = 24, coreDamage = 10;
         private float speed = 1.4f, interval = 1.1f;
         private int coreHealth = 100, towerDamage = 12;
@@ -80,6 +81,7 @@ namespace Brick2Life.Feedback
                 if (label != null) label.text = source.SelectSpawns ? "选入口（开）" : "点棋盘选入口";
                 spawnButton.interactable = !source.Running;
             }
+            if (clearSpawnButton != null) clearSpawnButton.interactable = !source.Running;
         }
 
         private void SyncFromController()
@@ -164,7 +166,7 @@ namespace Brick2Life.Feedback
             spawnText = AddText(panelObject.transform, "入口：0 个", 15);
             var spawnRow = AddRow(panelObject.transform);
             spawnButton = AddButton(spawnRow, "点棋盘选入口", () => { if (controller != null) controller.SelectSpawns = !controller.SelectSpawns; });
-            AddButton(spawnRow, "清空入口", () => { if (controller != null) { controller.ClearSpawns(); controller.SelectSpawns = false; } });
+            clearSpawnButton = AddButton(spawnRow, "清空入口", () => { if (controller != null) { controller.ClearSpawns(); controller.SelectSpawns = false; } });
 
             var startRow = AddRow(panelObject.transform);
             AddButton(startRow, "开始", () => { if (controller != null) controller.StartBattle(); });

@@ -25,6 +25,15 @@ namespace Brick2Life.Simulation
         public int Version => RequireLayout().Version;
         public BoardDefinition Definition => RequireLayout().Definition;
         public bool IsInitialized => layout != null;
+        public bool IsEditingLocked { get; private set; }
+        public event Action<bool> EditingLockChanged;
+
+        public void SetEditingLocked(bool locked)
+        {
+            if (IsEditingLocked == locked) return;
+            IsEditingLocked = locked;
+            EditingLockChanged?.Invoke(locked);
+        }
 
         private void Awake()
         {
@@ -70,6 +79,7 @@ namespace Brick2Life.Simulation
         // Validate and prepare the complete view before replacing the live model. Local versions remain monotonic.
         public void ReplaceLayout(BoardSnapshot snapshot)
         {
+            if (IsEditingLocked) throw new InvalidOperationException("战斗中布局已锁定，请结束本局或重试后再编辑。");
             var current = RequireLayout();
             if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
             if (!current.Definition.IsCompatible(snapshot.Definition)) throw new ArgumentException("Incompatible board definition.", nameof(snapshot));
@@ -105,9 +115,10 @@ namespace Brick2Life.Simulation
 
         public bool TryAdd(int x, int y, string colorId, out BoardLayout.Brick added)
         {
+            added = null;
+            if (IsEditingLocked) return false;
             var model = RequireLayout();
             int index = Array.FindIndex(palette, entry => entry.colorId == colorId);
-            added = null;
             if (index < 0 || !model.CanPlace(x, y)) return false;
             GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
             try
@@ -124,12 +135,14 @@ namespace Brick2Life.Simulation
         }
         public bool TryDelete(string id)
         {
+            if (IsEditingLocked) return false;
             if (id == null || !objects.TryGetValue(id, out GameObject instance) || !RequireLayout().TryDelete(id)) return false;
             objects.Remove(id); instance.SetActive(false); Destroy(instance);
             return true;
         }
         public bool TryMove(string id, int x, int y)
         {
+            if (IsEditingLocked) return false;
             if (!RequireLayout().TryMove(id, x, y)) return false;
             objects[id].transform.position = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
             return true;

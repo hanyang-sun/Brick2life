@@ -24,10 +24,10 @@ namespace Brick2Life.Feedback
         [SerializeField] private bool autoStep = true;
 
         private readonly List<GridPoint> spawns = new List<GridPoint>();
-        private LevelState frozenLevel;
         private BattleState lastState;
         private bool selectSpawns;
         private GameObject visionCanvas;
+        private SimulationBoardSession editingLockedBoard;
 
         public WavePlan WavePlan { get; set; } = WavePlan.Trial;
         public TowerSettings TowerSettings { get; set; } = TowerSettings.Trial;
@@ -46,6 +46,8 @@ namespace Brick2Life.Feedback
             get => selectSpawns;
             set
             {
+                if (!SimulationEditAccess.CanEdit) return;
+                if (value && Running) { LastMessage = "战斗中不能更换出生点。"; return; }
                 selectSpawns = value;
                 if (value && brickEditor == null) brickEditor = FindFirstObjectByType<SimulationBrickEditor>();
                 if (brickEditor != null) brickEditor.enabled = !value;
@@ -82,7 +84,7 @@ namespace Brick2Life.Feedback
 
         public bool AddSpawn(GridPoint cell)
         {
-            if (Running) return false;
+            if (Running || !SimulationEditAccess.CanEdit) return false;
             LevelState level = CurrentLevel();
             if (level == null) { LastMessage = "还没有确认的关卡，等识别面板出结果后再选入口。"; return false; }
             if (!level.Definition.Contains(cell.X, cell.Y)) { LastMessage = "点击位置不在棋盘内。"; return false; }
@@ -90,6 +92,8 @@ namespace Brick2Life.Feedback
             foreach (GridPoint existing in spawns)
                 if (existing.Equals(cell)) { LastMessage = "该入口已存在。"; return false; }
             spawns.Add(cell);
+            Level = null;
+            if (view != null) view.ClearRoutes();
             LastMessage = "已选 " + spawns.Count + " 个入口：" + DescribeSpawns();
             PublishSpawns();
             return true;
@@ -108,16 +112,20 @@ namespace Brick2Life.Feedback
 
         public void ClearSpawns()
         {
-            if (Running) return;
+            if (Running || !SimulationEditAccess.CanEdit) return;
             spawns.Clear();
+            Level = null;
+            if (view != null) view.ClearRoutes();
             LastMessage = "已清空入口。";
             PublishSpawns();
         }
 
         public bool Build()
         {
+            if (Running) { LastMessage = "战斗中不能重新生成地图，请先重试结束本局。"; return false; }
+            if (view != null) view.ClearRoutes();
             LevelState level = CurrentLevel();
-            if (level == null) { LastMessage = "还没有确认的关卡。"; return false; }
+            if (level == null) { Level = null; LastMessage = "还没有确认的关卡。"; return false; }
             BattleLevel candidate = BattleLevel.Build(level, spawns);
             Level = candidate;
             if (!candidate.IsValid)
@@ -125,7 +133,6 @@ namespace Brick2Life.Feedback
                 LastMessage = candidate.Issues[0].Message;
                 return false;
             }
-            frozenLevel = level;
             LastMessage = "入口 " + candidate.Routes.Count + " 条通路，可以开始。";
             return true;
         }
@@ -133,7 +140,9 @@ namespace Brick2Life.Feedback
         public bool StartBattle()
         {
             if (Running) return false;
-            if (Level == null || !Level.IsValid) { if (!Build()) return false; }
+            // Every new battle captures the latest confirmed layout and current entrances.
+            // The resulting BattleLevel stays fixed throughout that battle, including wave intervals.
+            if (!Build()) return false;
             IReadOnlyList<BattleIssue> issues = BattleValidation.Check(Level, WavePlan, TowerSettings);
             if (issues.Count != 0) { LastMessage = issues[0].Message; return false; }
             Battle = new BattleSimulation(Level, WavePlan, TowerSettings);
@@ -167,9 +176,10 @@ namespace Brick2Life.Feedback
             if (Battle == null) return false;
             Battle.Restart();
             Battle = null;
+            Level = null;
             lastState = null;
             if (view != null) { view.ClearEnemies(); view.ClearRoutes(); }
-            LastMessage = "已重置：入口仍在，可改参数后点开始";
+            LastMessage = "已重置：入口保留，可调整积木和参数后开始";
             PublishSpawns();
             Publish();
             return true;
@@ -184,7 +194,6 @@ namespace Brick2Life.Feedback
 
         private LevelState CurrentLevel()
         {
-            if (frozenLevel != null) return frozenLevel;
             if (adapter == null || adapter.Feedback == null) return null;
             return adapter.Feedback.Level;
         }
@@ -205,6 +214,7 @@ namespace Brick2Life.Feedback
 
         private void Publish()
         {
+            SyncEditingLock();
             lastState = Battle != null ? Battle.State : null;
             if (view != null && Battle != null) view.Render(Battle.State, Level);
             if (panel != null) panel.Refresh(this);
@@ -212,5 +222,23 @@ namespace Brick2Life.Feedback
             if (Battle.State.Phase == BattlePhase.Victory) LastMessage = "胜利：核心守住 " + Battle.State.CoreHealth;
             else if (Battle.State.Phase == BattlePhase.Defeat) LastMessage = "失败：核心被击破";
         }
+
+        private void SyncEditingLock()
+        {
+            if (!Running) { ReleaseEditingLock(); return; }
+            if (editingLockedBoard != null) return;
+            // This reference locks edits only; it never supplies recognition/gameplay truth.
+            if (brickEditor == null) brickEditor = FindFirstObjectByType<SimulationBrickEditor>();
+            editingLockedBoard = brickEditor != null ? brickEditor.Board : FindFirstObjectByType<SimulationBoardSession>();
+            if (editingLockedBoard != null) editingLockedBoard.SetEditingLocked(true);
+        }
+
+        private void ReleaseEditingLock()
+        {
+            if (editingLockedBoard != null) editingLockedBoard.SetEditingLocked(false);
+            editingLockedBoard = null;
+        }
+
+        private void OnDestroy() => ReleaseEditingLock();
     }
 }

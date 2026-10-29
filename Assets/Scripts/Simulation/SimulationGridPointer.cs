@@ -51,7 +51,7 @@ namespace Brick2Life.Simulation
                 else ClearHover();
                 return;
             }
-            if (!UnityApplication.isFocused || !Input.mousePresent ||
+            if (!SimulationEditAccess.CanEdit || !UnityApplication.isFocused || !Input.mousePresent ||
                 !TryPickCell(Input.mousePosition, out Vector2Int cell, out float surfaceHeight))
             {
                 ClearHover();
@@ -96,6 +96,7 @@ namespace Brick2Life.Simulation
 
         private bool CanPick(Vector2 position)
         {
+            if (!SimulationEditAccess.CanEdit) return false;
             if (workspaceCamera == null || !workspaceCamera.pixelRect.Contains(position)) return false;
             EventSystem current = EventSystem.current;
             if (current == null) return true;

@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Brick2Life.Application;
 using Brick2Life.Core;
+using Brick2Life.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -43,6 +44,7 @@ namespace Brick2Life.Feedback
         private SimulationLevelAdapter adapter;
         private long frameCounter;
         private int sampleIndex;
+        private SimulationBattleController battle;
 
         public bool IsBound => session != null && adapter != null;
         public int SampleIndex => sampleIndex;
@@ -57,20 +59,20 @@ namespace Brick2Life.Feedback
 
         public void NextSample()
         {
-            if (!IsBound) return;
+            if (!CanChangeLayout()) return;
             sampleIndex = (sampleIndex + 1) % Samples.Length;
             Submit(Samples[sampleIndex], "样例 " + (sampleIndex + 1) + "/" + Samples.Length);
         }
 
         public void SubmitEmpty()
         {
-            if (!IsBound) return;
+            if (!CanChangeLayout()) return;
             Submit(Array.Empty<(int x, int y, GameRole role)>(), "空布局");
         }
 
         public void SubmitCurrentSample()
         {
-            if (!IsBound) return;
+            if (!CanChangeLayout()) return;
             Submit(Samples[sampleIndex], "样例 " + (sampleIndex + 1) + "/" + Samples.Length);
         }
 
@@ -85,6 +87,13 @@ namespace Brick2Life.Feedback
             if (statusLabel != null) statusLabel.text = message;
         }
 
+        private bool CanChangeLayout()
+        {
+            if (!IsBound || !SimulationEditAccess.CanEdit) return false;
+            if (battle == null) battle = FindFirstObjectByType<SimulationBattleController>();
+            return battle == null || !battle.Running;
+        }
+
         private void Update()
         {
             if (!keyboardDemo || !IsBound) return;
@@ -95,6 +104,7 @@ namespace Brick2Life.Feedback
 
         private void Submit((int x, int y, GameRole role)[] layout, string label)
         {
+            if (!CanChangeLayout()) return;
             BoardDefinition definition = session.Definition;
             var cells = new ObservedCell[definition.CellCount];
             for (int i = 0; i < cells.Length; i++) cells[i] = new ObservedCell(BoardCell.Empty);
