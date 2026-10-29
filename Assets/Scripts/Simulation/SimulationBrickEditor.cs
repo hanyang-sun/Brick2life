@@ -23,25 +23,33 @@ namespace Brick2Life.Simulation
         private Tool tool;
         private int colorIndex;
         private string draggedId;
-        private bool locked;
+        private bool manualLock;
 
-        /// <summary>Battle and read-only display modes lock every edit path: mouse, tool buttons, colors and clearing.</summary>
+        /// <summary>Manual lock plus the shared gate (battle or read-only display mode).</summary>
         public bool Locked
         {
-            get => locked;
+            get => manualLock || BrickEditGate.Locked;
             set
             {
-                if (locked == value) return;
-                locked = value;
-                if (value) CancelDrag();
-                RefreshInteractable();
-                if (statusLabel != null)
-                    statusLabel.text = value ? "已锁定：战斗或展示模式下不能修改积木。" : "已解锁，可以继续编辑积木。";
+                if (manualLock == value) return;
+                manualLock = value;
+                ApplyLockState();
             }
         }
 
+        private void ApplyLockState()
+        {
+            if (Locked) CancelDrag();
+            RefreshInteractable();
+            if (statusLabel != null)
+                statusLabel.text = Locked ? "已锁定：战斗或展示模式下不能修改积木。" : "已解锁，可以继续编辑积木。";
+        }
+
+        private void OnEnable() => BrickEditGate.Changed += ApplyLockState;
+
         private void RefreshInteractable()
         {
+            bool locked = Locked;
             if (toolButtons != null)
                 foreach (Button button in toolButtons) if (button != null) button.interactable = !locked;
             if (colorButtons != null)
@@ -93,7 +101,7 @@ namespace Brick2Life.Simulation
         public void SelectTool(int index)
         {
             if (index < 0 || index >= 3 || board == null || !board.IsInitialized) return;
-            if (locked) { statusLabel.text = "战斗中不能切换积木编辑工具。"; return; }
+            if (Locked) { statusLabel.text = "战斗中不能切换积木编辑工具。"; return; }
             CancelDrag();
             tool = (Tool)index;
             RefreshButtons();
@@ -104,7 +112,7 @@ namespace Brick2Life.Simulation
         public void SelectColor(int index)
         {
             if (board == null || !board.IsInitialized || index < 0 || index >= palette.Count) return;
-            if (locked) { statusLabel.text = "战斗中不能更改积木颜色。"; return; }
+            if (Locked) { statusLabel.text = "战斗中不能更改积木颜色。"; return; }
             colorIndex = index;
             SelectTool((int)Tool.Add);
         }
@@ -112,7 +120,7 @@ namespace Brick2Life.Simulation
         public void ClearBoard()
         {
             if (board == null || !board.IsInitialized) return;
-            if (locked) { statusLabel.text = "战斗中不能清空积木。"; return; }
+            if (Locked) { statusLabel.text = "战斗中不能清空积木。"; return; }
             SelectTool((int)Tool.Add);
             int count = board.Bricks.Count;
             for (int i = count - 1; i >= 0; i--)
@@ -136,7 +144,7 @@ namespace Brick2Life.Simulation
 
         private void Update()
         {
-            if (locked)
+            if (Locked)
             {
                 if (draggedId != null) CancelDrag();
                 return;
@@ -155,7 +163,7 @@ namespace Brick2Life.Simulation
 
         private void HandlePointerDown(Vector2 position)
         {
-            if (locked) return;
+            if (Locked) return;
             if (!pointer.TryPickCell(position, out Vector2Int cell, out _)) return;
             BoardLayout.Brick brick = board.At(cell.x, cell.y);
             if (tool == Tool.Add)
@@ -213,7 +221,11 @@ namespace Brick2Life.Simulation
             if (wasDragging && statusLabel != null) statusLabel.text = "移动已取消，积木保持原位。";
         }
 
-        private void OnDisable() => CancelDrag();
+        private void OnDisable()
+        {
+            BrickEditGate.Changed -= ApplyLockState;
+            CancelDrag();
+        }
         private void OnApplicationFocus(bool focused) { if (!focused) CancelDrag(); }
     }
 }

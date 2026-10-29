@@ -20,6 +20,8 @@ namespace Brick2Life.Editor
         private const int ProjectionLayerIndex = 31;
         private const string GameLayerName = "Brick2LifeGame";
         private const string ProjectionLayerName = "Brick2LifeProjection";
+        private const string StageLayerName = "Brick2LifeStage";
+        private const int StageLayerIndex = 28;
 
         // Opens the simulation scene from the menu or from a command line launch without entering play mode.
         [MenuItem("Brick2Life/Simulation/Open simulation scene")]
@@ -101,6 +103,7 @@ namespace Brick2Life.Editor
 
             ApplyCameraMasks(topCamera, workspaceCamera);
             EnsureBattleRig(root, adapter);
+            EnsureDisplayRig(root, adapter, workspaceCamera);
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("任务 C 反馈已安装：" + RootName + "（关卡视图、投影、适配器、人工目标演示）；" +
                 "顶置相机排除 " + GameLayerName + "、包含 " + ProjectionLayerName + "。", root);
@@ -122,6 +125,21 @@ namespace Brick2Life.Editor
                 ((workspaceCamera.cullingMask & (1 << game)) != 0 && (workspaceCamera.cullingMask & (1 << projection)) != 0);
             Debug.Log("任务 C 分层检查：顶置相机排除游戏层=" + topExcludesGame + "，包含投影层=" + topIncludesProjection +
                 "，操作相机包含两层=" + workspaceIncludesBoth + "；顶置相机掩码=" + topCamera.cullingMask);
+        }
+
+        // Display modes: the showcase views read the same confirmed level, they never edit it.
+        private static void EnsureDisplayRig(GameObject root, SimulationLevelAdapter adapter, Camera workspaceCamera)
+        {
+            EnsureLayer(StageLayerIndex, StageLayerName);
+            SimulationDisplayController display = EnsureComponent<SimulationDisplayController>(root);
+            var serialized = new SerializedObject(display);
+            serialized.FindProperty("projection").objectReferenceValue = FindFirst<ProjectionSimulator>();
+            serialized.FindProperty("adapter").objectReferenceValue = adapter;
+            serialized.FindProperty("editor").objectReferenceValue = FindFirst<SimulationBrickEditor>();
+            serialized.FindProperty("workspaceCamera").objectReferenceValue = workspaceCamera;
+            serialized.FindProperty("stageLayerName").stringValue = StageLayerName;
+            serialized.ApplyModifiedProperties();
+            Debug.Log("展示模式已安装：原始布局 / 积木+投影 / 仅投影（层 " + StageLayerName + "）。", root);
         }
 
         // Battle rig: controller and view on a child object, the parameter panel on its own canvas object.

@@ -21,7 +21,16 @@ namespace Brick2Life.Simulation
         private BoardLayout layout;
         private IReadOnlyList<PaletteEntry> readOnlyPalette = Array.Empty<PaletteEntry>();
         public IReadOnlyList<PaletteEntry> Palette => readOnlyPalette;
+        public const string StageLayerName = "Brick2LifeStage";
         public IReadOnlyList<BoardLayout.Brick> Bricks => RequireLayout().Bricks;
+        public Transform BricksRoot => bricksRoot;
+
+        // Display modes hide the stage by layer, so every brick must live on the stage layer.
+        private static void ApplyStageLayer(GameObject instance)
+        {
+            int layer = LayerMask.NameToLayer(StageLayerName);
+            if (layer >= 0) instance.layer = layer;
+        }
         public int Version => RequireLayout().Version;
         public BoardDefinition Definition => RequireLayout().Definition;
         public bool IsInitialized => layout != null;
@@ -87,6 +96,7 @@ namespace Brick2Life.Simulation
                     prepared.Add(brick.BrickId, instance);
                     instance.SetActive(false);
                     instance.name = "Brick_" + brick.ColorId;
+                    ApplyStageLayer(instance);
                     instance.transform.SetParent(bricksRoot, false);
                     instance.transform.position = new Vector3(brick.GridX + 0.5f, 0.5f, brick.GridY + 0.5f);
                     instance.GetComponent<Renderer>().sharedMaterial = palette[index].material;
@@ -113,6 +123,7 @@ namespace Brick2Life.Simulation
             try
             {
                 instance.name = "Brick_" + colorId;
+                ApplyStageLayer(instance);
                 instance.transform.SetParent(bricksRoot, false);
                 instance.transform.position = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
                 instance.GetComponent<Renderer>().sharedMaterial = palette[index].material;

@@ -193,8 +193,7 @@ namespace Brick2Life.Feedback
         {
             if (editingLocked == value) return;
             editingLocked = value;
-            if (brickEditor == null) brickEditor = FindFirstObjectByType<SimulationBrickEditor>();
-            if (brickEditor != null) brickEditor.Locked = value;
+            BrickEditGate.SetBattle(value);
         }
 
         public bool StartNextWave()

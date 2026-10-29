@@ -95,13 +95,14 @@ namespace Brick2Life.Application
         public IReadOnlyList<ProjectionMark> Marks { get; }
         public bool Truncated { get; }
         public string Summary { get; }
+        public float ChangeFadeSeconds { get; }
 
         internal ProjectionPlan(BoardDefinition definition, long levelVersion, List<ProjectionMark> marks,
-            bool truncated, string summary)
+            bool truncated, string summary, float changeFadeSeconds)
         {
             Definition = definition; LevelVersion = levelVersion;
             Marks = new ReadOnlyCollection<ProjectionMark>(marks);
-            Truncated = truncated; Summary = summary;
+            Truncated = truncated; Summary = summary; ChangeFadeSeconds = changeFadeSeconds;
         }
 
         public int Count(ProjectionMarkKind kind)
@@ -184,7 +185,7 @@ namespace Brick2Life.Application
 
             string summary = $"格点 {CountOf(marks, ProjectionMarkKind.GridPoint)} · 高亮 {CountOf(marks, ProjectionMarkKind.RoleHighlight)}" +
                 $" · 变更 {CountOf(marks, ProjectionMarkKind.ChangeHighlight)}" + (truncated ? "（已截断）" : "");
-            return new ProjectionPlan(level.Definition, level.SourceVersion, marks, truncated, summary);
+            return new ProjectionPlan(level.Definition, level.SourceVersion, marks, truncated, summary, settings.ChangeFadeSeconds);
         }
 
         private static float Center(int cell, float size) => cell + (1 - size) * 0.5f;

@@ -3367,6 +3367,7 @@ GameObject:
   - component: {fileID: 1480744934}
   - component: {fileID: 1480744933}
   - component: {fileID: 1480744932}
+  - component: {fileID: 1480744938}
   m_Layer: 0
   m_Name: SimulationFeedback
   m_TagString: Untagged
@@ -3504,6 +3505,26 @@ Transform:
   - {fileID: 864833549}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1480744938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1480744931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5de89b4f8a24cdc84793c5ab2111ced, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationDisplayController
+  projection: {fileID: 1480744935}
+  adapter: {fileID: 1480744934}
+  editor: {fileID: 54039464}
+  workspaceCamera: {fileID: 1087626022}
+  stageObjectName: Board
+  stageLayerName: Brick2LifeStage
+  gameLayer: 30
+  buildToolbar: 1
 --- !u!1 &1483085154
 GameObject:
   m_ObjectHideFlags: 0
@@ -4275,6 +4296,8 @@ MonoBehaviour:
   view: {fileID: 1730692416}
   panel: {fileID: 864833550}
   pointer: {fileID: 54039463}
+  brickEditor: {fileID: 0}
+  board: {fileID: 0}
   autoStep: 1
 --- !u!114 &1730692416
 MonoBehaviour:
