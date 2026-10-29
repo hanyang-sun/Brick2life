@@ -38,6 +38,7 @@ namespace Brick2Life.Feedback
         public BattleLevel Level { get; private set; }
         public BattleSimulation Battle { get; private set; }
         public BattleState State => Battle != null ? Battle.State : lastState;
+        public IReadOnlyList<ShotEvent> LastShots { get; private set; } = Array.Empty<ShotEvent>();
         public bool Running => Battle != null && !Battle.State.Finished && Battle.State.Phase != BattlePhase.Ready;
         public string LastMessage { get; private set; } = "先点“点棋盘选入口”，再点棋盘上的空格";
         public SimulationBattlePanel Panel => panel;
@@ -232,7 +233,7 @@ namespace Brick2Life.Feedback
         public void StepManual(float seconds)
         {
             if (Battle == null) return;
-            Battle.Step(seconds);
+            LastShots = Battle.Step(seconds);
             Publish();
         }
 
@@ -264,7 +265,7 @@ namespace Brick2Life.Feedback
                 else LastMessage = "这里不是棋盘空格：请点棋盘上的空位（有积木的格子不能当入口）。";
             }
             if (!autoStep || Battle == null) return;
-            Battle.Step(Time.deltaTime);
+            LastShots = Battle.Step(Time.deltaTime);
             Publish();
         }
 
