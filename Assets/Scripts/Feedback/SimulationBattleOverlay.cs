@@ -40,9 +40,15 @@ namespace Brick2Life.Feedback
         private readonly List<Fx> effects = new List<Fx>();
         private readonly List<GameObject> arrows = new List<GameObject>();
         private readonly List<GameObject> rangeRings = new List<GameObject>();
+        private readonly List<GameObject> towerArrows = new List<GameObject>();
+        private readonly List<Vector2> towerAim = new List<Vector2>();
+        private readonly List<string> towerIds = new List<string>();
+        private readonly List<Vector2> towerPositions = new List<Vector2>();
+        private int arrowLevelHash;
         private Material arrowMaterial, ringMaterial;
         public int ActiveArrowCount { get { int c = 0; foreach (GameObject a in arrows) if (a != null && a.activeSelf) c++; return c; } }
         public int ActiveRangeRingCount { get { int c = 0; foreach (GameObject r in rangeRings) if (r != null && r.activeSelf) c++; return c; } }
+        public int ActiveTowerArrowCount { get { int c = 0; foreach (GameObject a in towerArrows) if (a != null && a.activeSelf) c++; return c; } }
         public int ActiveEffectCount => effects.Count;
         private int projectionLayer;
         private int lastCoreHealth = -1;
@@ -65,6 +71,7 @@ namespace Brick2Life.Feedback
             foreach (Fx fx in effects) if (fx.Quad != null) Destroy(fx.Quad);
             foreach (GameObject arrow in arrows) if (arrow != null) Destroy(arrow);
             foreach (GameObject ring in rangeRings) if (ring != null) Destroy(ring);
+            foreach (GameObject arrow in towerArrows) if (arrow != null) Destroy(arrow);
             if (arrowMaterial != null) Destroy(arrowMaterial);
             if (ringMaterial != null) Destroy(ringMaterial);
         }
@@ -77,6 +84,7 @@ namespace Brick2Life.Feedback
             BattleState state = controller.State;
             SyncRoutes();
             SyncRangeRings();
+            SyncTowerArrows(state);
             HandleShots(state);
             HandleCore(state);
             HandleWallRipples(state);
@@ -88,6 +96,7 @@ namespace Brick2Life.Feedback
         {
             foreach (GameObject arrow in arrows) if (arrow != null) arrow.SetActive(false);
             foreach (GameObject ring in rangeRings) if (ring != null) ring.SetActive(false);
+            foreach (GameObject arrow in towerArrows) if (arrow != null) arrow.SetActive(false);
             foreach (Fx fx in effects) if (fx.Quad != null) fx.Quad.SetActive(false);
         }
 
@@ -153,6 +162,48 @@ namespace Brick2Life.Feedback
             for (int i = towers; i < rangeRings.Count; i++) rangeRings[i].SetActive(false);
         }
 
+        // Every tower aims an arrow at its nearest enemy; without enemies the last heading is kept.
+        // Every tower aims an arrow at its nearest enemy; without enemies the last heading is kept.
+        private void SyncTowerArrows(BattleState state)
+        {
+            BattleLevel level = controller.Level;
+            if (level == null) { foreach (GameObject a in towerArrows) if (a != null) a.SetActive(false); return; }
+            int hash = level.Width * 397 ^ level.Height * 17 ^ level.Cells.Count;
+            if (towerIds.Count == 0 || arrowLevelHash != hash)
+            {
+                arrowLevelHash = hash;
+                towerIds.Clear(); towerPositions.Clear();
+                foreach (BattleCell cell in level.Cells)
+                {
+                    if (cell.Role != Application.GameRole.Tower || towerIds.Contains(cell.SourceBrickId)) continue;
+                    towerIds.Add(cell.SourceBrickId);
+                    towerPositions.Add(new Vector2(cell.Position.X * 0.5f, cell.Position.Y * 0.5f));
+                }
+                while (towerArrows.Count < towerIds.Count) { towerArrows.Add(CreateQuad("BattleTowerAim", arrowMaterial, 0.3f)); towerAim.Add(Vector2.right); }
+            }
+            for (int i = 0; i < towerArrows.Count; i++)
+            {
+                bool active = i < towerIds.Count;
+                towerArrows[i].SetActive(active);
+                if (!active) continue;
+                Vector2 tower = towerPositions[i];
+                Vector2 aim = towerAim[i];
+                double best = double.MaxValue;
+                foreach (EnemyState enemy in state.Enemies)
+                {
+                    double dx = enemy.X * 0.5 - tower.x, dz = enemy.Y * 0.5 - tower.y;
+                    double distance = dx * dx + dz * dz;
+                    if (distance >= best) continue;
+                    best = distance; aim = new Vector2((float)dx, (float)dz);
+                }
+                if (aim.sqrMagnitude < 1e-4f) aim = Vector2.right;
+                towerAim[i] = aim.normalized;
+                GameObject arrow = towerArrows[i];
+                arrow.transform.position = new Vector3(tower.x, 1.03f, tower.y);
+                arrow.transform.rotation = Quaternion.Euler(90f, -Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg, 0f);
+                SetColor(arrow, new Color(1f, 0.7f, 0.25f, 0.95f));
+            }
+        }
         // ---- shot / hit / core / walls ------------------------------------------------------
         private void HandleShots(BattleState state)
         {
