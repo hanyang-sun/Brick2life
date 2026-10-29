@@ -34,14 +34,14 @@ internal static class ProjectionPlanChecks
         Check(!plan.Truncated && plan.Summary.Contains("格点 121"), "Plan summary or truncation flag is wrong.");
 
         var grid = plan.Marks.First(mark => mark.Kind == ProjectionMarkKind.GridPoint);
-        Check(Math.Abs(grid.SizeX - 0.12f) < 1e-4 && grid.Surface == ProjectionSurface.BrickTop, "Lattice point (0,0) must sit on a brick top.");
+        Check(Math.Abs(grid.SizeX - 0.07f) < 1e-4 && grid.Surface == ProjectionSurface.BrickTop && grid.X >= 0 && grid.Y >= 0, "Lattice point (0,0) must sit on a brick top and inside the board.");
         var farGrid = plan.Marks.First(mark => mark.Kind == ProjectionMarkKind.GridPoint && Math.Abs(mark.CenterX - 5) < 1e-3 && Math.Abs(mark.CenterY - 5) < 1e-3);
         Check(farGrid.Surface == ProjectionSurface.Table, "A lattice point away from bricks must sit on the table.");
 
         var highlight = plan.Marks.First(mark => mark.Kind == ProjectionMarkKind.RoleHighlight && mark.Role == GameRole.Tower);
         Check(Math.Abs(highlight.CenterX - 3.5f) < 1e-4 && Math.Abs(highlight.CenterY - 4.5f) < 1e-4, "Role highlight is not centered on its cell.");
         Check(highlight.Surface == ProjectionSurface.BrickTop, "Role highlights must be projected on brick tops.");
-        Check(Math.Abs(highlight.Color.Alpha - 0.55f) < 1e-4, "Role highlight alpha does not follow the options.");
+        Check(Math.Abs(highlight.Color.Alpha - 0.32f) < 1e-4, "Role highlight alpha does not follow the options.");
         Check(ProjectionPlanBuilder.ColorOf(GameRole.Tower).Red > ProjectionPlanBuilder.ColorOf(GameRole.Wall).Red, "Role colors are not distinguishable.");
 
         var noGrid = ProjectionPlanBuilder.Build(level, null, new ProjectionOptions { IncludeGridPoints = false });
@@ -55,7 +55,8 @@ internal static class ProjectionPlanChecks
         Check(moved.Count(ProjectionMarkKind.ChangeHighlight) == 2, "A move must produce two change marks.");
         Check(moved.Marks.Count(mark => mark.Kind == ProjectionMarkKind.ChangeHighlight && mark.Change == ProjectionChange.Added) == 1, "Missing added mark.");
         Check(moved.Marks.Count(mark => mark.Kind == ProjectionMarkKind.ChangeHighlight && mark.Change == ProjectionChange.Removed) == 1, "Missing removed mark.");
-        Check(moved.Marks.Where(mark => mark.Kind == ProjectionMarkKind.ChangeHighlight).All(mark => mark.Surface == ProjectionSurface.BrickTop), "Change marks must sit on a visible surface.");
+        Check(moved.Marks.Single(mark => mark.Kind == ProjectionMarkKind.ChangeHighlight && mark.Change == ProjectionChange.Added).Surface == ProjectionSurface.BrickTop, "An added change mark must sit on the brick top.");
+        Check(moved.Marks.Single(mark => mark.Kind == ProjectionMarkKind.ChangeHighlight && mark.Change == ProjectionChange.Removed).Surface == ProjectionSurface.Table, "A removed change mark must sit on the table, not hover where the brick was.");
         Check(moved.Marks.Where(mark => mark.Kind == ProjectionMarkKind.ChangeHighlight && mark.Change == ProjectionChange.Added)
             .All(mark => Math.Abs(mark.CenterX - 3.5f) < 1e-4 && Math.Abs(mark.CenterY - 5.5f) < 1e-4), "Added mark is not on the new cell.");
 
@@ -73,6 +74,16 @@ internal static class ProjectionPlanChecks
 
         var capped = ProjectionPlanBuilder.Build(level, null, new ProjectionOptions { MaxMarks = 5 });
         Check(capped.Truncated && capped.Marks.Count == 5, "The mark cap must truncate deterministically.");
+
+        // Change marks are rings, so the role fill underneath stays visible and the colors never mix.
+        var overlapPlan = ProjectionPlanBuilder.Build(LevelState.FromSnapshot(after, rules), delta);
+        Check(overlapPlan.Marks.Where(mark => mark.Kind == ProjectionMarkKind.ChangeHighlight)
+            .All(mark => mark.Shape == ProjectionShape.Ring), "Change marks must be rings.");
+        Check(overlapPlan.Marks.Any(mark => mark.Kind == ProjectionMarkKind.RoleHighlight &&
+            Math.Abs(mark.CenterX - 3.5f) < 1e-3 && Math.Abs(mark.CenterY - 5.5f) < 1e-3),
+            "Changed cells must keep their role highlight under the ring.");
+        Check(overlapPlan.Marks.All(mark => mark.Kind == ProjectionMarkKind.ChangeHighlight || mark.Shape == ProjectionShape.Fill),
+            "Only change marks may be rings.");
 
         var emptyLevel = Level(1);
         var emptyPlan = ProjectionPlanBuilder.Build(emptyLevel, null);
