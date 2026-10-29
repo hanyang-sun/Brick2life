@@ -132,9 +132,10 @@ namespace Brick2Life.Feedback
         {
             int towers = 0;
             BattleLevel level = controller.Level;
+            var seenTowers = new System.Collections.Generic.HashSet<string>();
             if (level != null)
                 for (int i = 0; i < level.Cells.Count; i++)
-                    if (level.Cells[i].Role == Application.GameRole.Tower) towers++;
+                    if (level.Cells[i].Role == Application.GameRole.Tower && seenTowers.Add(level.Cells[i].SourceBrickId)) towers++;
             while (rangeRings.Count < towers) rangeRings.Add(CreateQuad("BattleRange", ringMaterial, 1f));
             if (towers == 0) return;
             float range = (float)controller.TowerSettings.Range * 0.5f;
@@ -142,7 +143,7 @@ namespace Brick2Life.Feedback
             for (int i = 0; i < level.Cells.Count && used < towers; i++)
             {
                 BattleCell cell = level.Cells[i];
-                if (cell.Role != Application.GameRole.Tower) continue;
+                if (cell.Role != Application.GameRole.Tower || !seenTowers.Add(cell.SourceBrickId)) continue;
                 GameObject ring = rangeRings[used++];
                 ring.SetActive(true);
                 ring.transform.position = new Vector3(cell.Position.X * 0.5f, ringHeight, cell.Position.Y * 0.5f);
