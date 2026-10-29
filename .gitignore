@@ -41,3 +41,5 @@
 # Unity crash-recovery scenes
 /_Recovery/
 Assets/_Recovery/
+
+Assets/_Recovery.meta
