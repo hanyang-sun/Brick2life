@@ -36,12 +36,12 @@ namespace Brick2Life.Feedback
             if (root == null) root = transform;
         }
 
-        public void Build(BattleLevel level)
+        public void Build(BattleLevel level, IReadOnlyList<BattleRoute> routes = null)
         {
             ClearRoutes();
             if (level == null) return;
             if (root == null) root = transform;
-            foreach (BattleRoute route in level.Routes)
+            foreach (BattleRoute route in routes ?? level.Routes)
             {
                 var lineObject = new GameObject("BattleRoute");
                 lineObject.layer = gameLayer;

@@ -26,6 +26,18 @@ namespace Brick2Life.Feedback
         [SerializeField] private Text statusLabel;
 
         private LevelFeedbackSession feedback;
+        private GeneratedRound round;
+        private BoardSyncSession boundSession;
+        public GeneratedRound Round => round;
+
+        public void SetGeneratedRound(GeneratedRound value)
+        {
+            round = value;
+            if (boundSession != null) Bind(boundSession);
+            LastFrame = null;
+            if (projection != null) projection.Clear();
+            if (levelView != null) levelView.Clear();
+        }
 
         public LevelFeedbackSession Feedback => feedback;
         public FeedbackFrame LastFrame { get; private set; }
@@ -36,12 +48,14 @@ namespace Brick2Life.Feedback
         public void Bind(BoardSyncSession session)
         {
             if (session == null) throw new ArgumentNullException(nameof(session));
+            boundSession = session;
             // Task B may rebuild its session (new calibration); re-binding keeps the same rules and views.
             var pairs = new List<KeyValuePair<string, GameRole>>();
             foreach (RoleRule rule in rules)
             {
                 if (string.IsNullOrWhiteSpace(rule.colorId) || rule.role == GameRole.None) continue;
-                pairs.Add(new KeyValuePair<string, GameRole>(rule.colorId, rule.role));
+                pairs.Add(new KeyValuePair<string, GameRole>(rule.colorId,
+                    round != null && rule.role == GameRole.Core ? GameRole.Wall : rule.role));
             }
             if (pairs.Count == 0)
             {
@@ -49,7 +63,7 @@ namespace Brick2Life.Feedback
                 enabled = false;
                 return;
             }
-            feedback = new LevelFeedbackSession(session.Definition, new LevelRuleSet(pairs));
+            feedback = new LevelFeedbackSession(session.Definition, new LevelRuleSet(pairs), round: round);
             if (levelView == null) Debug.LogWarning("关卡适配器缺少关卡视图，只更新投影与状态文字。", this);
             if (projection == null) Debug.LogWarning("关卡适配器缺少投影组件，只更新关卡与状态文字。", this);
             UpdateStatus(null);
@@ -72,6 +86,7 @@ namespace Brick2Life.Feedback
         public bool TryGetColorForRole(GameRole role, out string colorId)
         {
             colorId = null;
+            if (round != null && role == GameRole.Core) return false;
             if (role == GameRole.None) return false;
             foreach (RoleRule rule in rules)
                 if (rule.role == role && !string.IsNullOrWhiteSpace(rule.colorId)) { colorId = rule.colorId; return true; }

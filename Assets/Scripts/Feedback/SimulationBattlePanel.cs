@@ -22,6 +22,7 @@ namespace Brick2Life.Feedback
         private Button nextButton;
         private Button spawnButton;
         private Button clearSpawnButton;
+        private Button generateButton;
         private int waves = 3, perWave = 8, health = 24, coreDamage = 10;
         private float speed = 1.4f, interval = 1.1f;
         private int coreHealth = 100, towerDamage = 12;
@@ -59,15 +60,22 @@ namespace Brick2Life.Feedback
         {
             if (source == null) return;
             if (statusText != null)
-                statusText.text = source.LastMessage + (source.State != null && source.State.WaitingForLayout
+                statusText.text = (source.State != null && !source.State.Finished && source.State.UsingPreviousRoutes
+                    ? source.State.RouteWarning : source.LastMessage) + (source.State != null && source.State.WaitingForLayout
                     ? "\n等待布局修正：" + source.State.LayoutIssue : "") + (source.State != null
                     ? "\n核心 " + source.State.CoreHealth + " · 第 " + source.State.Wave + " 波 · 击杀 " +
                       source.State.Killed + " · 泄漏 " + source.State.Leaked + " · " + source.State.Phase
                     : "");
             if (spawnText != null)
-                spawnText.text = source.SelectSpawns
+            {
+                spawnText.text = source.Round != null
+                    ? "关卡种子 " + source.Round.Seed + " · 核心 (" + (source.Round.Core.X + 1) + "," + (source.Round.Core.Y + 1) +
+                        ") · 出生点 " + source.Spawns.Count + " 个\n城墙 / 防御塔不限数量；仅在原始布局窗口编辑。"
+                    : source.SelectSpawns
                     ? "入口：" + source.Spawns.Count + " 个 · 点亮中，点棋盘空格"
                     : "入口：" + source.Spawns.Count + " 个";
+                spawnText.GetComponent<LayoutElement>().minHeight = source.Round != null ? 44 : 21;
+            }
             if (pauseButton != null)
             {
                 var label = pauseButton.GetComponentInChildren<Text>();
@@ -80,9 +88,19 @@ namespace Brick2Life.Feedback
             {
                 var label = spawnButton.GetComponentInChildren<Text>();
                 if (label != null) label.text = source.SelectSpawns ? "选入口（开）" : "点棋盘选入口";
+                spawnButton.gameObject.SetActive(!source.GeneratedObjectives);
                 spawnButton.interactable = !source.Running;
             }
-            if (clearSpawnButton != null) clearSpawnButton.interactable = !source.Running;
+            if (clearSpawnButton != null)
+            {
+                clearSpawnButton.gameObject.SetActive(!source.GeneratedObjectives);
+                clearSpawnButton.interactable = !source.Running;
+            }
+            if (generateButton != null)
+            {
+                generateButton.gameObject.SetActive(source.GeneratedObjectives);
+                generateButton.interactable = !source.Running && !source.PendingStart;
+            }
         }
 
         private void SyncFromController()
@@ -168,6 +186,7 @@ namespace Brick2Life.Feedback
             var spawnRow = AddRow(panelObject.transform);
             spawnButton = AddButton(spawnRow, "点棋盘选入口", () => { if (controller != null) controller.SelectSpawns = !controller.SelectSpawns; });
             clearSpawnButton = AddButton(spawnRow, "清空入口", () => { if (controller != null) { controller.ClearSpawns(); controller.SelectSpawns = false; } });
+            generateButton = AddButton(spawnRow, "生成新关卡（清空积木）", () => { if (controller != null) controller.GenerateNewRound(); });
 
             var startRow = AddRow(panelObject.transform);
             AddButton(startRow, "开始", () => { if (controller != null) controller.StartBattle(); });

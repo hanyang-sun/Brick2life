@@ -161,12 +161,19 @@ namespace Brick2Life.Application
                     for (int x = 0; x < level.Definition.Width; x++)
                     {
                         LevelCell cell = level.At(x, y);
-                        if (!cell.Occupied || cell.Role == GameRole.None) continue;
+                        if ((!cell.Occupied && cell.Role != GameRole.Core) || cell.Role == GameRole.None) continue;
                         Add(new ProjectionMark(Center(x, settings.HighlightSize), Center(y, settings.HighlightSize),
                             settings.HighlightSize, settings.HighlightSize, ProjectionMarkKind.RoleHighlight,
-                            ProjectionSurface.BrickTop, cell.Role, null,
-                            ColorOf(cell.Role).WithAlpha(settings.HighlightAlpha)));
+                            cell.Occupied ? ProjectionSurface.BrickTop : ProjectionSurface.Table, cell.Role, null,
+                            ColorOf(cell.Role).WithAlpha(!cell.Occupied && cell.Role == GameRole.Core
+                                ? 0.75f : settings.HighlightAlpha)));
                     }
+
+            if (level.Round != null)
+                foreach (GridPoint spawn in level.Round.Spawns)
+                    Add(new ProjectionMark(Center(spawn.X, settings.HighlightSize), Center(spawn.Y, settings.HighlightSize),
+                        settings.HighlightSize, settings.HighlightSize, ProjectionMarkKind.RoleHighlight,
+                        ProjectionSurface.Table, GameRole.None, null, new ProjectionColor(1f, 0.76f, 0.18f, 0.7f), ProjectionShape.Ring));
 
             if (settings.IncludeChangeHighlights && delta != null)
                 foreach (CellChange change in delta.Changes)

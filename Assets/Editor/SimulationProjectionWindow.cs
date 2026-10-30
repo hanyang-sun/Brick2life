@@ -65,7 +65,8 @@ namespace Brick2Life.Editor
                 RenderTexture texture = preview.Render(Mathf.RoundToInt(viewport.width), Mathf.RoundToInt(viewport.height));
                 GUI.DrawTexture(viewport, texture, ScaleMode.StretchToFill, false);
                 if (preview.DisplayedVersion < 0)
-                    GUI.Label(new Rect(16, 38, position.width - 32, 28), "等待布局稳定确认…", EditorStyles.whiteLargeLabel);
+                    GUI.Label(new Rect(16, 38, position.width - 32, 28), battle != null && battle.Round != null
+                        ? "系统目标已生成，正在确认玩家布局…" : "等待布局稳定确认…", EditorStyles.whiteLargeLabel);
             }
             GUILayout.BeginArea(new Rect(8, position.height - 22, position.width - 16, 20));
             GUILayout.Label("只读展示 · 拖动旋转 · 滚轮缩放 · 编辑和战斗操作请点回原始窗口", EditorStyles.miniLabel);

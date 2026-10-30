@@ -22,16 +22,19 @@ namespace Brick2Life.Application
         public BoardDefinition Definition { get; }
         public LevelRuleSet Rules { get; }
         public ProjectionOptions Options { get; }
+        public GeneratedRound Round { get; }
         public LevelState Level { get; private set; }
         public ProjectionPlan Plan { get; private set; }
         public long AppliedVersion => Level == null ? -1 : Level.SourceVersion;
 
-        public LevelFeedbackSession(BoardDefinition definition, LevelRuleSet rules, ProjectionOptions options = null)
+        public LevelFeedbackSession(BoardDefinition definition, LevelRuleSet rules, ProjectionOptions options = null,
+            GeneratedRound round = null)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
             Rules = rules ?? throw new ArgumentNullException(nameof(rules));
             Options = options ?? new ProjectionOptions();
             Options.Validate();
+            Round = round;
         }
 
         public FeedbackFrame Apply(BoardUpdate update)
@@ -51,7 +54,7 @@ namespace Brick2Life.Application
             BoardDelta delta = update.Outcome == UpdateOutcome.Changed ? update.Delta : null;
             if (delta != null && Level != null && delta.BaseVersion != Level.SourceVersion)
                 throw new ArgumentException("Changes must start at the previously applied version.", nameof(update));
-            LevelState level = LevelState.FromSnapshot(update.Snapshot, Rules);
+            LevelState level = LevelState.FromSnapshot(update.Snapshot, Rules, Round);
             ProjectionPlan plan = ProjectionPlanBuilder.Build(level, delta, Options);
             Level = level; Plan = plan;
             string note = level.IsPlayable ? null : level.Issues[0].Message;

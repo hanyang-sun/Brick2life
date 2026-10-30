@@ -52,6 +52,12 @@ namespace Brick2Life.Simulation
 
         public bool Automatic { get; set; } = true;
 
+        public void ResetTracking()
+        {
+            if (board == null) throw new InvalidOperationException("识别尚未绑定棋盘。");
+            Rebuild(); primed = false; elapsed = 0;
+        }
+
         // Task C integration surface: one shared BoardSyncSession, confirmed updates, and the status line.
         public BoardSyncSession Session { get { return sync; } }
         public Text FeedbackText { get { return feedbackText; } }

@@ -3182,7 +3182,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 3221225471
+    m_Bits: 2684354559
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 8400000, guid: cbbf40e41fb30a645b5c4b612483b610, type: 2}
   m_TargetDisplay: 0
@@ -4278,6 +4278,9 @@ MonoBehaviour:
   pointer: {fileID: 54039463}
   brickEditor: {fileID: 0}
   autoStep: 1
+  generateObjectives: 1
+  minimumSpawns: 1
+  maximumSpawns: 4
 --- !u!114 &1730692416
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -41,6 +41,8 @@ C 不读 `SimulationBoardSession.Snapshot()`，不读 GT，也不创建观测。
 
 ## 3. 语义规则
 
+2026-10-30 默认玩法已改为 [系统目标与实时建造](generated-defense-round-guide.md)：系统生成一个固定核心与 1–4 个入口，玩家只摆墙塔且不限配额；堵路警告并继续旧路线。目标在应用层合入，不是 B 预测的蓝色积木。下列原有颜色核心规则和人工演示步骤用于独立/旧模式；默认 B 接入后演示组件自动停用，F5/F6/F7 不作为默认玩法入口，F8 仍控制识别取样是否保留投影。
+
 - `LevelRuleSet` 显式配置颜色→角色；未配置的颜色记 `UnmappedColor`，该格保留占用但 `Role=None`，不生成游戏对象也不高亮。
 - 关卡合法性：必须恰好一个核心。缺核心记 `MissingCore`，多核心记 `MultipleCores`。非法关卡仍会发布 `LevelState`（保留感知结果），只是 `IsPlayable=false`，界面显示原因。
 - 默认角色映射由安装菜单按调色板顺序写入：第 1 个颜色=核心，第 3 个=防御塔，其余=城墙。颜色语义（红=塔等）可按需在组件上改，规则不写死在代码里。
@@ -70,6 +72,8 @@ C 不读 `SimulationBoardSession.Snapshot()`，不读 GT，也不创建观测。
 
 ## 5. 场景分层
 
+当前默认场景新增 `Brick2LifeObjectives`（29）层用于原始窗口的系统核心和入口提示，无 Collider；TopCamera 排除 29 和 30、包含 31，掩码为 `2684354559`。投影窗口根据本局配置显示目标，确认后使用实际投影；不重复镜像原始提示。下列两层分离记录保留早期背景，当前以新默认掩码为准。
+
 | 层 | 索引 | 内容 | 顶置相机 | 操作相机 |
 | --- | --- | --- | --- | --- |
 | UI | 5 | 工具栏、按钮、文字 | —（Canvas 为 Overlay，本就不进相机） | 排除 |
@@ -93,7 +97,7 @@ C 不读 `SimulationBoardSession.Snapshot()`，不读 GT，也不创建观测。
    - 创建 `SimulationFeedback`（含 `Level`、`Projection` 子节点）并挂上 View/Projection/Adapter/Demo/Bootstrap；
    - 按调色板写入颜色→角色规则；
    - 调整两台相机的掩码并保存场景。
-3. 进入 Play，按 `F5` 依次提交三个人工目标，按 `F6` 提交空布局，按 `F7` 开/关投影。Console 会打印 `人工目标 …（非识别结果）`、关卡计数、核心/角色问题。
+3. 默认接入 B 后按 [新玩法指南](generated-defense-round-guide.md) 操作。仅在明确关闭自动识别接入、使用独立人工目标演示时，`F5` 提交目标、`F6` 提交空布局、`F7` 开/关投影；日志明确标注非识别结果。
 4. 建议的核对顺序：`F5` 两次（第二次应看到变更高亮）→ `F6`（应提示缺核心，游戏对象被清空）→ `F5` 恢复 → `F7` 关闭投影后保存一张 RGB 对照（`保存 RGB + 标注` 按钮），再开投影保存一张，两张应只差投影内容。
 
 ## 7. 接入任务 B
@@ -114,13 +118,15 @@ B 接通后：
 ## 9. 验证命令
 
 ```powershell
-# 纯 C# 断言 788 项（包含投影计划 29 项、原战斗 104 项、实时改图 188 项）
+# 纯 C# 断言 1076 项（含系统目标 215 项、旧路回退 73 项）
 dotnet run --project Tests/Brick2Life.Checks.csproj
 ```
 
 Unity 侧（有 6000.3.24f1 的机器）按第 6 节执行，并记录：面片中心与格位中心偏差、投影开/关的顶置图像差异、顶置相机是否拍到游戏对象。
 
 ## 9.1 战斗（新管线）
+
+默认场景的当前入口、重试与堵路规则以 [系统目标玩法](generated-defense-round-guide.md) 为准：无需手选入口；目标固定、墙塔实时可改、堵路继续完整旧路线。“生成新关卡”清空玩家布局，“重试”保留本局目标与布局。下面手动选入口、移动颜色核心、堵路等待的描述仅适用于显式关闭 `generateObjectives` 的旧模式/fixture。
 
 战斗逻辑在 `Brick2Life.Battle`（无 Unity 依赖），场景侧是 `SimulationBattleController` + `SimulationBattleView` + `SimulationBattlePanel`，安装菜单会一并装好（`Battle` 与 `BattlePanelRoot`）。
 

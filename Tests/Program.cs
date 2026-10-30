@@ -8,4 +8,6 @@ LevelFeedbackChecks.Run();
 VisionChecks.Run();
 BattleChecks.Run();
 LiveBattleChecks.Run();
+GeneratedRoundChecks.Run();
+GeneratedBattleFallbackChecks.Run();
 Console.WriteLine("BRICK2LIFE_CHECKS_PASSED");

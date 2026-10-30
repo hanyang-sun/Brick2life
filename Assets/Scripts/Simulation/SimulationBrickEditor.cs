@@ -96,10 +96,25 @@ namespace Brick2Life.Simulation
                 // Replace the event so a cloned persistent listener cannot select another entry.
                 button.onClick = new Button.ButtonClickedEvent();
                 button.onClick.AddListener(() => SelectColor(index));
-                button.GetComponentInChildren<Text>(true).text = palette[i].label;
-                button.gameObject.SetActive(true);
+                button.GetComponentInChildren<Text>(true).text = board.PlayerColorLabel(palette[i].colorId, palette[i].label);
+                button.gameObject.SetActive(board.IsPlayerColorAvailable(palette[i].colorId));
                 colorButtons[i] = button;
             }
+            RefreshPlacementRules();
+        }
+
+        public void RefreshPlacementRules()
+        {
+            if (board == null || palette == null || colorButtons == null) return;
+            for (int i = 0; i < colorButtons.Length; i++)
+            {
+                colorButtons[i].gameObject.SetActive(board.IsPlayerColorAvailable(palette[i].colorId));
+                colorButtons[i].GetComponentInChildren<Text>(true).text = board.PlayerColorLabel(palette[i].colorId, palette[i].label);
+            }
+            if (!board.IsPlayerColorAvailable(palette[colorIndex].colorId))
+                for (int i = 0; i < palette.Count; i++)
+                    if (board.IsPlayerColorAvailable(palette[i].colorId)) { colorIndex = i; break; }
+            RefreshButtons();
         }
 
         private void ConfigurationError()
@@ -120,7 +135,7 @@ namespace Brick2Life.Simulation
 
         public void SelectColor(int index)
         {
-            if (!CanEdit || index < 0 || index >= palette.Count) return;
+            if (!CanEdit || index < 0 || index >= palette.Count || !board.IsPlayerColorAvailable(palette[index].colorId)) return;
             colorIndex = index;
             SelectTool((int)Tool.Add);
         }
@@ -168,11 +183,13 @@ namespace Brick2Life.Simulation
         {
             if (!CanEdit) return;
             if (!pointer.TryPickCell(position, out Vector2Int cell, out _)) return;
+            if (board.IsReserved(cell.x, cell.y))
+            { statusLabel.text = "核心和出生点由系统固定，不能放置、删除或移动。"; return; }
             BoardLayout.Brick brick = board.At(cell.x, cell.y);
             if (tool == Tool.Add)
             {
                 if (!board.TryAdd(cell.x, cell.y, palette[colorIndex].colorId, out var added))
-                { statusLabel.text = "目标格已有积木，请选择空格。"; return; }
+                { statusLabel.text = board.LastPlacementIssue ?? "目标格不可放置，请选择其他位置。"; return; }
                 statusLabel.text = $"已添加 {palette[colorIndex].label}：({cell.x + 1}, {cell.y + 1})";
             }
             else if (tool == Tool.Delete)
@@ -204,7 +221,8 @@ namespace Brick2Life.Simulation
             bool valid = hasDragTarget && board.CanPlace(dragTarget.x, dragTarget.y, draggedId);
             pointer.SetDragPreview(hasDragTarget ? dragTarget : new Vector2Int(-1, -1), valid);
             statusLabel.text = !hasDragTarget ? "目标在棋盘外或界面上，松开将取消移动。" :
-                valid ? $"拖拽到 ({dragTarget.x + 1}, {dragTarget.y + 1})，松开放置。" : "目标格已有积木，松开将取消移动。";
+                valid ? $"拖拽到 ({dragTarget.x + 1}, {dragTarget.y + 1})，松开放置。" :
+                (board.LastPlacementIssue ?? "目标格不可放置，松开将取消移动。");
         }
 
         private void EndDrag(Vector2 position)

@@ -15,7 +15,8 @@ namespace Brick2Life.Editor
     public sealed class SimulationProjectionPreview : IDisposable
     {
         private readonly PreviewRenderUtility preview;
-        private readonly Transform root, boardRoot, brickRoot, projectionRoot, battleRoot;
+        private readonly Transform root, boardRoot, brickRoot, projectionRoot, battleRoot, objectiveRoot;
+        private readonly Dictionary<int, MeshRenderer> objectiveCopies = new Dictionary<int, MeshRenderer>();
         private readonly Dictionary<string, Material> brickMaterials = new Dictionary<string, Material>();
         private readonly List<Material> ownedMaterials = new List<Material>();
         private readonly Dictionary<int, MeshRenderer> projectionCopies = new Dictionary<int, MeshRenderer>();
@@ -60,6 +61,7 @@ namespace Brick2Life.Editor
             brickRoot = Child("ConfirmedBricks");
             projectionRoot = Child("Projection");
             battleRoot = Child("Battle");
+            objectiveRoot = Child("SystemObjectives");
             Material boardMaterial = Material(new Color(0.055f, 0.07f, 0.085f));
             GameObject floor = Cube(boardRoot, "Board", boardMaterial);
             floor.transform.position = new Vector3(5, -0.035f, 5);
@@ -161,17 +163,24 @@ namespace Brick2Life.Editor
             bool confirmedProjection = level != null && projection != null && projection.LastPlan != null &&
                 projection.LastPlan.LevelVersion == level.SourceVersion;
             projectionRoot.gameObject.SetActive(confirmedProjection && projection.IsVisible);
+            var objectives = battle != null ? battle.GetComponent<SimulationRoundMarkers>() : null;
+            // System goals are public configuration; before RGB confirmation show only their guides.
+            bool showObjectiveGuides = !confirmedProjection || (!projectionOnly && !projection.IsVisible);
+            objectiveRoot.gameObject.SetActive(showObjectiveGuides);
+            MirrorMeshes(showObjectiveGuides && objectives != null ? objectives.MarkersRoot : null,
+                objectiveRoot, objectiveCopies);
             var overlay = battle != null ? battle.GetComponent<SimulationBattleOverlay>() : null;
             MirrorMeshes(confirmedProjection ? projection.MarksRoot : null, projectionRoot, projectionCopies,
                 confirmedProjection && overlay != null ? overlay.MarksRoot : null);
             battleRoot.gameObject.SetActive(!projectionOnly);
             MirrorMeshes(battle != null ? battle.transform : null, battleRoot, battleCopies,
-                excludedLayer: projection != null ? projection.ProjectionLayer : 31);
+                excludedLayer: projection != null ? projection.ProjectionLayer : 31,
+                additionalExcludedLayer: SimulationRoundMarkers.LayerIndex);
             MirrorRoutes(battle != null ? battle.transform : null);
         }
 
         private void MirrorMeshes(Transform sourceRoot, Transform parent, Dictionary<int, MeshRenderer> copies,
-            Transform additionalRoot = null, int excludedLayer = -1)
+            Transform additionalRoot = null, int excludedLayer = -1, int additionalExcludedLayer = -1)
         {
             stale.Clear();
             stale.AddRange(copies.Keys);
@@ -181,7 +190,7 @@ namespace Brick2Life.Editor
                 {
                     MeshFilter filter = source.GetComponent<MeshFilter>();
                     if (filter == null || filter.sharedMesh == null || !source.enabled || source.forceRenderingOff ||
-                        source.gameObject.layer == excludedLayer) continue;
+                        source.gameObject.layer == excludedLayer || source.gameObject.layer == additionalExcludedLayer) continue;
                     int id = source.GetInstanceID();
                     stale.Remove(id);
                     if (!copies.TryGetValue(id, out MeshRenderer target))

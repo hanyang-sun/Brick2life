@@ -166,7 +166,8 @@ namespace Brick2Life.Feedback
 
         public void Clear()
         {
-            foreach (GameObject quad in pool) if (quad != null) Destroy(quad);
+            foreach (GameObject quad in pool)
+                if (quad != null) { quad.SetActive(false); Destroy(quad); }
             pool.Clear(); VisibleMarkCount = 0; LastPlan = null;
         }
 
@@ -235,7 +236,8 @@ namespace Brick2Life.Feedback
         private Material MaterialFor(ProjectionMark mark, Material fallback)
         {
             EnsureTextures(fallback);
-            if (mark.Kind == ProjectionMarkKind.ChangeHighlight) return ringMaterial != null ? ringMaterial : fallback;
+            if (mark.Kind == ProjectionMarkKind.ChangeHighlight || mark.Shape == ProjectionShape.Ring)
+                return ringMaterial != null ? ringMaterial : fallback;
             if (mark.Kind != ProjectionMarkKind.RoleHighlight) return fallback;
             switch (mark.Role)
             {

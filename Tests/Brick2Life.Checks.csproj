@@ -18,6 +18,8 @@
     <Compile Include="VisionChecks.cs" />
     <Compile Include="BattleChecks.cs" />
     <Compile Include="LiveBattleChecks.cs" />
+    <Compile Include="GeneratedRoundChecks.cs" />
+    <Compile Include="GeneratedBattleFallbackChecks.cs" />
     <Compile Include="../Assets/Scripts/Core/**/*.cs" Link="Core/%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="../Assets/Scripts/Application/**/*.cs" Link="Application/%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="../Assets/Scripts/Vision/**/*.cs" Link="Vision/%(RecursiveDir)%(Filename)%(Extension)" />

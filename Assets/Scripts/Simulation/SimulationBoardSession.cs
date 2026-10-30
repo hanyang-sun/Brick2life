@@ -19,6 +19,29 @@ namespace Brick2Life.Simulation
         [SerializeField] private PaletteEntry[] palette;
         private Dictionary<string, GameObject> objects = new Dictionary<string, GameObject>();
         private BoardLayout layout;
+        private readonly HashSet<GridPoint> reserved = new HashSet<GridPoint>();
+        private string wallColor, towerColor;
+        public bool DefenseEditing => wallColor != null;
+        public string LastPlacementIssue { get; private set; }
+        public event Action PlacementRulesChanged;
+        public bool IsReserved(int x, int y) => reserved.Contains(new GridPoint(x, y));
+        public bool IsPlayerColorAvailable(string colorId) => !DefenseEditing || colorId == wallColor || colorId == towerColor;
+        public string PlayerColorLabel(string colorId, string original) => !DefenseEditing ? original :
+            colorId == towerColor ? "防御塔（" + original + "）" : "城墙（" + original + "）";
+
+        public void SetDefenseEditing(IEnumerable<GridPoint> cells, string wall, string tower)
+        {
+            if (string.IsNullOrWhiteSpace(wall) || string.IsNullOrWhiteSpace(tower) || wall == tower)
+                throw new ArgumentException("墙与塔需要不同的公开调色板颜色。");
+            reserved.Clear();
+            foreach (GridPoint cell in cells)
+            {
+                if (!Definition.Contains(cell.X, cell.Y)) throw new ArgumentException("保留格不在棋盘内。");
+                reserved.Add(cell);
+            }
+            wallColor = wall; towerColor = tower;
+            PlacementRulesChanged?.Invoke();
+        }
         private IReadOnlyList<PaletteEntry> readOnlyPalette = Array.Empty<PaletteEntry>();
         public IReadOnlyList<PaletteEntry> Palette => readOnlyPalette;
         public IReadOnlyList<BoardLayout.Brick> Bricks => RequireLayout().Bricks;
@@ -74,7 +97,13 @@ namespace Brick2Life.Simulation
         private BoardLayout RequireLayout() => layout ?? throw new InvalidOperationException("Board session has not been initialized.");
         public BoardSnapshot Snapshot() => RequireLayout().Snapshot();
         public BoardLayout.Brick At(int x, int y) => RequireLayout().At(x, y);
-        public bool CanPlace(int x, int y, string movingId = null) => RequireLayout().CanPlace(x, y, movingId);
+        public bool CanPlace(int x, int y, string movingId = null)
+        {
+            LastPlacementIssue = IsReserved(x, y) ? "核心和出生点是系统保留格，请选择其他位置。" : "目标格已有积木或不在棋盘内。";
+            bool allowed = !IsReserved(x, y) && RequireLayout().CanPlace(x, y, movingId);
+            if (allowed) LastPlacementIssue = null;
+            return allowed;
+        }
 
         // Validate and prepare the complete view before replacing the live model. Local versions remain monotonic.
         public void ReplaceLayout(BoardSnapshot snapshot)
@@ -85,6 +114,13 @@ namespace Brick2Life.Simulation
             if (!current.Definition.IsCompatible(snapshot.Definition)) throw new ArgumentException("Incompatible board definition.", nameof(snapshot));
             foreach (BoardCell cell in snapshot.Cells)
                 if (!cell.IsKnown) throw new ArgumentException("Simulation requires a fully known layout.", nameof(snapshot));
+            for (int y = 0; y < snapshot.Definition.Height; y++)
+                for (int x = 0; x < snapshot.Definition.Width; x++)
+                {
+                    BoardCell cell = snapshot.At(x, y);
+                    if (cell.Occupancy == Occupancy.Occupied && (IsReserved(x, y) || !IsPlayerColorAvailable(cell.ColorId)))
+                        throw new ArgumentException("玩家积木不能占用系统目标，也只能使用墙和塔的颜色。", nameof(snapshot));
+                }
             var candidate = new BoardLayout(new BoardSnapshot(current.Definition, checked(current.Version + 1), snapshot.Cells, SnapshotSource.Simulation));
             var prepared = new Dictionary<string, GameObject>();
             try
@@ -119,7 +155,8 @@ namespace Brick2Life.Simulation
             if (IsEditingLocked) return false;
             var model = RequireLayout();
             int index = Array.FindIndex(palette, entry => entry.colorId == colorId);
-            if (index < 0 || !model.CanPlace(x, y)) return false;
+            if (!IsPlayerColorAvailable(colorId)) { LastPlacementIssue = "请选择城墙或防御塔。"; return false; }
+            if (index < 0 || !CanPlace(x, y)) return false;
             GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
             try
             {
@@ -143,6 +180,7 @@ namespace Brick2Life.Simulation
         public bool TryMove(string id, int x, int y)
         {
             if (IsEditingLocked) return false;
+            if (!CanPlace(x, y, id)) return false;
             if (!RequireLayout().TryMove(id, x, y)) return false;
             objects[id].transform.position = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
             return true;

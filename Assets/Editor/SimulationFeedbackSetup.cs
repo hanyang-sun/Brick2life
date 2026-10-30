@@ -65,6 +65,7 @@ namespace Brick2Life.Editor
 
             EnsureLayer(GameLayerIndex, GameLayerName);
             EnsureLayer(ProjectionLayerIndex, ProjectionLayerName);
+            EnsureLayer(SimulationRoundMarkers.LayerIndex, "Brick2LifeObjectives");
 
             Material coreMaterial = EnsureMaterial("Game_Core.mat", UnityEngine.Shader.Find("Standard"), new Color(0.35f, 0.72f, 1f));
             Material wallMaterial = EnsureMaterial("Game_Wall.mat", UnityEngine.Shader.Find("Standard"), new Color(0.78f, 0.82f, 0.88f));
@@ -154,6 +155,7 @@ namespace Brick2Life.Editor
             SimulationBattlePanel panel = EnsureComponent<SimulationBattlePanel>(panelObject);
             var controllerObject = new SerializedObject(controller);
             controllerObject.FindProperty("adapter").objectReferenceValue = adapter;
+            controllerObject.FindProperty("generateObjectives").boolValue = true;
             controllerObject.FindProperty("view").objectReferenceValue = view;
             controllerObject.FindProperty("panel").objectReferenceValue = panel;
             controllerObject.FindProperty("pointer").objectReferenceValue = FindFirst<SimulationGridPointer>();
@@ -293,6 +295,7 @@ namespace Brick2Life.Editor
             {
                 int mask = topCamera.cullingMask;
                 if (game >= 0) mask &= ~(1 << game);
+                mask &= ~(1 << SimulationRoundMarkers.LayerIndex);
                 if (projection >= 0) mask |= 1 << projection;
                 topCamera.cullingMask = mask;
             }

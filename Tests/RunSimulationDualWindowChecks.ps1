@@ -1,4 +1,6 @@
-param([string]$UnityPath = 'D:\Unity\Editor\6000.3.24f1\Editor\Unity.exe', [string]$ValidationProject)
+param([string]$UnityPath = 'D:\Unity\Editor\6000.3.24f1\Editor\Unity.exe', [string]$ValidationProject,
+    [ValidateSet('SimulationDualWindowChecks','GeneratedDefenseRoundChecks')]
+    [string]$CheckClass = 'SimulationDualWindowChecks')
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($ValidationProject)) {
@@ -17,6 +19,10 @@ foreach ($file in @('SimulationProjectionPreview.cs','SimulationProjectionWindow
     Copy-Item -LiteralPath (Join-Path $repoRoot ('Assets\Editor\' + $file)) -Destination (Join-Path $runPath ('Assets\Editor\' + $file)) -Force
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Unity\SimulationDualWindowChecks.cs') -Destination (Join-Path $runPath 'Assets\Editor\SimulationDualWindowChecks.cs') -Force
+$roundChecks = Join-Path $PSScriptRoot 'Unity\GeneratedDefenseRoundChecks.cs'
+if (Test-Path -LiteralPath $roundChecks) {
+    Copy-Item -LiteralPath $roundChecks -Destination (Join-Path $runPath 'Assets\Editor\GeneratedDefenseRoundChecks.cs') -Force
+}
 foreach ($file in @('ProjectVersion.txt','ProjectSettings.asset','QualitySettings.asset','GraphicsSettings.asset','TagManager.asset','InputManager.asset')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot ('ProjectSettings\' + $file)) -Destination (Join-Path $runPath ('ProjectSettings\' + $file)) -Force
 }
@@ -25,11 +31,14 @@ $manifest.dependencies.PSObject.Properties.Remove('com.unity.multiplayer.center'
 [IO.File]::WriteAllText((Join-Path $runPath 'Packages\manifest.json'), ($manifest | ConvertTo-Json -Depth 8), [Text.UTF8Encoding]::new($false))
 $resultPath = Join-Path $runPath 'verification.json'
 if (Test-Path -LiteralPath $resultPath) { Move-Item -LiteralPath $resultPath -Destination (Join-Path $runPath ('verification-previous-' + [guid]::NewGuid().ToString('N') + '.json')) }
-$arguments = @('-batchmode','-projectPath',('"' + $runPath + '"'),'-executeMethod','SimulationDualWindowChecks.Run','-logFile',('"' + (Join-Path $runPath 'editor.log') + '"'))
+$arguments = @('-batchmode','-projectPath',('"' + $runPath + '"'),'-executeMethod',($CheckClass + '.Run'),'-logFile',('"' + (Join-Path $runPath 'editor.log') + '"'))
 $process = Start-Process -FilePath $UnityPath -ArgumentList $arguments -WindowStyle Hidden -PassThru
 Write-Output ('Validation project: ' + $runPath)
 $process.WaitForExit()
-if (Test-Path -LiteralPath $resultPath) { Get-Content -LiteralPath $resultPath -Raw } else { Write-Output 'No verification.json; inspect editor.log.'; exit 1 }
+if (Test-Path -LiteralPath $resultPath) {
+    Copy-Item -LiteralPath $resultPath -Destination (Join-Path $runPath ('verification-' + $CheckClass + '.json')) -Force
+    Get-Content -LiteralPath $resultPath -Raw
+} else { Write-Output 'No verification.json; inspect editor.log.'; exit 1 }
 if ($process.ExitCode -ne 0) { exit $process.ExitCode }
 $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
 if (-not $result.passed) { exit 1 }

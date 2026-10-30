@@ -141,7 +141,8 @@ namespace Brick2Life.Feedback
         // ---- arrows -------------------------------------------------------------------------
         private void SyncRoutes()
         {
-            int routes = controller.Level != null ? controller.Level.Routes.Count : 0;
+            IReadOnlyList<BattleRoute> activeRoutes = controller.Battle != null ? controller.Battle.ActiveRoutes : controller.Level?.Routes;
+            int routes = activeRoutes != null ? activeRoutes.Count : 0;
             int wanted = routes * arrowsPerRoute;
             while (arrows.Count < wanted) arrows.Add(CreateQuad("BattleArrow", arrowMaterial, arrowSize));
             for (int i = 0; i < arrows.Count; i++) arrows[i].SetActive(i < wanted);
@@ -149,7 +150,7 @@ namespace Brick2Life.Feedback
             float t = animationTime * arrowSpeed;
             for (int r = 0; r < routes; r++)
             {
-                IReadOnlyList<GridPoint> route = controller.Level.Routes[r].Route;
+                IReadOnlyList<GridPoint> route = activeRoutes[r].Route;
                 for (int a = 0; a < arrowsPerRoute; a++)
                 {
                     float progress = Mathf.Repeat(t / Mathf.Max(1, route.Count) + a / (float)arrowsPerRoute, 1f);
@@ -266,8 +267,9 @@ namespace Brick2Life.Feedback
             for (int i = 0; i < level.Cells.Count; i++)
             {
                 if (level.Cells[i].Role != Application.GameRole.Core) continue;
-                SpawnEffect(BrickCenter(level.Cells[i], 1.03f),
-                    1.03f, 0.6f, 3.2f, new Color(1f, 0.3f, 0.35f, 0.95f), rippleSeconds * 1.4f);
+                float height = controller.Round != null ? 0.025f : 1.03f;
+                SpawnEffect(BrickCenter(level.Cells[i], height),
+                    height, 0.6f, 3.2f, new Color(1f, 0.3f, 0.35f, 0.95f), rippleSeconds * 1.4f);
                 break;
             }
         }

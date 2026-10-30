@@ -50,6 +50,8 @@ namespace Brick2Life.Battle
         public int Width { get; }
         public int Height { get; }
         public IReadOnlyList<BattleCell> Cells { get; }
+        // All requested navigation entrances, including those whose candidate path is blocked.
+        public IReadOnlyList<GridPoint> Entrances { get; }
         public IReadOnlyList<BattleRoute> Routes { get; }
         public IReadOnlyList<string> CoreBrickIds { get; }
         public IReadOnlyList<BattleIssue> Issues { get; }
@@ -57,12 +59,13 @@ namespace Brick2Life.Battle
         public GridPoint At(int x, int y) => new GridPoint(x, y);
         public BattleCell CellAt(int x, int y) => Cells[y * Width + x];
 
-        private BattleLevel(int width, int height, BattleCell[] cells, List<BattleRoute> routes,
+        private BattleLevel(int width, int height, BattleCell[] cells, List<GridPoint> entrances, List<BattleRoute> routes,
             List<string> cores, List<BattleIssue> issues)
         {
             Width = width; Height = height;
             this.cells = cells;
             Cells = Array.AsReadOnly(cells);
+            Entrances = entrances.AsReadOnly();
             Routes = routes.AsReadOnly();
             CoreBrickIds = cores.AsReadOnly();
             Issues = issues.AsReadOnly();
@@ -93,7 +96,7 @@ namespace Brick2Life.Battle
                 for (int x = 0; x < level.Definition.Width; x++)
                 {
                     LevelCell cell = level.At(x, y);
-                    if (!cell.Occupied || cell.Role == GameRole.None) continue;
+                    if ((!cell.Occupied && cell.Role != GameRole.Core) || cell.Role == GameRole.None) continue;
                     string id = "brick-" + x + "-" + y;
                     if (cell.Role == GameRole.Core) cores.Add(id);
                     for (int dy = 0; dy < NavigationPerPhysical; dy++)
@@ -106,6 +109,7 @@ namespace Brick2Life.Battle
             if (cores.Count == 0) issues.Add(new BattleIssue("NO_CORE", "关卡缺少核心。"));
 
             var routes = new List<BattleRoute>();
+            var entrances = new List<GridPoint>();
             if (spawns == null || spawns.Count == 0)
                 issues.Add(new BattleIssue("NO_SPAWNS", "至少选择一个空格作为敌人入口。"));
             else
@@ -113,6 +117,7 @@ namespace Brick2Life.Battle
                 var seen = new HashSet<GridPoint>();
                 foreach (GridPoint spawn in spawns)
                 {
+                    entrances.Add(new GridPoint(spawn.X * NavigationPerPhysical, spawn.Y * NavigationPerPhysical));
                     if (!seen.Add(spawn))
                     {
                         issues.Add(new BattleIssue("SPAWN_DUPLICATE", "入口 (" + spawn.X + "," + spawn.Y + ") 重复。"));
@@ -124,7 +129,7 @@ namespace Brick2Life.Battle
                         continue;
                     }
                     LevelCell physical = level.At(spawn.X, spawn.Y);
-                    if (physical.Occupied)
+                    if (physical.Occupied || physical.Role == GameRole.Core)
                     {
                         issues.Add(new BattleIssue("SPAWN_OCCUPIED", "入口 (" + spawn.X + "," + spawn.Y + ") 必须为空格。"));
                         continue;
@@ -140,7 +145,7 @@ namespace Brick2Life.Battle
                     routes.Add(new BattleRoute(start, route, target));
                 }
             }
-            return new BattleLevel(width, height, cells, routes, cores, issues);
+            return new BattleLevel(width, height, cells, entrances, routes, cores, issues);
         }
     }
 }

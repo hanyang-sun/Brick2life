@@ -29,6 +29,10 @@ namespace Brick2Life.Battle
 
         private GridPoint[][] routes;
         private BattleLevel currentLevel;
+        private readonly bool keepLastValidRoutes;
+        private readonly IReadOnlyList<GridPoint> fixedEntrances;
+        private readonly IReadOnlyList<string> fixedCoreBrickIds;
+        private IReadOnlyList<BattleRoute> activeRoutes;
         private readonly WavePlan plan;
         private readonly TowerSettings tower;
         private readonly List<Enemy> enemies = new List<Enemy>();
@@ -39,18 +43,26 @@ namespace Brick2Life.Battle
         private bool paused;
         private bool waitingForLayout;
         private string layoutIssue = "";
+        private bool usingPreviousRoutes;
+        private string routeWarning = "";
 
         public BattleState State { get; private set; }
         public WavePlan Plan => plan;
         public TowerSettings Towers => tower;
         public bool Paused => paused;
+        public BattleLevel CurrentLevel => currentLevel;
+        public IReadOnlyList<BattleRoute> ActiveRoutes => activeRoutes;
 
-        public BattleSimulation(BattleLevel level, WavePlan plan, TowerSettings tower)
+        public BattleSimulation(BattleLevel level, WavePlan plan, TowerSettings tower, bool keepLastValidRoutes = false)
         {
             IReadOnlyList<BattleIssue> issues = BattleValidation.Check(level, plan, tower);
             if (issues.Count != 0) throw new ArgumentException(issues[0].ToString());
             this.plan = plan; this.tower = tower; coreHealth = tower.InitialCoreHealth;
+            this.keepLastValidRoutes = keepLastValidRoutes;
             currentLevel = level;
+            fixedEntrances = level.Entrances;
+            fixedCoreBrickIds = level.CoreBrickIds;
+            activeRoutes = level.Routes;
             routes = CopyRoutes(level);
             UpdateTowers(level, true);
             Publish();
@@ -91,23 +103,43 @@ namespace Brick2Life.Battle
         public bool TryUpdateLevel(BattleLevel candidate, out string reason)
         {
             if (State.Finished) { reason = "本局已结束。"; return false; }
-            if (candidate == null || !candidate.IsValid)
-                return WaitForLayout(candidate != null && candidate.Issues.Count > 0
-                    ? candidate.Issues[0].Message : "等待有效的已确认布局。", out reason);
+            if (candidate == null) return WaitForLayout("等待有效的已确认布局。", out reason);
             if (candidate.Width != currentLevel.Width || candidate.Height != currentLevel.Height ||
-                candidate.Routes.Count != routes.Length)
+                candidate.Entrances.Count != fixedEntrances.Count)
                 return WaitForLayout("本局棋盘尺寸和入口数量不能改变。", out reason);
-            for (int i = 0; i < routes.Length; i++)
-                if (!candidate.Routes[i].Spawn.Equals(routes[i][0]))
-                    return WaitForLayout("本局入口不能改变，请移开入口上的积木。", out reason);
+            for (int i = 0; i < fixedEntrances.Count; i++)
+                if (!candidate.Entrances[i].Equals(fixedEntrances[i]))
+                    return WaitForLayout("本局入口的位置和顺序不能改变。", out reason);
+            if (keepLastValidRoutes)
+            {
+                if (candidate.CoreBrickIds.Count != fixedCoreBrickIds.Count)
+                    return WaitForLayout("本局系统核心不能增删或移动。", out reason);
+                for (int i = 0; i < fixedCoreBrickIds.Count; i++)
+                    if (candidate.CoreBrickIds[i] != fixedCoreBrickIds[i])
+                        return WaitForLayout("本局系统核心不能增删或移动。", out reason);
+            }
+            if (!candidate.IsValid)
+            {
+                string issue = candidate.Issues.Count > 0 ? candidate.Issues[0].Message : "布局不可用。";
+                bool routeOnly = candidate.Issues.Count > 0;
+                foreach (BattleIssue candidateIssue in candidate.Issues)
+                    routeOnly &= candidateIssue.Code == "NO_ROUTE" || candidateIssue.Code == "SPAWN_OCCUPIED";
+                if (keepLastValidRoutes && routeOnly) return KeepPreviousRoutes(candidate, issue, out reason);
+                return WaitForLayout(issue, out reason);
+            }
             var remaining = new GridPoint[enemies.Count][];
             for (int i = 0; i < enemies.Count; i++)
             {
                 remaining[i] = RemainingRoute(candidate, enemies[i]);
                 if (remaining[i] == null)
-                    return WaitForLayout("敌人 " + enemies[i].Id + " 无法从当前位置到达核心，请移开障碍或恢复通路。", out reason);
+                {
+                    string issue = "敌人 " + enemies[i].Id + " 无法从当前位置到达核心。";
+                    if (keepLastValidRoutes) return KeepPreviousRoutes(candidate, issue, out reason);
+                    return WaitForLayout(issue + "请移开障碍或恢复通路。", out reason);
+                }
             }
             routes = CopyRoutes(candidate);
+            activeRoutes = candidate.Routes;
             currentLevel = candidate;
             for (int i = 0; i < enemies.Count; i++)
             {
@@ -116,7 +148,21 @@ namespace Brick2Life.Battle
             }
             UpdateTowers(candidate);
             waitingForLayout = false; layoutIssue = "";
+            usingPreviousRoutes = false; routeWarning = "";
             reason = "";
+            Publish();
+            return true;
+        }
+
+        private bool KeepPreviousRoutes(BattleLevel candidate, string issue, out string reason)
+        {
+            // Only paths are retained: confirmed new walls and towers still become the current map.
+            // Existing enemy paths/waypoint indices and the complete entrance array remain untouched.
+            currentLevel = candidate;
+            UpdateTowers(candidate);
+            waitingForLayout = false; layoutIssue = "";
+            usingPreviousRoutes = true;
+            routeWarning = reason = "布局堵路，沿用上次有效路线（可能穿过新放置的积木）。" + issue;
             Publish();
             return true;
         }
@@ -124,6 +170,7 @@ namespace Brick2Life.Battle
         private bool WaitForLayout(string message, out string reason)
         {
             waitingForLayout = true; layoutIssue = reason = message;
+            usingPreviousRoutes = false; routeWarning = "";
             Publish();
             return false;
         }
@@ -289,7 +336,7 @@ namespace Brick2Life.Battle
                 snapshots[i] = new EnemyState(enemy.Id, enemy.X, enemy.Y, enemy.Progress, enemy.Health, enemy.SpawnIndex);
             }
             State = new BattleState(phase, coreHealth, wave, spawned, killed, leaked, elapsed, paused, snapshots,
-                waitingForLayout, layoutIssue);
+                waitingForLayout, layoutIssue, usingPreviousRoutes, routeWarning);
         }
     }
 }

@@ -38,6 +38,11 @@ public static class SimulationDualWindowChecks
         SimulationFeedbackSetup.InstallAndSave();
         Require(Object.FindObjectsByType<SimulationBattleOverlay>(FindObjectsSortMode.None).Length == 1,
             "Reinstalling feedback duplicated the battle projection overlay.");
+        // This suite retains explicit legacy observation fixtures; generated rules have a separate real-scene suite.
+        var legacyController = Object.FindFirstObjectByType<SimulationBattleController>();
+        var legacySettings = new SerializedObject(legacyController);
+        legacySettings.FindProperty("generateObjectives").boolValue = false;
+        legacySettings.ApplyModifiedPropertiesWithoutUndo();
         EditorSettings.enterPlayModeOptionsEnabled = true;
         EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
         EditorApplication.playModeStateChanged += OnPlay;
