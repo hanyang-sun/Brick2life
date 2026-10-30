@@ -39,6 +39,7 @@ namespace Brick2Life.Feedback
         private LevelState preparationObservation;
         private SimulationRoundMarkers roundMarkers;
         private double nextRouteRetryAt;
+        private SimulationLevelAdapter subscribedAdapter;
         public bool GeneratedObjectives => generateObjectives;
         public GeneratedRound Round { get; private set; }
 
@@ -55,6 +56,8 @@ namespace Brick2Life.Feedback
         public string LastMessage { get; private set; } = "先点“点棋盘选入口”，再点棋盘上的空格";
         public SimulationBattlePanel Panel => panel;
         public SimulationBattleView View => view;
+        public IReadOnlyList<BattleRoute> DisplayRoutes => Battle != null && !Battle.State.Finished
+            ? Battle.ActiveRoutes : Level != null && Level.IsValid ? Level.Routes : lastValidNavigation?.Routes;
 
         // Picking entrances must take the left click away from the brick editor, which would otherwise add bricks.
         public bool SelectSpawns
@@ -81,6 +84,28 @@ namespace Brick2Life.Feedback
         public void Bind(SimulationLevelAdapter levelAdapter)
         {
             adapter = levelAdapter != null ? levelAdapter : throw new ArgumentNullException(nameof(levelAdapter));
+            ConnectFeedback();
+        }
+
+        private void OnEnable() => ConnectFeedback();
+        private void OnDisable()
+        {
+            if (subscribedAdapter != null) subscribedAdapter.FeedbackChanged -= OnFeedbackChanged;
+            subscribedAdapter = null;
+        }
+        private void ConnectFeedback()
+        {
+            if (!isActiveAndEnabled) return;
+            if (adapter == null) adapter = FindFirstObjectByType<SimulationLevelAdapter>();
+            if (subscribedAdapter == adapter) return;
+            if (subscribedAdapter != null) subscribedAdapter.FeedbackChanged -= OnFeedbackChanged;
+            subscribedAdapter = adapter;
+            if (subscribedAdapter != null) subscribedAdapter.FeedbackChanged += OnFeedbackChanged;
+        }
+        private void OnFeedbackChanged(FeedbackFrame frame)
+        {
+            SyncConfirmedLayout();
+            SyncPreparationRoutes();
         }
 
         public void SetAutoStep(bool value) => autoStep = value;
@@ -362,6 +387,9 @@ namespace Brick2Life.Feedback
         {
             lastState = Battle != null ? Battle.State : null;
             if (view != null && Battle != null) view.Render(Battle.State, Level);
+            var overlay = GetComponent<SimulationBattleOverlay>();
+            if (overlay != null && overlay.isActiveAndEnabled && !ReferenceEquals(overlay.DisplayedLevel, Level))
+                overlay.RefreshLayout();
             if (panel != null) panel.Refresh(this);
             if (Battle == null) return;
             if (Battle.State.Phase == BattlePhase.Victory) LastMessage = "胜利：核心守住 " + Battle.State.CoreHealth;
@@ -371,8 +399,21 @@ namespace Brick2Life.Feedback
 
         private void SyncConfirmedLayout()
         {
-            if (!Running) return;
+            if (Battle == null) return;
             LevelState confirmed = CurrentLevel();
+            if (Battle.State.Finished)
+            {
+                if (confirmed == null || ReferenceEquals(observedBattleLayout, confirmed)) return;
+                observedBattleLayout = confirmed;
+                Level = BattleLevel.Build(confirmed, spawns);
+                if (Level != null && Level.IsValid) lastValidNavigation = Level;
+                LastShots = Array.Empty<ShotEvent>();
+                ShotSequence++;
+                if (view != null) view.Build(Level, DisplayRoutes);
+                Publish();
+                return;
+            }
+            if (!Running) return;
             bool unchanged = ReferenceEquals(observedBattleLayout, confirmed);
             if (unchanged)
             {
