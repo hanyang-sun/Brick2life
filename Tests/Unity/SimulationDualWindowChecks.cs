@@ -20,6 +20,7 @@ public static class SimulationDualWindowChecks
         public bool passed;
         public int assertions, captureChangedPixels, projectionChangedPixels, cleanCaptureMismatchPixels;
         public float automaticConfirmationSeconds;
+        public float previewFaceContrast;
         public List<string> failures = new List<string>();
     }
     private static Result result;
@@ -129,6 +130,13 @@ public static class SimulationDualWindowChecks
             Check(preview.DisplayedVersion == update.Snapshot.Version, "Displayed layout version differs from B's confirmed version.");
             Check(preview.Camera.scene != workspace.gameObject.scene, "Display camera shares the source scene.");
             Check(preview.ProjectionCount > 0, "No projection marks were mirrored.");
+            preview.UpdateScene(adapter.Feedback.Level, null, null, false);
+            RenderTexture probe = preview.Render(900, 650);
+            result.previewFaceContrast = PreviewFaceContrast(preview.Camera, probe);
+            Check(result.previewFaceContrast > 0.04f,
+                "Preview brick top and side remain flat: luminance contrast=" + result.previewFaceContrast);
+            Save(probe, "plastic-material-probe.png");
+            preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, controller.View, false);
             Save(preview.Render(900, 650), "combined.png");
             Vector3 viewPosition = preview.Camera.transform.position;
             preview.Orbit(new Vector2(55, 15));
@@ -447,6 +455,26 @@ public static class SimulationDualWindowChecks
             if (Math.Abs(a.Rgb[i] - b.Rgb[i]) > 1 || Math.Abs(a.Rgb[i + 1] - b.Rgb[i + 1]) > 1 ||
                 Math.Abs(a.Rgb[i + 2] - b.Rgb[i + 2]) > 1) count++;
         return count;
+    }
+
+    private static float PreviewFaceContrast(Camera camera, RenderTexture target)
+    {
+        RenderTexture old = RenderTexture.active;
+        var pixels = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);
+        try
+        {
+            RenderTexture.active = target;
+            pixels.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0);
+            pixels.Apply();
+            float Luminance(Vector3 point)
+            {
+                Vector3 viewport = camera.WorldToViewportPoint(point);
+                Color color = pixels.GetPixelBilinear(viewport.x, viewport.y);
+                return color.r * 0.2126f + color.g * 0.7152f + color.b * 0.0722f;
+            }
+            return Mathf.Abs(Luminance(new Vector3(0.5f, 1f, 0.5f)) - Luminance(new Vector3(0.5f, 0.5f, 0)));
+        }
+        finally { RenderTexture.active = old; Object.DestroyImmediate(pixels); }
     }
 
     private static void Save(RenderTexture target, string name)

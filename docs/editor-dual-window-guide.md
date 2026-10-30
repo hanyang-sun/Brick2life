@@ -14,6 +14,7 @@
 
 - 展示的积木由 B 已确认的 `LevelState` 重建；未确认时显示等待状态。展示不读取 JSON 真值占用，也不直接镜像原始棋盘的积木实例。
 - 积木颜色使用约定的公开调色板；投影镜像现有面片几何、颜色与强度。组合模式还显示已有战斗观察几何，纯投影模式隐藏积木与战斗模型。
+- 展示积木使用预览独占的非金属、低光滑度 Standard 材质，中性主光与补光提供顶面和侧面的柔和明暗。底板、网格及投影沿用原有显示方式；不修改原始积木材质或相机光照。材质与预览一起释放。
 - 展示使用独立的预览场景、相机与 RenderTexture，隐藏模型及观察操作不修改源对象。原始 WorkspaceCamera 排除游戏/投影层；实验 TopCamera 的配置和取样流程保持原状。
 - 编辑焦点限制只拦截用户编辑入口，不把窗口焦点当作模型锁；拍照、识别与后台数据生成仍可读取和使用模型。战斗不再自动设置模型写入锁。
 - A/C 整合后包含核心徽记与呼吸效果、塔靶纹与朝向、城墙砖纹，以及路径流动箭头、射程圈、开火闪光、命中和核心受伤效果。战斗投影在两种展示模式中均可见；数字游戏对象只在组合模式显示。
@@ -25,3 +26,5 @@
 `pwsh -File Tests/RunSimulationDualWindowChecks.ps1` 在隔离工程运行真实场景，验证确认状态显示、两种模式、轨道相机、焦点限制、双窗口创建/关闭、战斗实时改图、失败恢复与原始 RGB 不变，并导出 `combined.png`、`projection-only.png` 与 `live-edited-combined.png`。操作规则见 [实时交互指南](live-battle-editing-guide.md)。
 
 机制与候选比较见 [检索记录](research/editor-dual-window-github.md)。
+
+2026-10-30 材质修正：真实 Unity 场景 179 项检查通过。无投影的单块蓝色积木顶面/侧面 RGB 加权亮度差由 0 增加至约 0.183，源 RGB 对照差异为 0 像素。该指标用于显示回归，不作为物理亮度测量。对照图为隔离工程中的 `plastic-material-probe.png`，完整效果见 `live-edited-combined.png`；材质与灯光取舍见 [材质研究记录](research/preview-plastic-material-github.md)。

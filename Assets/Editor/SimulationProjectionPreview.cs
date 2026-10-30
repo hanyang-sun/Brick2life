@@ -46,9 +46,12 @@ namespace Brick2Life.Editor
             Camera.farClipPlane = 150;
             Camera.fieldOfView = 43;
             Camera.allowHDR = false;
-            preview.lights[0].intensity = 1.2f;
-            preview.lights[0].transform.rotation = Quaternion.Euler(45, 35, 0);
-            preview.lights[1].intensity = 0.6f;
+            preview.lights[0].color = Color.white;
+            preview.lights[0].intensity = 1f;
+            preview.lights[0].transform.rotation = Quaternion.Euler(55, 35, 0);
+            preview.lights[1].color = Color.white;
+            preview.lights[1].intensity = 0.38f;
+            preview.lights[1].transform.rotation = Quaternion.Euler(30, -140, 0);
             foreach (Light light in preview.lights) light.enabled = true;
             root = new GameObject("ProjectionPreview").transform;
             root.gameObject.hideFlags = HideFlags.HideAndDontSave;
@@ -71,7 +74,7 @@ namespace Brick2Life.Editor
             if (palette != null)
                 foreach (SimulationBoardSession.PaletteEntry entry in palette)
                     if (!string.IsNullOrWhiteSpace(entry.colorId) && entry.material != null)
-                        brickMaterials[entry.colorId] = Material(entry.material.color);
+                        brickMaterials[entry.colorId] = PlasticMaterial(entry.material.color);
             PositionCamera();
         }
 
@@ -88,6 +91,20 @@ namespace Brick2Life.Editor
             if (shader == null) shader = Shader.Find("Sprites/Default");
             if (shader == null) throw new InvalidOperationException("缺少预览所需的基础 Shader。");
             var material = new Material(shader) { color = color, hideFlags = HideFlags.HideAndDontSave };
+            ownedMaterials.Add(material);
+            return material;
+        }
+
+        private Material PlasticMaterial(Color color)
+        {
+            Shader shader = Shader.Find("Standard");
+            if (shader == null) throw new InvalidOperationException("缺少积木预览所需的 Standard Shader。");
+            var material = new Material(shader)
+            {
+                name = "PreviewBrickPlastic", color = color, hideFlags = HideFlags.HideAndDontSave
+            };
+            material.SetFloat("_Metallic", 0);
+            material.SetFloat("_Glossiness", 0.22f);
             ownedMaterials.Add(material);
             return material;
         }
@@ -132,7 +149,7 @@ namespace Brick2Life.Editor
                             if (!cell.Occupied) continue;
                             if (!brickMaterials.TryGetValue(cell.ColorId, out Material material))
                             {
-                                material = Material(Color.gray);
+                                material = PlasticMaterial(Color.gray);
                                 brickMaterials[cell.ColorId] = material;
                             }
                             GameObject go = Cube(brickRoot, "ConfirmedBrick_" + x + "_" + y, material);
