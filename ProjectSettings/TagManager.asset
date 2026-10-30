@@ -34,9 +34,9 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
-  - 
+  - Brick2LifeObjectives
+  - Brick2LifeGame
+  - Brick2LifeProjection
   m_SortingLayers:
   - name: Default
     uniqueID: 0

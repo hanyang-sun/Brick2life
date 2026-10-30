@@ -18,8 +18,17 @@ namespace Brick2Life.Simulation
         [SerializeField] private Camera sourceCamera;
         private SimulationBoardSession board;
         [SerializeField] private Text statusLabel;
+        [Tooltip("识别取样前先关闭虚拟投影，避免投影光污染识别输入。")]
+        [SerializeField] private bool captureWithoutProjection = true;
+        [Tooltip("关闭投影后额外渲染的帧数，模拟投影画面稳定时间。")]
+        [SerializeField, Min(0)] private int projectionSettleFrames = 2;
 
         public string LastSavedPath { get; private set; }
+        public bool CaptureWithoutProjection
+        {
+            get => captureWithoutProjection;
+            set => captureWithoutProjection = value;
+        }
         public void Bind(SimulationBoardSession session) => board = session ?? throw new ArgumentNullException(nameof(session));
 
         public void SaveImage()
@@ -231,7 +240,25 @@ namespace Brick2Life.Simulation
         }
 
         // RGB and the public camera matrices only. Ground truth cells are not read.
-        public SimulationObservationImage CaptureObservationImage()
+        public SimulationObservationImage CaptureObservationImage() => CaptureObservationImage(!captureWithoutProjection);
+
+        // Recognition samples hide the virtual projection first: clear → settle → capture → restore.
+        public SimulationObservationImage CaptureObservationImage(bool includeProjection)
+        {
+            IDisposable suppression = includeProjection ? null : ProjectionCaptureGate.Suppress();
+            try
+            {
+                if (!includeProjection && sourceCamera != null)
+                    for (int i = 0; i < projectionSettleFrames; i++) sourceCamera.Render();
+                return CaptureObservationImageInternal(includeProjection);
+            }
+            finally
+            {
+                suppression?.Dispose();
+            }
+        }
+
+        private SimulationObservationImage CaptureObservationImageInternal(bool includeProjection)
         {
             if (sourceCamera == null || sourceCamera.targetTexture == null)
                 throw new InvalidOperationException("请配置顶置相机和 RenderTexture。");
@@ -241,7 +268,7 @@ namespace Brick2Life.Simulation
             byte[] rgb = ReadTopDown(target);
             if (sourceCamera.targetTexture != target)
                 throw new InvalidOperationException("拍摄期间相机目标纹理发生变化。");
-            return new SimulationObservationImage(target.width, target.height, rgb, DateTimeOffset.UtcNow, view, projection);
+            return new SimulationObservationImage(target.width, target.height, rgb, DateTimeOffset.UtcNow, view, projection, includeProjection);
         }
 
         public GridSample[][] BuildTopSamples(BoardDefinition definition, VisionCalibration calibration, int imageWidth, int imageHeight)

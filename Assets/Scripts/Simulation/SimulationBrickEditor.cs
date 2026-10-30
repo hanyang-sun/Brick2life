@@ -26,8 +26,49 @@ namespace Brick2Life.Simulation
         private Vector3 grabOffset;
         private Vector2Int dragTarget;
         private bool hasDragTarget;
+        private CanvasGroup editingControls;
 
-        public void Bind(SimulationBoardSession session) => board = session ?? throw new ArgumentNullException(nameof(session));
+        public SimulationBoardSession Board => board;
+        private bool CanEdit => board != null && board.IsInitialized && !board.IsEditingLocked && SimulationEditAccess.CanEdit;
+
+        public void Bind(SimulationBoardSession session)
+        {
+            if (session == null) throw new ArgumentNullException(nameof(session));
+            if (board != null) board.EditingLockChanged -= OnEditingLockChanged;
+            board = session;
+            board.EditingLockChanged += OnEditingLockChanged;
+            SimulationEditAccess.FocusChanged -= OnEditingFocusChanged;
+            SimulationEditAccess.FocusChanged += OnEditingFocusChanged;
+            OnEditingLockChanged(board.IsEditingLocked);
+        }
+
+        private void OnEditingLockChanged(bool locked)
+        {
+            RefreshEditingState();
+        }
+
+        private void OnEditingFocusChanged(bool focused) => RefreshEditingState();
+
+        private void RefreshEditingState()
+        {
+            bool locked = board != null && board.IsEditingLocked;
+            bool focused = SimulationEditAccess.CanEdit;
+            CancelDrag();
+            // All edit tools, palette buttons and ClearBoard share this existing panel.
+            if (editingControls == null && toolButtons != null && toolButtons.Length > 0 && toolButtons[0] != null)
+            {
+                Transform controlsRoot = toolButtons[0].transform.parent;
+                if (controlsRoot != null)
+                {
+                    editingControls = controlsRoot.GetComponent<CanvasGroup>();
+                    if (editingControls == null) editingControls = controlsRoot.gameObject.AddComponent<CanvasGroup>();
+                }
+            }
+            if (editingControls != null) editingControls.interactable = !locked && focused;
+            if (locked && statusLabel != null) statusLabel.text = "战斗中布局已锁定，结束本局或重试后可编辑。";
+            else if (!focused && statusLabel != null) statusLabel.text = "点击原始布局窗口后可编辑。";
+            else if (CanEdit && colorButtons != null && statusLabel != null) SelectTool((int)tool);
+        }
 
         private void Start()
         {
@@ -39,6 +80,7 @@ namespace Brick2Life.Simulation
             foreach (Button button in toolButtons)
                 if (button == null) { ConfigurationError(); return; }
             CreateColorButtons();
+            OnEditingLockChanged(board.IsEditingLocked);
             SelectTool(0);
         }
 
@@ -54,10 +96,25 @@ namespace Brick2Life.Simulation
                 // Replace the event so a cloned persistent listener cannot select another entry.
                 button.onClick = new Button.ButtonClickedEvent();
                 button.onClick.AddListener(() => SelectColor(index));
-                button.GetComponentInChildren<Text>(true).text = palette[i].label;
-                button.gameObject.SetActive(true);
+                button.GetComponentInChildren<Text>(true).text = board.PlayerColorLabel(palette[i].colorId, palette[i].label);
+                button.gameObject.SetActive(board.IsPlayerColorAvailable(palette[i].colorId));
                 colorButtons[i] = button;
             }
+            RefreshPlacementRules();
+        }
+
+        public void RefreshPlacementRules()
+        {
+            if (board == null || palette == null || colorButtons == null) return;
+            for (int i = 0; i < colorButtons.Length; i++)
+            {
+                colorButtons[i].gameObject.SetActive(board.IsPlayerColorAvailable(palette[i].colorId));
+                colorButtons[i].GetComponentInChildren<Text>(true).text = board.PlayerColorLabel(palette[i].colorId, palette[i].label);
+            }
+            if (!board.IsPlayerColorAvailable(palette[colorIndex].colorId))
+                for (int i = 0; i < palette.Count; i++)
+                    if (board.IsPlayerColorAvailable(palette[i].colorId)) { colorIndex = i; break; }
+            RefreshButtons();
         }
 
         private void ConfigurationError()
@@ -68,7 +125,7 @@ namespace Brick2Life.Simulation
 
         public void SelectTool(int index)
         {
-            if (index < 0 || index >= 3 || board == null || !board.IsInitialized) return;
+            if (index < 0 || index >= 3 || !CanEdit) return;
             CancelDrag();
             tool = (Tool)index;
             RefreshButtons();
@@ -78,14 +135,14 @@ namespace Brick2Life.Simulation
 
         public void SelectColor(int index)
         {
-            if (board == null || !board.IsInitialized || index < 0 || index >= palette.Count) return;
+            if (!CanEdit || index < 0 || index >= palette.Count || !board.IsPlayerColorAvailable(palette[index].colorId)) return;
             colorIndex = index;
             SelectTool((int)Tool.Add);
         }
 
         public void ClearBoard()
         {
-            if (board == null || !board.IsInitialized) return;
+            if (!CanEdit) return;
             SelectTool((int)Tool.Add);
             int count = board.Bricks.Count;
             for (int i = count - 1; i >= 0; i--)
@@ -110,6 +167,7 @@ namespace Brick2Life.Simulation
         private void Update()
         {
             if (board == null || !board.IsInitialized) return;
+            if (!CanEdit) { CancelDrag(); return; }
             if (!UnityApplication.isFocused) { CancelDrag(); return; }
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
             { CancelDrag(); return; }
@@ -123,12 +181,15 @@ namespace Brick2Life.Simulation
 
         private void HandlePointerDown(Vector2 position)
         {
+            if (!CanEdit) return;
             if (!pointer.TryPickCell(position, out Vector2Int cell, out _)) return;
+            if (board.IsReserved(cell.x, cell.y))
+            { statusLabel.text = "核心和出生点由系统固定，不能放置、删除或移动。"; return; }
             BoardLayout.Brick brick = board.At(cell.x, cell.y);
             if (tool == Tool.Add)
             {
                 if (!board.TryAdd(cell.x, cell.y, palette[colorIndex].colorId, out var added))
-                { statusLabel.text = "目标格已有积木，请选择空格。"; return; }
+                { statusLabel.text = board.LastPlacementIssue ?? "目标格不可放置，请选择其他位置。"; return; }
                 statusLabel.text = $"已添加 {palette[colorIndex].label}：({cell.x + 1}, {cell.y + 1})";
             }
             else if (tool == Tool.Delete)
@@ -145,10 +206,11 @@ namespace Brick2Life.Simulation
             }
         }
 
-        private bool DeleteBrick(string id) => board.TryDelete(id);
+        private bool DeleteBrick(string id) => CanEdit && board.TryDelete(id);
 
         private void UpdateDrag(Vector2 position)
         {
+            if (!CanEdit) { CancelDrag(); return; }
             hasDragTarget = pointer.TryProjectToBoard(position, out Vector3 ground);
             if (hasDragTarget)
             {
@@ -159,11 +221,13 @@ namespace Brick2Life.Simulation
             bool valid = hasDragTarget && board.CanPlace(dragTarget.x, dragTarget.y, draggedId);
             pointer.SetDragPreview(hasDragTarget ? dragTarget : new Vector2Int(-1, -1), valid);
             statusLabel.text = !hasDragTarget ? "目标在棋盘外或界面上，松开将取消移动。" :
-                valid ? $"拖拽到 ({dragTarget.x + 1}, {dragTarget.y + 1})，松开放置。" : "目标格已有积木，松开将取消移动。";
+                valid ? $"拖拽到 ({dragTarget.x + 1}, {dragTarget.y + 1})，松开放置。" :
+                (board.LastPlacementIssue ?? "目标格不可放置，松开将取消移动。");
         }
 
         private void EndDrag(Vector2 position)
         {
+            if (!CanEdit) { CancelDrag(); return; }
             UpdateDrag(position);
             string id = draggedId;
             bool moved = hasDragTarget && board.TryMove(id, dragTarget.x, dragTarget.y);
@@ -181,6 +245,11 @@ namespace Brick2Life.Simulation
         }
 
         private void OnDisable() => CancelDrag();
+        private void OnDestroy()
+        {
+            if (board != null) board.EditingLockChanged -= OnEditingLockChanged;
+            SimulationEditAccess.FocusChanged -= OnEditingFocusChanged;
+        }
         private void OnApplicationFocus(bool focused) { if (!focused) CancelDrag(); }
     }
 }

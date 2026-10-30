@@ -16,7 +16,7 @@ namespace Brick2Life.Simulation
     public sealed class SimulationVisionMonitor : MonoBehaviour
     {
         private const int CellSize = 36;
-        [SerializeField] private float interval = 0.35f;
+        [SerializeField] private float interval = 0.15f;
         [SerializeField] private int requiredFrames = 3;
         private SimulationBoardSession board;
         private SimulationCameraCapture capture;
@@ -30,6 +30,7 @@ namespace Brick2Life.Simulation
         private Text toggleLabel;
         private Text titleText;
         private Text accuracyText;
+        private Text feedbackText;
         private Text eventText;
         private ScrollRect eventScroll;
         private bool stickToLatest = true;
@@ -42,8 +43,33 @@ namespace Brick2Life.Simulation
         private float elapsed;
         private bool primed;
         private string loggedError;
+        private long captureSequence;
+        private long confirmedCaptureSequence = -1;
+
+        // Require fresh RGB evidence without consulting source layout or evaluation scores.
+        public long RequestFreshConfirmation() => captureSequence + requiredFrames;
+        public bool HasConfirmed(long requestedSequence) => confirmedCaptureSequence >= requestedSequence;
 
         public bool Automatic { get; set; } = true;
+
+        public void ResetTracking()
+        {
+            if (board == null) throw new InvalidOperationException("识别尚未绑定棋盘。");
+            Rebuild(); primed = false; elapsed = 0;
+        }
+
+        // Task C integration surface: one shared BoardSyncSession, confirmed updates, and the status line.
+        public BoardSyncSession Session { get { return sync; } }
+        public Text FeedbackText { get { return feedbackText; } }
+        public event Action<BoardUpdate> UpdateApplied;
+        public event Action<BoardSyncSession> SessionRebuilt;
+        public event Action UiReady;
+
+        public void SetFeedbackStatus(string text)
+        {
+            if (feedbackText != null) feedbackText.text = text ?? string.Empty;
+        }
+
         public bool IsPanelVisible => panel != null && panel.activeSelf;
         public string ReportText => report;
         public string LastError { get; private set; }
@@ -106,6 +132,10 @@ namespace Brick2Life.Simulation
             LastRawScore = null;
             LastStableScore = null;
             LastError = null;
+            confirmedCaptureSequence = -1;
+            // Task C binds to this session so recognition and feedback share one confirmed state.
+            Action<BoardSyncSession> rebuilt = SessionRebuilt;
+            if (rebuilt != null) rebuilt(sync);
         }
 
         private void Start()
@@ -118,6 +148,12 @@ namespace Brick2Life.Simulation
         private void Update()
         {
             ScrollEventLogFromPointer();
+            // F8 switches between interference-free sampling and sampling that includes task C's projection.
+            if (Input.GetKeyDown(KeyCode.F8) && capture != null)
+            {
+                capture.CaptureWithoutProjection = !capture.CaptureWithoutProjection;
+                Debug.Log("识别取样" + (capture.CaptureWithoutProjection ? "关闭" : "保留") + "虚拟投影（F8 切换）。", this);
+            }
             if (!Automatic || board == null) return;
             elapsed += Time.unscaledDeltaTime;
             if (primed && elapsed < interval) return;
@@ -140,6 +176,7 @@ namespace Brick2Life.Simulation
             if (board == null || !board.IsInitialized || capture == null || calibration == null)
                 throw new InvalidOperationException("识别面板尚未绑定棋盘和相机。");
             SimulationObservationImage image = capture.CaptureObservationImage();
+            captureSequence++;
             // The snapshot is only the accuracy reference. Recognize does not receive it.
             BoardSnapshot truth = board.Snapshot();
             GridSample[][] samples = capture.BuildTopSamples(board.Definition, calibration, image.Width, image.Height);
@@ -155,7 +192,13 @@ namespace Brick2Life.Simulation
                 ObservationRequest request = sync.BeginFrame(frameId, image.CapturedAtUtc);
                 var stamped = new FrameObservation(observation.Definition, request.FrameId, request.SessionId, request.Sequence,
                     request.CapturedAtUtc, request.CalibrationId, observation.Cells);
-                LastOutcome = sync.Confirm(request, stamped).Outcome;
+                BoardUpdate update = sync.Confirm(request, stamped);
+                LastOutcome = update.Outcome;
+                if (update.Outcome == UpdateOutcome.Baseline || update.Outcome == UpdateOutcome.Changed ||
+                    update.Outcome == UpdateOutcome.Unchanged) confirmedCaptureSequence = captureSequence;
+                // Task C consumes the confirmed prediction event; no ground truth is forwarded.
+                Action<BoardUpdate> applied = UpdateApplied;
+                if (applied != null) applied(update);
             }
             LastError = null;
             Publish(observation, step);
@@ -407,10 +450,14 @@ namespace Brick2Life.Simulation
 
             titleText = CreateLine(panel.transform, "VisionTitle", 20, 30);
             accuracyText = CreateLine(panel.transform, "VisionAccuracy", 18, 28);
+            // Task C feedback summary (level roles plus projection plan) is pushed in by the adapter.
+            feedbackText = CreateLine(panel.transform, "VisionFeedback", 14, 26);
             matrixRoot = CreateMatrix(panel.transform);
             CreateBlock(panel.transform, "VisionEventTitle", uiFont, 18, TextAnchor.MiddleLeft, 28).text = "变化事件";
             eventText = CreateEventLog(panel.transform);
             SetPanelVisible(true);
+            Action ready = UiReady;
+            if (ready != null) ready();
         }
 
         private RectTransform CreateMatrix(Transform parent)

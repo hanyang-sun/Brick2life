@@ -1548,7 +1548,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01c3a07e7ad44ff7a3b60f4b03a00cdc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationLightingControls
   settings: {fileID: 497589107}
   buttonTemplate: {fileID: 100530585}
@@ -1563,7 +1563,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d16fc6af6f7543c6800a1b7642e37c02, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationLightingSettings
   leftLight: {fileID: 743977936}
   rightLight: {fileID: 467394313}
@@ -1923,6 +1923,83 @@ Transform:
   m_Children: []
   m_Father: {fileID: 497589108}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &863402293
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 863402294}
+  m_Layer: 0
+  m_Name: Level
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &863402294
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 863402293}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1480744937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &864833548
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 864833549}
+  - component: {fileID: 864833550}
+  m_Layer: 0
+  m_Name: BattlePanelRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &864833549
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864833548}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1480744937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &864833550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864833548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3594f6120532e8b42b3368f74e8f0ae0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationBattlePanel
+  controller: {fileID: 1730692415}
+  visible: 1
 --- !u!1 &875255854
 GameObject:
   m_ObjectHideFlags: 0
@@ -2091,6 +2168,48 @@ Transform:
   - {fileID: 7103880735110480457}
   m_Father: {fileID: 54039462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &920000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54039461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39f75aedc6954d3fa97cd44ec719eae9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationBoardSession
+  bricksRoot: {fileID: 889534993}
+  palette:
+  - colorId: red
+    label: "\u7EA2\u8272"
+    material: {fileID: 2100000, guid: fe73a14aeaa5d844c844927cf6091ba0, type: 2}
+  - colorId: green
+    label: "\u7EFF\u8272"
+    material: {fileID: 2100000, guid: 8e8d591c912287447944dfb11e71c4b3, type: 2}
+  - colorId: blue
+    label: "\u84DD\u8272"
+    material: {fileID: 2100000, guid: e4e0b5dc6647e284ab96907bed220bdc, type: 2}
+  - colorId: yellow
+    label: "\u9EC4\u8272"
+    material: {fileID: 2100000, guid: 0c1766735c2c8324b852437960bcd061, type: 2}
+--- !u!114 &920000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54039461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e39fc9e33e554e7cb9cf72345ca91fc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationBootstrap
+  board: {fileID: 920000001}
+  editor: {fileID: 54039464}
+  capture: {fileID: 1356387077}
+  vision: {fileID: 0}
 --- !u!1 &966102104
 GameObject:
   m_ObjectHideFlags: 0
@@ -2906,7 +3025,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -3063,7 +3182,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 2684354559
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 8400000, guid: cbbf40e41fb30a645b5c4b612483b610, type: 2}
   m_TargetDisplay: 0
@@ -3089,6 +3208,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationCameraCapture
   sourceCamera: {fileID: 1356387076}
   statusLabel: {fileID: 875255856}
+  captureWithoutProjection: 1
+  projectionSettleFrames: 2
 --- !u!1 &1452470341
 GameObject:
   m_ObjectHideFlags: 0
@@ -3230,6 +3351,157 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1480744931
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1480744937}
+  - component: {fileID: 1480744936}
+  - component: {fileID: 1480744935}
+  - component: {fileID: 1480744934}
+  - component: {fileID: 1480744933}
+  - component: {fileID: 1480744932}
+  m_Layer: 0
+  m_Name: SimulationFeedback
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1480744932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1480744931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 447af9d36a1f4b34a694f2b411dcd0af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationFeedbackBootstrap
+  board: {fileID: 920000001}
+  adapter: {fileID: 1480744934}
+  demo: {fileID: 1480744933}
+  vision: {fileID: 0}
+  disableDemoWhenVisionActive: 1
+  calibrationId: brick2life-simulation
+--- !u!114 &1480744933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1480744931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1ceca933c9e4b4da105a827abee6dd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationFeedbackDemo
+  keyboardDemo: 1
+  statusLabel: {fileID: 0}
+  logToConsole: 1
+--- !u!114 &1480744934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1480744931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17aa342fc2af4991ac6009e134cec1c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationLevelAdapter
+  levelView: {fileID: 1480744936}
+  projection: {fileID: 1480744935}
+  rules:
+  - colorId: red
+    role: 3
+  - colorId: green
+    role: 2
+  - colorId: blue
+    role: 1
+  - colorId: yellow
+    role: 2
+  statusLabel: {fileID: 0}
+--- !u!114 &1480744935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1480744931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1d8726eb64d4f69a882e33746c90e99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.ProjectionSimulator
+  marksRoot: {fileID: 1579378318}
+  overheadCamera: {fileID: 1356387076}
+  markMaterial: {fileID: 2100000, guid: c8d55d84ac076bc4db654658ca79a556, type: 2}
+  projectionLayerName: Brick2LifeProjection
+  fallbackProjectionLayer: 31
+  brickTopHeight: 1
+  tableHeight: 0
+  surfaceOffset: 0.006
+  intensity: 1
+  visible: 1
+--- !u!114 &1480744936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1480744931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cccb4990c164db8a7061a664e47d3f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationLevelView
+  levelRoot: {fileID: 863402294}
+  styles:
+  - role: 1
+    material: {fileID: 2100000, guid: 92d2587e083ab624685a4e8b34b7fa91, type: 2}
+    shape: 3
+    height: 0.9
+    footprint: 0.7
+  - role: 2
+    material: {fileID: 2100000, guid: 5a7169217a2253e49b7b39ebd79ef8f4, type: 2}
+    shape: 3
+    height: 0.45
+    footprint: 1
+  - role: 3
+    material: {fileID: 2100000, guid: 041b3ba4452cc4b4ba06b2f4cb39d69d, type: 2}
+    shape: 2
+    height: 1.6
+    footprint: 0.55
+  gameLayerName: Brick2LifeGame
+  fallbackGameLayer: 30
+  overheadCamera: {fileID: 1356387076}
+--- !u!4 &1480744937
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1480744931}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 863402294}
+  - {fileID: 1579378318}
+  - {fileID: 1730692417}
+  - {fileID: 864833549}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1483085154
@@ -3581,6 +3853,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1572472704}
   m_CullTransparentMesh: 1
+--- !u!1 &1579378317
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1579378318}
+  m_Layer: 0
+  m_Name: Projection
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1579378318
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579378317}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1480744937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1593453868
 GameObject:
   m_ObjectHideFlags: 0
@@ -3938,6 +4241,102 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1660887073}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1730692414
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1730692417}
+  - component: {fileID: 1730692416}
+  - component: {fileID: 1730692415}
+  - component: {fileID: 1730692418}
+  m_Layer: 0
+  m_Name: Battle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1730692415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730692414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c528cd09e5687a6448ccc689cd3fe045, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationBattleController
+  adapter: {fileID: 1480744934}
+  view: {fileID: 1730692416}
+  panel: {fileID: 864833550}
+  pointer: {fileID: 54039463}
+  brickEditor: {fileID: 0}
+  autoStep: 1
+  generateObjectives: 1
+  minimumSpawns: 1
+  maximumSpawns: 4
+--- !u!114 &1730692416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730692414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceff8c7b05023a24b9e4443a8ab2d2c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationBattleView
+  root: {fileID: 1730692417}
+  enemyMaterial: {fileID: 2100000, guid: 99b581c8d263dcb4d84918f5c979d845, type: 2}
+  routeMaterial: {fileID: 2100000, guid: d5ab083804945494f9fb9f78df95af37, type: 2}
+  enemyScale: 0.45
+  routeWidth: 0.08
+  gameLayerName: Brick2LifeGame
+--- !u!4 &1730692417
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730692414}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1480744937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1730692418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730692414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cde17bf7d9764068963954fb5b04012f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationBattleOverlay
+  controller: {fileID: 1730692415}
+  projector: {fileID: 1480744935}
+  root: {fileID: 1730692417}
+  projectionLayerName: Brick2LifeProjection
+  fallbackLayer: 31
+  arrowsPerRoute: 7
+  arrowSize: 0.34
+  arrowSpeed: 1.6
+  ringHeight: 0.02
+  flashSeconds: 0.18
+  rippleSeconds: 0.5
 --- !u!1 &1835982914
 GameObject:
   m_ObjectHideFlags: 0
@@ -5004,47 +5403,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &920000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 54039461}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39f75aedc6954d3fa97cd44ec719eae9, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationBoardSession
-  bricksRoot: {fileID: 889534993}
-  palette:
-  - colorId: red
-    label: "\u7EA2\u8272"
-    material: {fileID: 2100000, guid: fe73a14aeaa5d844c844927cf6091ba0, type: 2}
-  - colorId: green
-    label: "\u7EFF\u8272"
-    material: {fileID: 2100000, guid: 8e8d591c912287447944dfb11e71c4b3, type: 2}
-  - colorId: blue
-    label: "\u84DD\u8272"
-    material: {fileID: 2100000, guid: e4e0b5dc6647e284ab96907bed220bdc, type: 2}
-  - colorId: yellow
-    label: "\u9EC4\u8272"
-    material: {fileID: 2100000, guid: 0c1766735c2c8324b852437960bcd061, type: 2}
---- !u!114 &920000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 54039461}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e39fc9e33e554e7cb9cf72345ca91fc7, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationBootstrap
-  board: {fileID: 920000001}
-  editor: {fileID: 54039464}
-  capture: {fileID: 1356387077}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -5054,3 +5412,4 @@ SceneRoots:
   - {fileID: 1888184271}
   - {fileID: 1477656653}
   - {fileID: 497589108}
+  - {fileID: 1480744937}

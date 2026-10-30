@@ -1,6 +1,6 @@
 # Brick2Life
 
-Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层积木工作台、固定透视相机、可配置光照、RGB/真值配对采集，以及根据顶置相机 RGB 的固定格位识别和增删移动事件。投影反馈仍待接入。
+Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层积木工作台、固定透视相机、可配置光照、RGB/真值配对采集，以及 RGB 识别、稳定确认、关卡反馈、塔防战斗和虚拟投影。真值仅用于评价，不参与视觉预测或开战正确性判断。
 
 ## 运行
 
@@ -10,7 +10,7 @@ Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层
 git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-sun/Brick2life.git Brick2Life
 ```
 
-在 Unity Hub 添加工程，打开默认场景 `Assets/Scenes/Brick2LifeSimulation.unity`，点击 Play。侧栏支持选择颜色、添加、删除、拖拽移动、清空棋盘和保存 RGB + 标注。画面下方显示当前帧 10×10 识别矩阵、与真值对照的准确率，以及连续三帧确认后的增加、删除和移动。操作相机与实验相机彼此独立。
+在 Unity Hub 添加工程，打开默认场景 `Assets/Scenes/Brick2LifeSimulation.unity`，点击 Play。系统生成一个固定核心和 1–4 个出生点，玩家摆放绿色城墙、红色防御塔，暂不设数量配额。侧栏支持添加、删除、拖拽移动、清空玩家积木和保存 RGB + 标注。操作相机与实验相机彼此独立。
 
 “光照”面板提供左右/双侧白光、亮度、左右强度比例、环境光倍数和阴影开关。默认双侧标准亮度、50:50、环境 1 倍。顶置实验相机使用 Perspective、FOV 50。
 
@@ -19,12 +19,13 @@ git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-su
 | 模块 | 当前职责 | 分工 |
 | --- | --- | --- |
 | Core | 固定棋盘定义、布局、不可变快照、观测与差异；无 Unity 依赖 | A 基础合同，B 差异 |
-| Application | 确认会话、帧/标定校验、有限测试集布局计划；无 Unity 依赖 | 集成负责人 |
+| Application | 确认会话、帧/标定校验、测试集计划与可复现系统目标；无 Unity 依赖 | 集成负责人 |
 | Simulation | 独立棋盘会话、编辑界面、相机/光照采集和场景接线 | A |
-| Vision | 顶面采样、颜色分类、连续帧确认和变化事件；无 Unity 依赖 | B |
-| Projection | 待接入：确认状态到暴露底板的反馈及坐标映射 | C |
+| Vision | 固定格位识别：调色板色样、逐格顶面采样与归一化 RGB 分类、连续帧稳定与变化事件、与真值的准确率对照；无 Unity 依赖 | B |
+| Feedback | 确认积木映射为墙/塔、合入固定系统目标、游戏对象与虚拟投影；玩家布局只消费 `BoardUpdate` | C |
+| Battle | 关卡转 20×20 战斗格、A* 寻路、波次/塔/核心模拟与暂停重试；无 Unity 依赖 | 新管线 |
 
-Vision/Projection 尚无具体实现或空程序集。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。
+任务 B 与任务 C 已接线：识别面板持有唯一的 `BoardSyncSession`，确认后的 `BoardUpdate` 驱动关卡对象与投影，人工目标演示在识别接入后自动停用。自动识别启用时，点击开始后等待新 RGB 稳定确认；准备阶段、战斗、暂停和波次间隔均可编辑墙塔，确认后保留本局进度并从敌人当前位置重新寻路。堵路时提示并沿用完整旧路线，继续移动、出怪和更新塔；旧路线可能穿过新障碍。核心与出生点固定且不可编辑。编辑器 Play 模式打开原始布局与只读投影两个窗口，展示窗口可旋转缩放，并切换“积木＋投影／仅投影”。角色纹样与战斗动态效果均纳入投影采集开关。使用见 [新玩法指南](docs/generated-defense-round-guide.md)、[实时交互指南](docs/live-battle-editing-guide.md) 和 [双窗口指南](docs/editor-dual-window-guide.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)。
 
 ## 采集数据
 
@@ -38,7 +39,7 @@ GT 仅用于导出和评价。B 接收图像与约定公开配置，C 消费视�
 
 ## 检查与构建
 
-纯 C# 检查需要 .NET 10 SDK，默认包含布局、快照、确认会话及数据集计划：
+纯 C# 检查需要 .NET 10 SDK，包含布局、快照、确认会话、数据集计划、视觉、关卡投影及战斗规则（共 1076 项断言）：
 
 ```powershell
 dotnet run --project Tests/Brick2Life.Checks.csproj
@@ -49,6 +50,7 @@ Unity 检查在独立临时工程运行，可通过 `-UnityPath` 指定编辑器
 ```powershell
 pwsh -File Tests/RunSimulationCameraMetadataChecks.ps1
 pwsh -File Tests/RunSimulationLightingChecks.ps1
+pwsh -File Tests/RunSimulationDualWindowChecks.ps1 -CheckClass GeneratedDefenseRoundChecks
 ```
 
 Windows x64 构建可用菜单 `Brick2Life/Build/Windows x64`，或关闭当前工程编辑器后执行：

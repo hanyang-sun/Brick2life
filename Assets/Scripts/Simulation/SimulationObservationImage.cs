@@ -11,12 +11,14 @@ namespace Brick2Life.Simulation
         public DateTimeOffset CapturedAtUtc { get; }
         public double[] WorldToCamera { get; }
         public double[] Projection { get; }
+        // True when the virtual projection was left visible for this capture (interference sample).
+        public bool ProjectionVisible { get; }
 
         internal SimulationObservationImage(int width, int height, byte[] rgb, DateTimeOffset capturedAtUtc,
-            double[] worldToCamera, double[] projection)
+            double[] worldToCamera, double[] projection, bool projectionVisible = false)
         {
             Width = width; Height = height; Rgb = rgb; CapturedAtUtc = capturedAtUtc;
-            WorldToCamera = worldToCamera; Projection = projection;
+            WorldToCamera = worldToCamera; Projection = projection; ProjectionVisible = projectionVisible;
         }
     }
 }
