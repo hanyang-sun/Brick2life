@@ -16,7 +16,7 @@ namespace Brick2Life.Simulation
     public sealed class SimulationVisionMonitor : MonoBehaviour
     {
         private const int CellSize = 36;
-        [SerializeField] private float interval = 0.35f;
+        [SerializeField] private float interval = 0.15f;
         [SerializeField] private int requiredFrames = 3;
         private SimulationBoardSession board;
         private SimulationCameraCapture capture;

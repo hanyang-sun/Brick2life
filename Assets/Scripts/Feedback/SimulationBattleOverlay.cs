@@ -55,6 +55,7 @@ namespace Brick2Life.Feedback
         private int lastCoreHealth = -1;
 
         private BattleLevel lastLevel;
+        private BattleSimulation lastBattle;
         private long lastShotSequence = -1;
         private bool captureVisible = true;
         private float animationTime;
@@ -110,11 +111,12 @@ namespace Brick2Life.Feedback
                 wallCooldown.Clear();
                 towerIds.Clear();
                 lastLevel = controller.Level;
-                lastCoreHealth = -1;
+                if (!ReferenceEquals(lastBattle, controller.Battle)) lastCoreHealth = -1;
+                lastBattle = controller.Battle;
                 lastShotSequence = -1;
                 animationTime = 0;
             }
-            if (controller == null || controller.State == null) { HideAll(); return; }
+            if (controller == null || controller.State == null || controller.State.WaitingForLayout) { HideAll(); return; }
             bool visible = projector == null || projector.IsVisible;
             if (!visible) { HideAll(); return; }
             BattleState state = controller.State;

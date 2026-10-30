@@ -19,6 +19,7 @@ public static class SimulationDualWindowChecks
     {
         public bool passed;
         public int assertions, captureChangedPixels, projectionChangedPixels, cleanCaptureMismatchPixels;
+        public float automaticConfirmationSeconds;
         public List<string> failures = new List<string>();
     }
     private static Result result;
@@ -193,16 +194,17 @@ public static class SimulationDualWindowChecks
         controller.SetAutoStep(false);
         Require(controller.AddSpawn(new GridPoint(1, 1)), "Could not prepare an entrance for the combined focus/battle check.");
         Require(controller.StartBattle(), "Could not start the focus/battle fixture.");
-        Check(board.IsEditingLocked, "Opening two windows removed the battle lock.");
+        Check(!board.IsEditingLocked, "Running battle still prevents live brick editing.");
         SimulationDualWindowSession.DisplayWindow.Focus();
         SimulationEditAccess.Refresh();
         yield return null;
+        editor.ClearBoard();
+        Check(board.Version == boardVersion, "Readonly display focus allowed an edit during battle.");
         SimulationDualWindowSession.LayoutWindow.Focus();
         SimulationEditAccess.Refresh();
         yield return null;
-        editor.ClearBoard();
-        Check(board.IsEditingLocked && board.Version == boardVersion,
-            "Returning edit focus bypassed the active battle lock.");
+        Check(!board.IsEditingLocked && SimulationEditAccess.CanEdit && board.Version == boardVersion,
+            "Returning edit focus did not allow live editing or changed the board by itself.");
         Require(controller.Restart(), "Could not reset the focus/battle fixture.");
         Check(!board.IsEditingLocked, "Reset did not release the battle lock with two windows open.");
         SimulationDualWindowSession.Close();
@@ -219,7 +221,7 @@ public static class SimulationDualWindowChecks
         // Real RGB recognition of an explicitly arranged test scene; GT is used only by the normal evaluator.
         editor.ClearBoard();
         Require(board.TryAdd(9, 9, "blue", out BoardLayout.Brick core), "Could not arrange the RGB core fixture.");
-        Require(board.TryAdd(5, 5, "red", out _), "Could not arrange the RGB tower fixture.");
+        Require(board.TryAdd(5, 5, "red", out BoardLayout.Brick tower), "Could not arrange the RGB tower fixture.");
         Require(board.TryAdd(4, 5, "green", out _), "Could not arrange the RGB wall fixture.");
         capture.CaptureWithoutProjection = true;
         monitor.Configure(3, false);
@@ -254,8 +256,8 @@ public static class SimulationDualWindowChecks
         monitor.Automatic = false;
         Check(controller.Level.CellAt(16, 16).IsCore && !controller.Level.CellAt(18, 18).IsCore,
             "Battle did not replan to the newly confirmed core.");
-        Check(!controller.SelectSpawns && editor.enabled && board.IsEditingLocked,
-            "Deferred start did not end spawn selection or retain the model lock when focus changed.");
+        Check(!controller.SelectSpawns && editor.enabled && !board.IsEditingLocked,
+            "Deferred start did not end spawn selection or left the board locked.");
         SimulationEditAccess.ConfigureFocus(null);
         yield return null;
         var overlay = controller.GetComponent<SimulationBattleOverlay>();
@@ -329,6 +331,63 @@ public static class SimulationDualWindowChecks
                 adapter.Projection.MarksRoot.GetChild(i).gameObject.activeSelf) faded = false;
         }
         Check(faded, "Change rings did not fade away while the battle was paused.");
+        BattleSimulation liveRun = controller.Battle;
+        BattleState liveBefore = controller.State;
+        BattleLevel oldMap = controller.Level;
+        Require(board.TryAdd(4, 3, "green", out var wall), "Cannot add a wall during the live RGB battle.");
+        monitor.AnalyzeOnce();
+        yield return null;
+        Check(ReferenceEquals(oldMap, controller.Level), "Unconfirmed single RGB frame changed the battle map.");
+        monitor.AnalyzeOnce(); monitor.AnalyzeOnce();
+        yield return null;
+        Check(!ReferenceEquals(oldMap, controller.Level) && ReferenceEquals(liveRun, controller.Battle) &&
+            controller.Level.CellAt(8, 6).Blocked, "Confirmed live wall did not replan the same battle.");
+        Check(controller.State.Paused && Math.Abs(controller.State.Elapsed - liveBefore.Elapsed) < 1e-8 &&
+            controller.State.CoreHealth == liveBefore.CoreHealth &&
+            controller.State.Enemies[0].Id == liveBefore.Enemies[0].Id &&
+            Math.Abs(controller.State.Enemies[0].X - liveBefore.Enemies[0].X) < 1e-8 &&
+            Math.Abs(controller.State.Enemies[0].Y - liveBefore.Enemies[0].Y) < 1e-8,
+            "Live wall update reset positions, time, health or user pause.");
+        Require(board.TryMove(tower.BrickId, 5, 4), "Cannot move a live tower.");
+        ConfirmRgb(monitor);
+        yield return null;
+        Check(controller.Level.CellAt(10, 8).Role == GameRole.Tower && controller.Level.CellAt(10, 10).Role == GameRole.None,
+            "RGB-confirmed tower move did not update the battle map.");
+        Require(board.TryDelete(wall.BrickId), "Cannot remove a live wall.");
+        ConfirmRgb(monitor);
+        yield return null;
+        Check(!controller.Level.CellAt(8, 6).Blocked, "Removed live wall remains in navigation.");
+        controller.SetPaused(false);
+        Require(board.TryDelete(core.BrickId), "Cannot remove core during live battle.");
+        ConfirmRgb(monitor);
+        yield return null;
+        Require(controller.State.WaitingForLayout && !board.IsEditingLocked, "Missing core did not wait with editing available.");
+        double heldTime = controller.State.Elapsed;
+        controller.StepManual(1);
+        Check(Math.Abs(controller.State.Elapsed - heldTime) < 1e-8, "Missing-core wait advanced the battle.");
+        Require(board.TryAdd(7, 8, "blue", out var restoredCore), "Cannot repair the missing core.");
+        ConfirmRgb(monitor);
+        yield return null;
+        Check(!controller.State.WaitingForLayout && !controller.State.Paused && ReferenceEquals(liveRun, controller.Battle) &&
+            controller.Level.CellAt(14, 16).IsCore, "RGB core repair did not resume the existing run at its new location.");
+        controller.StepManual(0.1f);
+        Check(controller.State.Elapsed > heldTime, "Recovered live battle did not advance.");
+        Require(board.TryDelete(tower.BrickId), "Cannot remove the live tower.");
+        ConfirmRgb(monitor);
+        yield return null;
+        Check(overlay.ActiveRangeRingCount == 0 && overlay.ActiveTowerArrowCount == 0,
+            "Removed tower still has a range ring or aiming arrow.");
+        Require(board.TryAdd(6, 5, "red", out _), "Cannot place a replacement tower.");
+        Require(board.TryMove(restoredCore.BrickId, 8, 8), "Cannot move the recovered core.");
+        ConfirmRgb(monitor);
+        yield return null;
+        Check(overlay.ActiveRangeRingCount == 1 && overlay.ActiveTowerArrowCount == 1 && controller.Level.CellAt(16, 16).IsCore,
+            "Replacement tower/core did not update live projection and navigation.");
+        using (var preview = new SimulationProjectionPreview(board.Palette))
+        {
+            preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, controller.View, false);
+            Save(preview.Render(1000, 720), "live-edited-combined.png");
+        }
         Require(controller.Restart(), "Could not restart the combined integration battle.");
         yield return null;
         Check(!board.IsEditingLocked && overlay.ActiveArrowCount == 0 && overlay.ActiveRangeRingCount == 0 &&
@@ -362,6 +421,23 @@ public static class SimulationDualWindowChecks
         Check(coreImpact, "Core damage produced no visible impact ring.");
         Require(controller.Restart(), "Could not reset the core-impact fixture.");
         yield return null;
+        typeof(SimulationVisionMonitor).GetField("interval", System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic).SetValue(monitor, 0.15f);
+        monitor.Configure(3, true);
+        float automaticStarted = Time.realtimeSinceStartup;
+        Check(!controller.StartBattle() && controller.PendingStart, "Automatic sampling did not request a fresh start.");
+        while (!controller.Running && Time.realtimeSinceStartup - automaticStarted < 3f) yield return null;
+        result.automaticConfirmationSeconds = Time.realtimeSinceStartup - automaticStarted;
+        Require(controller.Running, "Automatic RGB sampling failed to confirm and start within 3 seconds.");
+        Check(monitor.LastRawScore.ExactMatches == 100 && !board.IsEditingLocked,
+            "Automatic confirmation lost RGB accuracy or disabled live editing.");
+        monitor.Automatic = false;
+        controller.Restart();
+    }
+
+    private static void ConfirmRgb(SimulationVisionMonitor monitor)
+    {
+        for (int i = 0; i < 3; i++) monitor.AnalyzeOnce();
     }
 
     private static int ChangedPixels(SimulationObservationImage a, SimulationObservationImage b)

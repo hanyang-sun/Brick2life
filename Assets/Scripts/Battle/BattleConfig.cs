@@ -51,6 +51,7 @@ namespace Brick2Life.Battle
         public int Id { get; }
         public double X { get; }
         public double Y { get; }
+        // Cumulative navigation distance since spawn, including movement after rerouting.
         public double RouteProgress { get; }
         public int Health { get; }
         public int SpawnIndex { get; }
@@ -86,16 +87,19 @@ namespace Brick2Life.Battle
         public int Leaked { get; }
         public double Elapsed { get; }
         public bool Paused { get; }
+        public bool WaitingForLayout { get; }
+        public string LayoutIssue { get; }
         public IReadOnlyList<EnemyState> Enemies { get; }
         public bool Finished => Phase == BattlePhase.Victory || Phase == BattlePhase.Defeat;
-        public bool CanStartWave => Phase == BattlePhase.Ready || Phase == BattlePhase.AwaitingNextWave;
+        public bool CanStartWave => !WaitingForLayout && (Phase == BattlePhase.Ready || Phase == BattlePhase.AwaitingNextWave);
 
         public BattleState(BattlePhase phase, int coreHealth, int wave, int spawned, int killed, int leaked,
-            double elapsed, bool paused, EnemyState[] enemies)
+            double elapsed, bool paused, EnemyState[] enemies, bool waitingForLayout = false, string layoutIssue = "")
         {
             Phase = phase; CoreHealth = coreHealth; Wave = wave; SpawnedThisWave = spawned;
             Killed = killed; Leaked = leaked; Elapsed = elapsed; Paused = paused;
             Enemies = Array.AsReadOnly((EnemyState[])enemies.Clone());
+            WaitingForLayout = waitingForLayout; LayoutIssue = layoutIssue;
         }
     }
 

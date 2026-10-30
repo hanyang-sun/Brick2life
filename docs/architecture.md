@@ -35,7 +35,7 @@ flowchart TD
 - `Brick2Life.Battle` 不引用 Unity：`BattleLevel` 把确认关卡（10×10）映射成 20×20 战斗格并校验入口通路，`RouteSearch` 做四方向 A*，`BattleSimulation` 以 1/60 固定步长跑波次、塔与核心；`SimulationBattleController/View/Panel` 只负责驱动、渲染和参数输入。
 - Editor 引用 Core、Application、Battle、Vision、Simulation、Feedback 和 Unity UI，仅 Editor 编译，承载灯光配置、任务 C 安装与分层检查、战斗装置安装、依赖检查与构建。
 
-Awake 顺序为棋盘会话 -200、接线 -100、任务 C 反馈入口 -50，随后编辑界面 Start。自动视觉输入启用时，点击 `开始` 后等待 B 的新采集确认，再冻结确认关卡；不读取原始棋盘内容判断识别是否正确。局中识别变化不影响本局，暂停和波次间隔仍锁定模型编辑。
+Awake 顺序为棋盘会话 -200、接线 -100、任务 C 反馈入口 -50，随后编辑界面 Start。自动视觉输入启用时，点击 `开始` 后等待 B 的新采集确认。战斗中继续允许编辑积木，新确认 LevelState 通过 `BattleSimulation.TryUpdateLevel` 原子替换地图、入口路线、存活敌人的剩余路径和塔；保留敌人位置与血量、波次、核心生命和时钟。不读取原始棋盘内容判断识别是否正确。布局非法或敌人当前位置无路时，`WaitingForLayout` 停止推进；修复后恢复，并独立保留用户暂停状态。出生点在本局保持固定。
 
 ## 状态归属
 
@@ -77,7 +77,7 @@ Fail 用于采集/识别异常，Cancel 用于取消；ChangeCalibration 取消�
 
 投影与拍照的时序由 `IProjectionGate`（Simulation 程序集）连接：角色投影与战斗覆盖层在 `OnEnable` 注册到 `ProjectionCaptureGate`。`SimulationCameraCapture.CaptureObservationImage()` 通过 `Suppress()` 临时关闭全部已注册投影、按 `projectionSettleFrames` 追加渲染、取完在 finally 中恢复各自原状态；战斗渲染同步隐藏，不依赖下一次 Update。`CaptureObservationImage(true)` 保留投影，用于干扰对照。识别默认使用无投影取样，F8 可实时切换。
 
-编辑器双窗口采用独立预览场景：确认布局重建积木，`ProjectionSimulator` 与 `SimulationBattleOverlay` 的可见面片共同镜像到投影组。两种展示模式都保留该组，只有组合模式显示数字游戏对象。原始窗口拥有编辑焦点，战斗锁在模型层生效；展示切换不改变源相机、布局和采集条件。详见 [A/C 整合说明](a-c-integration.md)。
+编辑器双窗口采用独立预览场景：确认布局重建积木，`ProjectionSimulator` 与 `SimulationBattleOverlay` 的可见面片共同镜像到投影组。两种展示模式都保留该组，只有组合模式显示数字游戏对象。原始窗口拥有编辑焦点，战斗不再锁定积木模型；展示切换不改变源相机、布局和采集条件。实时更新和失败恢复见 [交互指南](live-battle-editing-guide.md)。
 
 ### C：关卡与投影（2026-10-25）
 

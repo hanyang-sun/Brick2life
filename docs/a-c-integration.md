@@ -2,11 +2,13 @@
 
 日期：2026-10-30。整合基础为 A `823fe28` 与 C `56adb76`，保留双方历史，以 A 的双窗口作为使用入口。目标版本为 Unity 6000.3.24f1，编辑器 Play 模式。
 
+后续规则更新：用户已改为要求战斗中编辑积木，当前实现以 [实时交互指南](live-battle-editing-guide.md) 为准。下文验证数字保留整合当时记录。
+
 ## 整合后的行为
 
 - 原始积木布局与投影展示是两个同时可见的独立窗口；只有点回原始窗口才允许编辑。展示可旋转缩放，并切换积木＋投影或仅投影；纯投影保留暗色棋盘轮廓。
 - 复用 C 的核心徽记与呼吸、塔靶纹与瞄准朝向、墙砖纹，以及路径箭头、每塔射程圈、开火闪光、命中涟漪、核心冲击环和邻墙波纹。变化提示用轮廓圈并淡出，移除标记落在桌面。
-- 每局使用当前确认布局与入口重新规划，战斗中锁定布局与入口，暂停和波次间隔也不能修改。胜负结束或重试后解锁。
+- 每局使用当前确认布局与入口规划，战斗中继续允许编辑积木，确认后从敌人当前位置重新寻路并保留进度；出生点在本局保持固定。堵路或缺核心时等待修正。
 - 自动识别开启时，点开始先等待 B 新采集的 RGB 完成确认，再开战；重试可取消等待，超过 8 秒或确认会话改变则取消并提示。没有自动视觉输入的独立人工目标演示继续使用明确提交的确认布局。
 - F8 独立控制识别是否保留投影，角色投影与战斗覆盖层统一受控。展示模式不决定识别输入。
 
@@ -14,7 +16,7 @@
 
 ## 重叠实现的处理
 
-采用 A 的 SimulationBoardSession 模型写入锁与 SimulationEditAccess 焦点许可，移除 C 单窗口 F1/F2/F3 工具条、舞台改层和 BrickEditGate，避免显示与锁定状态相互覆盖。
+保留 A 的 SimulationEditAccess 编辑焦点许可，移除 C 单窗口 F1/F2/F3 工具条、舞台改层和 BrickEditGate。后续实时编辑要求又取消了战斗自动设置模型写入锁的行为。
 
 C 的等待开战原先通过读取仿真棋盘占用和颜色核对识别结果；整合后改为等待 B 的新采集确认序列，不把真值用于业务正确性判断。已有真值评分仍在预测之后独立计算。
 
@@ -49,7 +51,7 @@ GitHub 候选与复用决定见 [检索记录](research/a-c-integration-github.m
 ```powershell
 dotnet run --project Tests/Brick2Life.Checks.csproj --no-restore
 pwsh -File Tests/RunBattleControllerChecks.ps1
-pwsh -File Tests/RunBattleControllerChecks.ps1 -CheckClass BattleEditingLockChecks
+pwsh -File Tests/RunBattleControllerChecks.ps1 -CheckClass BattleLiveEditingChecks
 pwsh -File Tests/RunSimulationDualWindowChecks.ps1
 ```
 

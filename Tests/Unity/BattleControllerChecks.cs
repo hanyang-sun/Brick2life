@@ -37,8 +37,8 @@ public static class BattleControllerChecks
             RunCase("finished battle uses new inputs", FinishedBattleUsesLatestInputs);
             RunCase("invalid new layout cannot reuse old map", InvalidNewLayoutCannotStart);
             RunCase("new walls affect the next route", NewWallsAffectNextRoute);
-            RunCase("running and paused battle keep snapshot", RunningBattleKeepsSnapshot);
-            RunCase("next wave keeps snapshot", NextWaveKeepsSnapshot);
+            RunCase("running and paused battle accept confirmed layouts", RunningBattleUpdatesConfirmedLayout);
+            RunCase("next wave uses updated layout", NextWaveUsesUpdatedLayout);
         }
         catch (Exception error) { result.failures.Add(error.ToString()); }
         result.passed = result.failures.Count == 0;
@@ -199,7 +199,7 @@ public static class BattleControllerChecks
         }
     }
 
-    private static void RunningBattleKeepsSnapshot()
+    private static void RunningBattleUpdatesConfirmedLayout()
     {
         using (var fixture = new Fixture())
         {
@@ -212,15 +212,16 @@ public static class BattleControllerChecks
             Check(ReferenceEquals(level, fixture.Controller.Level), "Rebuild replaced the running map.");
             Check(ReferenceEquals(battle, fixture.Controller.Battle), "Recognition replaced the running battle.");
             fixture.Controller.SetPaused(true);
+            Check(!ReferenceEquals(level, fixture.Controller.Level), "Confirmed layout did not replace the live map.");
             Check(!fixture.Controller.StartBattle(), "Paused battle allowed a new battle.");
             Check(!fixture.Controller.Build(), "Paused battle allowed its map to be rebuilt.");
             fixture.Controller.ClearSpawns();
             Check(fixture.Controller.Spawns.Count == 1, "Paused battle allowed its entrances to be cleared.");
-            CheckRoute(fixture, new GridPoint(0, 0), new GridPoint(9, 9), "During battle");
+            CheckRoute(fixture, new GridPoint(0, 0), new GridPoint(2, 7), "During live battle");
         }
     }
 
-    private static void NextWaveKeepsSnapshot()
+    private static void NextWaveUsesUpdatedLayout()
     {
         using (var fixture = new Fixture())
         {
@@ -233,8 +234,8 @@ public static class BattleControllerChecks
             Check(!fixture.Controller.Build(), "Wave interval allowed the map to be rebuilt.");
             Check(!fixture.Controller.AddSpawn(new GridPoint(8, 0)), "Wave interval allowed a new entrance.");
             Require(fixture.Controller.StartNextWave(), "Next wave failed to start.");
-            Check(ReferenceEquals(level, fixture.Controller.Level), "Next wave replaced this battle's map.");
-            CheckRoute(fixture, new GridPoint(0, 0), new GridPoint(9, 9), "Next wave");
+            Check(!ReferenceEquals(level, fixture.Controller.Level), "Next wave ignored the latest confirmed map.");
+            CheckRoute(fixture, new GridPoint(0, 0), new GridPoint(2, 7), "Next wave");
         }
     }
 

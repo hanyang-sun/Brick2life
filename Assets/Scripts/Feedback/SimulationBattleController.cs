@@ -9,8 +9,7 @@ using UnityEngine;
 namespace Brick2Life.Feedback
 {
     /// <summary>
-    /// Runs a battle on a snapshot of the confirmed level. Entrances are chosen on empty physical cells;
-    /// the level is frozen at battle start so later recognition updates cannot change the running game.
+    /// Runs a battle from confirmed RGB observations, updating live routes while preserving run state.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SimulationBattleController : MonoBehaviour
@@ -27,7 +26,7 @@ namespace Brick2Life.Feedback
         private BattleState lastState;
         private bool selectSpawns;
         private GameObject visionCanvas;
-        private SimulationBoardSession editingLockedBoard;
+        private LevelState observedBattleLayout;
         private SimulationVisionMonitor pendingVision;
         private BoardSyncSession pendingSession;
         private long pendingConfirmation;
@@ -164,12 +163,12 @@ namespace Brick2Life.Feedback
 
         private bool BeginBattle()
         {
-            // Every new battle captures the latest confirmed layout and current entrances.
-            // The resulting BattleLevel stays fixed throughout that battle, including wave intervals.
+            // Every new battle starts with the latest confirmed layout and current entrances.
             if (!Build()) return false;
             IReadOnlyList<BattleIssue> issues = BattleValidation.Check(Level, WavePlan, TowerSettings);
             if (issues.Count != 0) { LastMessage = issues[0].Message; return false; }
             Battle = new BattleSimulation(Level, WavePlan, TowerSettings);
+            observedBattleLayout = CurrentLevel();
             EndSpawnSelection();
             LastShots = Array.Empty<ShotEvent>();
             ShotSequence++;
@@ -183,6 +182,7 @@ namespace Brick2Life.Feedback
         public bool StartNextWave()
         {
             if (Battle == null) return false;
+            SyncConfirmedLayout();
             if (!Battle.StartWave()) { LastMessage = "现在不能开下一波。"; return false; }
             LastMessage = "第 " + Battle.State.Wave + " 波";
             Publish();
@@ -192,6 +192,7 @@ namespace Brick2Life.Feedback
         public void SetPaused(bool paused)
         {
             if (Battle == null) return;
+            SyncConfirmedLayout();
             Battle.SetPaused(paused);
             LastMessage = paused ? "已暂停" : "继续";
             Publish();
@@ -210,6 +211,7 @@ namespace Brick2Life.Feedback
             if (Battle == null) return false;
             Battle.Restart();
             Battle = null;
+            observedBattleLayout = null;
             Level = null;
             lastState = null;
             LastShots = Array.Empty<ShotEvent>();
@@ -224,6 +226,7 @@ namespace Brick2Life.Feedback
         public void StepManual(float seconds)
         {
             if (Battle == null) return;
+            SyncConfirmedLayout();
             LastShots = Battle.Step(seconds);
             ShotSequence++;
             Publish();
@@ -262,6 +265,7 @@ namespace Brick2Life.Feedback
                     AddSpawn(new GridPoint(cell.x, cell.y));
                 else LastMessage = "这里不是棋盘空格：请点棋盘上的空位（有积木的格子不能当入口）。";
             }
+            SyncConfirmedLayout();
             if (!autoStep || Battle == null) return;
             LastShots = Battle.Step(Time.deltaTime);
             ShotSequence++;
@@ -279,7 +283,6 @@ namespace Brick2Life.Feedback
 
         private void Publish()
         {
-            SyncEditingLock();
             lastState = Battle != null ? Battle.State : null;
             if (view != null && Battle != null) view.Render(Battle.State, Level);
             if (panel != null) panel.Refresh(this);
@@ -288,22 +291,27 @@ namespace Brick2Life.Feedback
             else if (Battle.State.Phase == BattlePhase.Defeat) LastMessage = "失败：核心被击破";
         }
 
-        private void SyncEditingLock()
+        private void SyncConfirmedLayout()
         {
-            if (!Running) { ReleaseEditingLock(); return; }
-            if (editingLockedBoard != null) return;
-            // This reference locks edits only; it never supplies recognition/gameplay truth.
-            if (brickEditor == null) brickEditor = FindFirstObjectByType<SimulationBrickEditor>();
-            editingLockedBoard = brickEditor != null ? brickEditor.Board : FindFirstObjectByType<SimulationBoardSession>();
-            if (editingLockedBoard != null) editingLockedBoard.SetEditingLocked(true);
+            if (!Running) return;
+            LevelState confirmed = CurrentLevel();
+            if (ReferenceEquals(observedBattleLayout, confirmed)) return;
+            observedBattleLayout = confirmed;
+            BattleLevel candidate = confirmed != null ? BattleLevel.Build(confirmed, spawns) : null;
+            LastShots = Array.Empty<ShotEvent>();
+            ShotSequence++;
+            if (Battle.TryUpdateLevel(candidate, out string reason))
+            {
+                Level = candidate;
+                if (view != null) view.Build(Level);
+                LastMessage = "布局已确认并更新：敌人从当前位置重新寻路，本局进度保留。";
+            }
+            else
+            {
+                if (view != null) view.ClearRoutes();
+                LastMessage = "战斗等待修正布局：" + reason + "（仍可增删、移动积木）";
+            }
+            Publish();
         }
-
-        private void ReleaseEditingLock()
-        {
-            if (editingLockedBoard != null) editingLockedBoard.SetEditingLocked(false);
-            editingLockedBoard = null;
-        }
-
-        private void OnDestroy() => ReleaseEditingLock();
     }
 }

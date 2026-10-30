@@ -25,7 +25,7 @@ git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-su
 | Feedback | 关卡语义映射（颜色→核心/城墙/塔）、游戏对象更新、表面贴合的虚拟投影与场景分层；只消费 `BoardUpdate` | C |
 | Battle | 关卡转 20×20 战斗格、A* 寻路、波次/塔/核心模拟与暂停重试；无 Unity 依赖 | 新管线 |
 
-任务 B 与任务 C 已接线：识别面板持有唯一的 `BoardSyncSession`，确认后的 `BoardUpdate` 同时驱动关卡对象与投影，人工目标演示在识别接入后自动停用。自动识别启用时，点击开始后等待新采集 RGB 的稳定确认，再按当前确认布局与入口重新规划；战斗中锁定编辑，支持多入口、暂停和重试。编辑器 Play 模式打开原始布局与只读投影两个窗口，展示窗口可旋转缩放，并切换“积木＋投影／仅投影”。角色纹样与战斗动态效果均纳入投影采集开关。使用见 [双窗口指南](docs/editor-dual-window-guide.md) 和 [A/C 整合说明](docs/a-c-integration.md)；任务 C 见 [反馈指南](docs/task-c-feedback-guide.md)，任务 B 见 [识别说明](docs/task-b-recognition-changes.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)。
+任务 B 与任务 C 已接线：识别面板持有唯一的 `BoardSyncSession`，确认后的 `BoardUpdate` 同时驱动关卡对象与投影，人工目标演示在识别接入后自动停用。自动识别启用时，点击开始后等待新 RGB 稳定确认；战斗中可继续放置、删除和移动积木，确认后保留本局进度并从敌人当前位置重新寻路。无核心、入口被占或堵路时等待修正，恢复有效布局后继续；出生点在本局保持固定。编辑器 Play 模式打开原始布局与只读投影两个窗口，展示窗口可旋转缩放，并切换“积木＋投影／仅投影”。角色纹样与战斗动态效果均纳入投影采集开关。使用见 [实时交互指南](docs/live-battle-editing-guide.md)、[双窗口指南](docs/editor-dual-window-guide.md) 和 [A/C 整合说明](docs/a-c-integration.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)。
 
 ## 采集数据
 

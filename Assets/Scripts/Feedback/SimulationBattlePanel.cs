@@ -59,7 +59,8 @@ namespace Brick2Life.Feedback
         {
             if (source == null) return;
             if (statusText != null)
-                statusText.text = source.LastMessage + (source.State != null
+                statusText.text = source.LastMessage + (source.State != null && source.State.WaitingForLayout
+                    ? "\n等待布局修正：" + source.State.LayoutIssue : "") + (source.State != null
                     ? "\n核心 " + source.State.CoreHealth + " · 第 " + source.State.Wave + " 波 · 击杀 " +
                       source.State.Killed + " · 泄漏 " + source.State.Leaked + " · " + source.State.Phase
                     : "");

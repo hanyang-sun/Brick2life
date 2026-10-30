@@ -15,7 +15,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // Play-mode checks use real board writes, editor buttons and battle lifecycle calls.
-public static class BattleEditingLockChecks
+public static class BattleLiveEditingChecks
 {
     [Serializable] private sealed class Result
     {
@@ -52,7 +52,7 @@ public static class BattleEditingLockChecks
     {
         try
         {
-            if (EditorApplication.timeSinceStartup - startedAt > 40) throw new TimeoutException("Play-mode editing-lock checks timed out.");
+            if (EditorApplication.timeSinceStartup - startedAt > 40) throw new TimeoutException("Play-mode live-editing checks timed out.");
             if (lastFrame == Time.frameCount) return;
             lastFrame = Time.frameCount;
             if (!sequence.MoveNext()) Finish();
@@ -66,7 +66,7 @@ public static class BattleEditingLockChecks
         (sequence as IDisposable)?.Dispose();
         result.passed = result.failures.Count == 0;
         File.WriteAllText(Path.Combine(UnityEngine.Application.dataPath, "..", "verification.json"), JsonUtility.ToJson(result, true));
-        Debug.Log("BATTLE_EDITING_LOCK_CHECKS_" + (result.passed ? "PASSED" : "FAILED") + ": " + result.assertions + " assertions.");
+        Debug.Log("BATTLE_LIVE_EDITING_CHECKS_" + (result.passed ? "PASSED" : "FAILED") + ": " + result.assertions + " assertions.");
         EditorApplication.Exit(result.passed ? 0 : 1);
     }
 
@@ -84,78 +84,68 @@ public static class BattleEditingLockChecks
 
     private static IEnumerator Verify()
     {
+        SimulationEditAccess.ConfigureFocus(null);
         using (var rig = new Rig())
         {
             yield return null;
             yield return null;
-            rig.CheckUi(false, "Before battle");
-            SetField(rig.Editor, "draggedId", rig.TowerId);
-            Require(rig.Controller.StartBattle(), "Battle did not start.");
-            Check(GetField(rig.Editor, "draggedId") == null, "Battle start did not cancel the pending drag.");
-            yield return null; // CanvasGroup changes propagate to Selectable during the UI frame update.
-            rig.CheckLocked("Running");
+            Require(rig.Controller.StartBattle(), "Live editing fixture did not start.");
+            yield return null;
+            var battle = rig.Controller.Battle;
+            Check(!rig.Board.IsEditingLocked, "Battle still locks the board model.");
+            rig.CheckUi(false, "Running, editable");
+            Require(rig.Board.TryAdd(2, 2, "green", out var added), "Cannot place a brick during battle.");
+            Check(rig.Board.TryMove(added.BrickId, 2, 3), "Cannot move a brick during battle.");
+            Check(rig.Board.TryDelete(added.BrickId), "Cannot remove a brick during battle.");
+            rig.Editor.SelectTool(2);
+            Check(Convert.ToInt32(GetField(rig.Editor, "tool")) == 2, "Move tool is disabled during battle.");
+            rig.Clear.onClick.Invoke();
+            Check(rig.Board.Bricks.Count == 0, "Clear button does not work during battle.");
+            rig.Confirm();
+            Check(rig.Controller.State.WaitingForLayout && ReferenceEquals(battle, rig.Controller.Battle),
+                "Deleting the core reset the battle instead of waiting for a repair.");
+            double frozen = rig.Controller.State.Elapsed;
+            rig.Controller.StepManual(1);
+            Check(Math.Abs(rig.Controller.State.Elapsed - frozen) < 1e-8, "Invalid layout advanced battle time.");
+            Require(rig.Board.TryAdd(8, 8, "blue", out var core), "Cannot restore core while waiting.");
+            Require(rig.Board.TryAdd(4, 4, "red", out var tower), "Cannot restore tower while waiting.");
+            rig.Confirm((8, 8, "blue"), (4, 4, "red"));
+            Check(!rig.Controller.State.WaitingForLayout && ReferenceEquals(battle, rig.Controller.Battle),
+                "Repair did not resume the same battle.");
             rig.Controller.SetPaused(true);
-            rig.CheckLocked("Paused");
+            yield return null;
+            rig.CheckUi(false, "Paused, editable");
+            Check(rig.Board.TryMove(core.BrickId, 7, 8), "Cannot move core while paused.");
+            rig.Confirm((7, 8, "blue"), (4, 4, "red"));
+            Check(rig.Controller.State.Paused && rig.Controller.Level.CellAt(14, 16).IsCore,
+                "Paused edit lost pause state or retained old core.");
+            int version = rig.Board.Version;
+            SimulationEditAccess.ConfigureFocus(() => false);
+            rig.Editor.ClearBoard();
+            Check(rig.Board.Version == version, "Readonly display focus allowed an edit.");
+            SimulationEditAccess.ConfigureFocus(null);
+            rig.Controller.SelectSpawns = true;
+            Check(!rig.Controller.SelectSpawns && !rig.Controller.AddSpawn(new GridPoint(8, 0)),
+                "Live brick editing unexpectedly enabled entrance changes.");
+            rig.Controller.ClearSpawns();
+            Check(rig.Controller.Spawns.Count == 1, "Entrances changed during battle.");
             rig.Controller.SetPaused(false);
             rig.FinishWave();
-            Require(rig.Controller.State.Phase == BattlePhase.AwaitingNextWave, "Did not reach the wave interval.");
-            rig.CheckLocked("Between waves");
-            Require(rig.Controller.StartNextWave(), "Next wave did not start.");
-            rig.CheckUi(true, "Next wave");
-            rig.Controller.SetPaused(true);
-            Require(rig.Controller.Restart(), "Restart failed.");
+            Require(rig.Controller.State.Phase == BattlePhase.AwaitingNextWave, "Did not reach wave interval.");
             yield return null;
-            rig.CheckUi(false, "After restart");
-            Check(!rig.Locked, "Restart did not release the board lock.");
-            Check(rig.Board.TryAdd(1, 1, "red", out _), "Editing did not recover after restart.");
-            Require(rig.Controller.StartBattle(), "A new battle did not start.");
-            Check(rig.Locked, "A second battle did not reacquire the lock.");
-            UnityEngine.Object.DestroyImmediate(rig.Controller);
-            Check(!rig.Locked, "Destroying the battle owner left the board locked.");
-        }
-        yield return null;
-        using (var rig = new Rig())
-        {
+            rig.CheckUi(false, "Between waves, editable");
+            Check(rig.Board.TryMove(tower.BrickId, 5, 4), "Cannot move tower between waves.");
+            int coreHealth = rig.Controller.State.CoreHealth;
+            rig.Confirm((7, 8, "blue"), (5, 4, "red"));
+            Require(rig.Controller.StartNextWave(), "Updated next wave did not start.");
+            Check(rig.Controller.State.Wave == 2 && rig.Controller.State.CoreHealth == coreHealth,
+                "Live edit reset wave or core health.");
+            Require(rig.Controller.Restart(), "Cannot end the live battle.");
             yield return null;
-            yield return null;
-            rig.Controller.WavePlan = new WavePlan(1, 1, 1, 10, 100, 0.1);
-            Require(rig.Controller.StartBattle(), "Defeat fixture did not start.");
-            yield return null;
-            rig.FinishWave();
-            Require(rig.Controller.State.Phase == BattlePhase.Defeat, "Did not reach defeat.");
-            yield return null;
-            rig.CheckUi(false, "After defeat");
-            Check(!rig.Locked && rig.Board.TryMove(rig.TowerId, 4, 3), "Defeat did not restore movement.");
-            rig.Clear.onClick.Invoke();
-            Check(rig.Board.Bricks.Count == 0, "Clear button did not recover after defeat.");
-        }
-        yield return null;
-        using (var rig = new Rig())
-        {
-            yield return null;
-            yield return null;
-            rig.Controller.WavePlan = new WavePlan(1, 1, 1, 10, 1, 0.1);
-            rig.Controller.TowerSettings = new TowerSettings(5, 10, 40, 0.1);
-            Require(rig.Controller.StartBattle(), "Victory fixture did not start.");
-            yield return null;
-            rig.FinishWave();
-            Require(rig.Controller.State.Phase == BattlePhase.Victory, "Did not reach victory.");
-            yield return null;
-            rig.CheckUi(false, "After victory");
-            Check(!rig.Locked && rig.Board.TryAdd(2, 2, "green", out _), "Victory did not restore adding bricks.");
-        }
-        yield return null;
-        using (var rig = new Rig())
-        {
-            yield return null;
-            yield return null;
-            rig.Controller.ClearSpawns();
-            Check(!rig.Controller.StartBattle(), "An empty entrance list started a battle.");
-            rig.CheckUi(false, "Failed start");
-            Check(!rig.Locked && rig.Board.TryAdd(2, 2, "green", out _), "A failed start locked editing.");
+            rig.CheckUi(false, "After retry");
+            Check(!rig.Board.IsEditingLocked, "Retry left a model lock.");
         }
     }
-
     private static void SetField(object target, string name, object value) =>
         target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
     private static object GetField(object target, string name) =>
@@ -166,6 +156,8 @@ public static class BattleEditingLockChecks
         private readonly GameObject root;
         private readonly Material[] materials = new Material[3];
         private readonly SimulationLevelAdapter adapter;
+        private readonly BoardSyncSession session;
+        private int confirmationSequence;
         private readonly List<Button> editingButtons = new List<Button>();
         public SimulationBoardSession Board { get; }
         public SimulationBrickEditor Editor { get; }
@@ -174,12 +166,11 @@ public static class BattleEditingLockChecks
         public SimulationBattlePanel Panel { get; }
         public Button Clear { get; }
         public string TowerId { get; }
-        // Reflection keeps the pre-fix version compilable, so the missing lock also produces a failing test.
-        public bool Locked => (bool?)typeof(SimulationBoardSession).GetProperty("IsEditingLocked")?.GetValue(Board) ?? false;
+        public bool Locked => Board.IsEditingLocked;
 
         public Rig()
         {
-            root = new GameObject("EditingLockCheck");
+            root = new GameObject("LiveEditingCheck");
             root.SetActive(false);
             Transform bricks = new GameObject("Bricks").transform;
             bricks.SetParent(root.transform, false);
@@ -229,7 +220,7 @@ public static class BattleEditingLockChecks
                 new SimulationLevelAdapter.RoleRule { colorId = "red", role = GameRole.Tower },
                 new SimulationLevelAdapter.RoleRule { colorId = "green", role = GameRole.Wall }
             });
-            var session = new BoardSyncSession(Board.Definition, "editing-lock-check");
+            session = new BoardSyncSession(Board.Definition, "live-editing-check");
             adapter.Bind(session);
             var cells = new ObservedCell[session.Definition.CellCount];
             for (int i = 0; i < cells.Length; i++) cells[i] = new ObservedCell(BoardCell.Empty);
@@ -279,52 +270,22 @@ public static class BattleEditingLockChecks
             var spawnButton = GetField(Panel, "spawnButton") as Button;
             var clearSpawnButton = GetField(Panel, "clearSpawnButton") as Button;
             Require(spawnButton != null && clearSpawnButton != null, context + ": entrance buttons were not initialized.");
-            Check(spawnButton.IsInteractable() != locked, context + ": entrance selection button has the wrong interaction state.");
-            Check(clearSpawnButton.IsInteractable() != locked, context + ": clear-entrance button has the wrong interaction state.");
+            Check(spawnButton.IsInteractable() == !Controller.Running, context + ": entrance selection button has the wrong interaction state.");
+            Check(clearSpawnButton.IsInteractable() == !Controller.Running, context + ": clear-entrance button has the wrong interaction state.");
         }
 
-        public void CheckLocked(string context)
+        public void Confirm(params (int x, int y, string color)[] bricks)
         {
-            Check(Locked, context + ": board is not locked.");
-            CheckUi(true, context);
-            int version = Board.Version;
-            int count = Board.Bricks.Count;
-            BoardSnapshot snapshot = Board.Snapshot();
-            Check(!Board.TryAdd(2, 2, "green", out _), context + ": adding a brick was allowed.");
-            Check(!Board.TryMove(TowerId, 4, 3), context + ": moving a brick was allowed.");
-            Check(!Board.TryDelete(TowerId), context + ": deleting a brick was allowed.");
-            bool rejected = false;
-            try { Board.ReplaceLayout(snapshot); } catch (InvalidOperationException) { rejected = true; }
-            Check(rejected, context + ": replacing/recoloring the layout was allowed.");
-            Clear.OnPointerClick(new PointerEventData(null) { button = PointerEventData.InputButton.Left });
-            Clear.onClick.Invoke(); // Intentionally bypass Button.Press: target methods must also be safe.
-            object previousTool = GetField(Editor, "tool");
-            object previousColor = GetField(Editor, "colorIndex");
-            Editor.SelectTool(2);
-            Editor.SelectColor(2);
-            Check(previousTool.Equals(GetField(Editor, "tool")) && previousColor.Equals(GetField(Editor, "colorIndex")),
-                context + ": editor tool/color callbacks were not locked.");
-            typeof(SimulationBrickEditor).GetMethod("HandlePointerDown", BindingFlags.Instance | BindingFlags.NonPublic)
-                .Invoke(Editor, new object[] { Vector2.zero });
-            SetField(Editor, "draggedId", TowerId);
-            typeof(SimulationBrickEditor).GetMethod("EndDrag", BindingFlags.Instance | BindingFlags.NonPublic)
-                .Invoke(Editor, new object[] { Vector2.zero });
-            Check(GetField(Editor, "draggedId") == null, context + ": mouse release did not cancel dragging while locked.");
-            Check(Board.Version == version && Board.Bricks.Count == count, context + ": callback or pointer input changed the board.");
-            long confirmedVersion = adapter.Feedback.AppliedVersion;
-            Demo.SubmitEmpty();
-            Demo.NextSample();
-            Check(adapter.Feedback.AppliedVersion == confirmedVersion, context + ": F5/F6 demo callbacks changed the level.");
-            Controller.SelectSpawns = true;
-            Check(!Controller.SelectSpawns, context + ": entrance selection was enabled during battle.");
-            Check(!Controller.AddSpawn(new GridPoint(8, 0)), context + ": an entrance was added.");
-            Controller.ClearSpawns();
-            var clearEntrance = (Button)GetField(Panel, "clearSpawnButton");
-            clearEntrance.OnPointerClick(new PointerEventData(null) { button = PointerEventData.InputButton.Left });
-            clearEntrance.onClick.Invoke();
-            Check(Controller.Spawns.Count == 1, context + ": entrances were cleared.");
+            // Explicit observation fixture, never used as RGB recognition evidence.
+            var cells = new ObservedCell[session.Definition.CellCount];
+            for (int i = 0; i < cells.Length; i++) cells[i] = new ObservedCell(BoardCell.Empty);
+            foreach (var brick in bricks) cells[session.Definition.Index(brick.x, brick.y)] =
+                new ObservedCell(new BoardCell(Occupancy.Occupied, brick.color));
+            var request = session.BeginFrame("live-fixture-" + (++confirmationSequence), DateTimeOffset.UtcNow);
+            adapter.Apply(session.Confirm(request, new FrameObservation(session.Definition, request.FrameId,
+                request.SessionId, request.Sequence, request.CapturedAtUtc, request.CalibrationId, cells)));
+            Controller.StepManual(0);
         }
-
         public void FinishWave()
         {
             for (int i = 0; i < 200 && !Controller.State.Finished && !Controller.State.CanStartWave; i++)

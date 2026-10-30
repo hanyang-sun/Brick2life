@@ -1,7 +1,7 @@
 param(
     [string]$UnityPath = 'D:\Unity\Editor\6000.3.24f1\Editor\Unity.exe',
     [string]$ValidationProject,
-    [ValidateSet('BattleControllerChecks', 'BattleEditingLockChecks')]
+    [ValidateSet('BattleControllerChecks', 'BattleLiveEditingChecks')]
     [string]$CheckClass = 'BattleControllerChecks'
 )
 $ErrorActionPreference = 'Stop'
@@ -25,9 +25,13 @@ foreach ($file in @('ProjectVersion.txt', 'ProjectSettings.asset')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot ('ProjectSettings\' + $file)) -Destination (Join-Path $runPath ('ProjectSettings\' + $file)) -Force
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Unity\BattleControllerChecks.cs') -Destination (Join-Path $runPath 'Assets\Editor\BattleControllerChecks.cs') -Force
-$editingChecks = Join-Path $PSScriptRoot 'Unity\BattleEditingLockChecks.cs'
+$editingChecks = Join-Path $PSScriptRoot 'Unity\BattleLiveEditingChecks.cs'
 if (Test-Path -LiteralPath $editingChecks) {
-    Copy-Item -LiteralPath $editingChecks -Destination (Join-Path $runPath 'Assets\Editor\BattleEditingLockChecks.cs') -Force
+    Copy-Item -LiteralPath $editingChecks -Destination (Join-Path $runPath 'Assets\Editor\BattleLiveEditingChecks.cs') -Force
+}
+foreach ($oldName in @('BattleEditingLockChecks.cs','BattleEditingLockChecks.cs.meta')) {
+    $oldCheck = Join-Path $runPath ('Assets\Editor\' + $oldName)
+    if (Test-Path -LiteralPath $oldCheck) { Remove-Item -LiteralPath $oldCheck }
 }
 $manifest = Get-Content -LiteralPath (Join-Path $repoRoot 'Packages\manifest.json') -Raw | ConvertFrom-Json
 $manifest.dependencies.PSObject.Properties.Remove('com.unity.multiplayer.center')

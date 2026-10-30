@@ -45,6 +45,7 @@ namespace Brick2Life.Battle
     /// </summary>
     public sealed class BattleLevel
     {
+        private readonly BattleCell[] cells;
         public const int NavigationPerPhysical = 2;
         public int Width { get; }
         public int Height { get; }
@@ -60,11 +61,14 @@ namespace Brick2Life.Battle
             List<string> cores, List<BattleIssue> issues)
         {
             Width = width; Height = height;
+            this.cells = cells;
             Cells = Array.AsReadOnly(cells);
             Routes = routes.AsReadOnly();
             CoreBrickIds = cores.AsReadOnly();
             Issues = issues.AsReadOnly();
         }
+
+        public GridPoint[] FindRoute(GridPoint start) => RouteSearch.Find(cells, Width, Height, CoreBrickIds, start);
 
         // spawns are physical (10×10) coordinates chosen by the user; they map to the top-left nav cell.
         public static BattleLevel Build(LevelState level, IReadOnlyList<GridPoint> spawns)

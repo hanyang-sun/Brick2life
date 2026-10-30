@@ -7,7 +7,7 @@ namespace Brick2Life.Battle
     /// <summary>
     /// Deterministic battle clock: movement, tower damage, leaks and wave transitions. Unity only renders
     /// the published snapshots. Ported from the archived BrickDefense simulation (Brackeys-derived rules,
-    /// Unlicense; see THIRD_PARTY_NOTICES.md) and extended with pause and restart.
+    /// Unlicense; see THIRD_PARTY_NOTICES.md) and extended with pause, restart and confirmed live layouts.
     /// </summary>
     public sealed class BattleSimulation
     {
@@ -17,6 +17,8 @@ namespace Brick2Life.Battle
         {
             public int Id, Health, SpawnIndex;
             public double Progress, X, Y;
+            public GridPoint[] Route;
+            public int WaypointIndex;
         }
 
         private sealed class Tower
@@ -25,7 +27,8 @@ namespace Brick2Life.Battle
             public double X, Y, Cooldown;
         }
 
-        private readonly GridPoint[][] routes;
+        private GridPoint[][] routes;
+        private BattleLevel currentLevel;
         private readonly WavePlan plan;
         private readonly TowerSettings tower;
         private readonly List<Enemy> enemies = new List<Enemy>();
@@ -34,6 +37,8 @@ namespace Brick2Life.Battle
         private int coreHealth, wave, spawned, killed, leaked, nextId;
         private double accumulator, waveTime, nextSpawn, elapsed;
         private bool paused;
+        private bool waitingForLayout;
+        private string layoutIssue = "";
 
         public BattleState State { get; private set; }
         public WavePlan Plan => plan;
@@ -45,22 +50,104 @@ namespace Brick2Life.Battle
             IReadOnlyList<BattleIssue> issues = BattleValidation.Check(level, plan, tower);
             if (issues.Count != 0) throw new ArgumentException(issues[0].ToString());
             this.plan = plan; this.tower = tower; coreHealth = tower.InitialCoreHealth;
-            routes = new GridPoint[level.Routes.Count][];
-            for (int r = 0; r < routes.Length; r++)
+            currentLevel = level;
+            routes = CopyRoutes(level);
+            UpdateTowers(level, true);
+            Publish();
+        }
+
+        private static GridPoint[][] CopyRoutes(BattleLevel level)
+        {
+            var result = new GridPoint[level.Routes.Count][];
+            for (int r = 0; r < result.Length; r++)
             {
                 BattleRoute source = level.Routes[r];
-                routes[r] = new GridPoint[source.Route.Count];
-                for (int p = 0; p < routes[r].Length; p++) routes[r][p] = source.Route[p];
+                result[r] = new GridPoint[source.Route.Count];
+                for (int p = 0; p < result[r].Length; p++) result[r][p] = source.Route[p];
             }
+            return result;
+        }
+
+        private void UpdateTowers(BattleLevel level, bool initial = false)
+        {
+            var existing = new Dictionary<string, Tower>();
+            foreach (Tower item in towers) existing[item.Id] = item;
+            towers.Clear();
             for (int y = 0; y < level.Height; y++)
                 for (int x = 0; x < level.Width; x++)
                 {
                     BattleCell cell = level.CellAt(x, y);
                     if (cell.Role != Application.GameRole.Tower) continue;
-                    towers.Add(new Tower { Id = cell.SourceBrickId + "-" + x + "-" + y, X = x + 0.5, Y = y + 0.5 });
+                    string id = cell.SourceBrickId + "-" + x + "-" + y;
+                    if (!existing.TryGetValue(id, out Tower item))
+                        item = new Tower { Id = id, X = x + 0.5, Y = y + 0.5,
+                            Cooldown = initial ? 0 : tower.AttackInterval };
+                    towers.Add(item);
                 }
             towers.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
+        }
+
+        /// <summary>Atomically reroutes live enemies without changing positions, health or wave clocks.</summary>
+        public bool TryUpdateLevel(BattleLevel candidate, out string reason)
+        {
+            if (State.Finished) { reason = "本局已结束。"; return false; }
+            if (candidate == null || !candidate.IsValid)
+                return WaitForLayout(candidate != null && candidate.Issues.Count > 0
+                    ? candidate.Issues[0].Message : "等待有效的已确认布局。", out reason);
+            if (candidate.Width != currentLevel.Width || candidate.Height != currentLevel.Height ||
+                candidate.Routes.Count != routes.Length)
+                return WaitForLayout("本局棋盘尺寸和入口数量不能改变。", out reason);
+            for (int i = 0; i < routes.Length; i++)
+                if (!candidate.Routes[i].Spawn.Equals(routes[i][0]))
+                    return WaitForLayout("本局入口不能改变，请移开入口上的积木。", out reason);
+            var remaining = new GridPoint[enemies.Count][];
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                remaining[i] = RemainingRoute(candidate, enemies[i]);
+                if (remaining[i] == null)
+                    return WaitForLayout("敌人 " + enemies[i].Id + " 无法从当前位置到达核心，请移开障碍或恢复通路。", out reason);
+            }
+            routes = CopyRoutes(candidate);
+            currentLevel = candidate;
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                enemies[i].Route = remaining[i];
+                enemies[i].WaypointIndex = 0;
+            }
+            UpdateTowers(candidate);
+            waitingForLayout = false; layoutIssue = "";
+            reason = "";
             Publish();
+            return true;
+        }
+
+        private bool WaitForLayout(string message, out string reason)
+        {
+            waitingForLayout = true; layoutIssue = reason = message;
+            Publish();
+            return false;
+        }
+
+        private static GridPoint[] RemainingRoute(BattleLevel candidate, Enemy enemy)
+        {
+            int x = (int)Math.Floor(enemy.X), y = (int)Math.Floor(enemy.Y);
+            if (x < 0 || y < 0 || x >= candidate.Width || y >= candidate.Height || candidate.CellAt(x, y).Blocked)
+                return null;
+            GridPoint[] best = null;
+            double bestCost = double.MaxValue;
+            // Continuous positions remain on a four-way edge; either adjacent free endpoint may connect.
+            for (int ny = y; ny <= (int)Math.Ceiling(enemy.Y); ny++)
+                for (int nx = x; nx <= (int)Math.Ceiling(enemy.X); nx++)
+                {
+                    double dx = Math.Abs(enemy.X - nx), dy = Math.Abs(enemy.Y - ny);
+                    if (dx > 1e-8 && dy > 1e-8) continue;
+                    GridPoint[] path = candidate.FindRoute(new GridPoint(nx, ny));
+                    if (path == null) continue;
+                    double cost = dx + dy + path.Length - 1;
+                    if (cost >= bestCost - 1e-8) continue;
+                    best = path; bestCost = cost;
+                }
+            return best;
         }
 
         public void SetPaused(bool value)
@@ -90,6 +177,7 @@ namespace Brick2Life.Battle
             accumulator = waveTime = elapsed = 0;
             nextSpawn = 0;
             paused = false;
+            waitingForLayout = false; layoutIssue = "";
             foreach (Tower item in towers) item.Cooldown = 0;
             Publish();
         }
@@ -99,7 +187,7 @@ namespace Brick2Life.Battle
             if (double.IsNaN(seconds) || double.IsInfinity(seconds) || seconds < 0 || seconds > 5)
                 throw new ArgumentOutOfRangeException(nameof(seconds), "Advance by 0 to 5 seconds at a time.");
             var shots = new List<ShotEvent>();
-            if (paused || State.Finished || State.CanStartWave || seconds == 0) return shots.AsReadOnly();
+            if (paused || waitingForLayout || State.Finished || State.CanStartWave || seconds == 0) return shots.AsReadOnly();
             accumulator += seconds;
             while (accumulator + 1e-10 >= FixedStep && !Finished() &&
                 (phase == BattlePhase.Spawning || phase == BattlePhase.Clearing))
@@ -122,12 +210,24 @@ namespace Brick2Life.Battle
             if (spawned == plan.EnemiesPerWave) phase = BattlePhase.Clearing;
             foreach (Enemy enemy in enemies)
             {
-                GridPoint[] route = routes[enemy.SpawnIndex];
-                enemy.Progress = Math.Min(route.Length - 1, enemy.Progress + plan.EnemySpeed * FixedStep);
-                int index = Math.Min((int)enemy.Progress, route.Length - 2);
-                double fraction = enemy.Progress - index;
-                enemy.X = route[index].X + (route[index + 1].X - route[index].X) * fraction;
-                enemy.Y = route[index].Y + (route[index + 1].Y - route[index].Y) * fraction;
+                double remaining = plan.EnemySpeed * FixedStep;
+                while (enemy.WaypointIndex < enemy.Route.Length)
+                {
+                    GridPoint target = enemy.Route[enemy.WaypointIndex];
+                    double dx = target.X - enemy.X, dy = target.Y - enemy.Y;
+                    double distance = Math.Abs(dx) + Math.Abs(dy);
+                    double travel = Math.Min(distance, remaining);
+                    if (distance > 1e-10)
+                    {
+                        enemy.X += dx * travel / distance;
+                        enemy.Y += dy * travel / distance;
+                    }
+                    enemy.Progress += travel; remaining -= travel;
+                    if (travel + 1e-10 < distance) break;
+                    enemy.X = target.X; enemy.Y = target.Y;
+                    enemy.WaypointIndex++;
+                    if (remaining <= 1e-10) break;
+                }
             }
             foreach (Tower item in towers)
             {
@@ -154,7 +254,7 @@ namespace Brick2Life.Battle
             {
                 Enemy enemy = enemies[i];
                 if (enemy.Health <= 0) { enemies.RemoveAt(i); continue; }
-                if (enemy.Progress >= routes[enemy.SpawnIndex].Length - 1 - 1e-10)
+                if (enemy.WaypointIndex >= enemy.Route.Length)
                 {
                     leaked++;
                     coreHealth = Math.Max(0, coreHealth - plan.CoreDamage);
@@ -175,7 +275,8 @@ namespace Brick2Life.Battle
         {
             int entrance = nextId % routes.Length;
             GridPoint start = routes[entrance][0];
-            enemies.Add(new Enemy { Id = ++nextId, SpawnIndex = entrance, Health = plan.EnemyHealth, X = start.X, Y = start.Y });
+            enemies.Add(new Enemy { Id = ++nextId, SpawnIndex = entrance, Health = plan.EnemyHealth,
+                X = start.X, Y = start.Y, Route = routes[entrance], WaypointIndex = 1 });
             spawned++;
         }
 
@@ -187,7 +288,8 @@ namespace Brick2Life.Battle
                 Enemy enemy = enemies[i];
                 snapshots[i] = new EnemyState(enemy.Id, enemy.X, enemy.Y, enemy.Progress, enemy.Health, enemy.SpawnIndex);
             }
-            State = new BattleState(phase, coreHealth, wave, spawned, killed, leaked, elapsed, paused, snapshots);
+            State = new BattleState(phase, coreHealth, wave, spawned, killed, leaked, elapsed, paused, snapshots,
+                waitingForLayout, layoutIssue);
         }
     }
 }
