@@ -1,5 +1,5 @@
 param([string]$UnityPath = 'D:\Unity\Editor\6000.3.24f1\Editor\Unity.exe', [string]$ValidationProject,
-    [ValidateSet('SimulationDualWindowChecks','GeneratedDefenseRoundChecks')]
+    [ValidateSet('SimulationDualWindowChecks','GeneratedDefenseRoundChecks','LiveProjectionRefreshChecks')]
     [string]$CheckClass = 'SimulationDualWindowChecks')
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -22,6 +22,10 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Unity\SimulationDualWindowCheck
 $roundChecks = Join-Path $PSScriptRoot 'Unity\GeneratedDefenseRoundChecks.cs'
 if (Test-Path -LiteralPath $roundChecks) {
     Copy-Item -LiteralPath $roundChecks -Destination (Join-Path $runPath 'Assets\Editor\GeneratedDefenseRoundChecks.cs') -Force
+}
+$liveChecks = Join-Path $PSScriptRoot 'Unity\LiveProjectionRefreshChecks.cs'
+if (Test-Path -LiteralPath $liveChecks) {
+    Copy-Item -LiteralPath $liveChecks -Destination (Join-Path $runPath 'Assets\Editor\LiveProjectionRefreshChecks.cs') -Force
 }
 foreach ($file in @('ProjectVersion.txt','ProjectSettings.asset','QualitySettings.asset','GraphicsSettings.asset','TagManager.asset','InputManager.asset')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot ('ProjectSettings\' + $file)) -Destination (Join-Path $runPath ('ProjectSettings\' + $file)) -Force

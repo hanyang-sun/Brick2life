@@ -1,3 +1,4 @@
+using Brick2Life.Application;
 using Brick2Life.Feedback;
 using Brick2Life.Simulation;
 using UnityEditor;
@@ -17,14 +18,17 @@ namespace Brick2Life.Editor
 
         public void Bind(SimulationLevelAdapter source, SimulationBoardSession board, SimulationBattleController controller)
         {
+            if (adapter != null) adapter.FeedbackChanged -= OnFeedbackChanged;
             preview?.Dispose();
             adapter = source; battle = controller;
+            adapter.FeedbackChanged += OnFeedbackChanged;
             preview = new SimulationProjectionPreview(board.Palette);
             titleContent = new GUIContent("投影展示");
             minSize = new Vector2(440, 340);
         }
 
         private void OnFocus() => SimulationEditAccess.Refresh();
+        private void OnFeedbackChanged(FeedbackFrame frame) => Repaint();
 
         private void Update()
         {
@@ -69,12 +73,15 @@ namespace Brick2Life.Editor
                         ? "系统目标已生成，正在确认玩家布局…" : "等待布局稳定确认…", EditorStyles.whiteLargeLabel);
             }
             GUILayout.BeginArea(new Rect(8, position.height - 22, position.width - 16, 20));
-            GUILayout.Label("只读展示 · 拖动旋转 · 滚轮缩放 · 编辑和战斗操作请点回原始窗口", EditorStyles.miniLabel);
+            GUILayout.Label(new GUIContent("确认 v" + adapter.ConfirmedVersion + " · 投影 v" +
+                (adapter.Projection?.LastPlan?.LevelVersion ?? -1) + " · 画面 v" + preview.DisplayedVersion + " · 只读展示",
+                "三个版本应一致；拖动旋转、滚轮缩放；编辑和战斗操作请点回原始窗口。"), EditorStyles.miniLabel);
             GUILayout.EndArea();
         }
 
         private void OnDisable()
         {
+            if (adapter != null) adapter.FeedbackChanged -= OnFeedbackChanged;
             preview?.Dispose();
             preview = null;
         }

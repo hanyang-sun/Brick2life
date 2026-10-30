@@ -44,6 +44,8 @@ namespace Brick2Life.Feedback
         public bool IsBound => feedback != null;
         public SimulationLevelView LevelView => levelView;
         public ProjectionSimulator Projection => projection;
+        public event Action<FeedbackFrame> FeedbackChanged;
+        public long ConfirmedVersion => boundSession?.Confirmed?.Version ?? -1;
 
         public void Bind(BoardSyncSession session)
         {
@@ -80,6 +82,7 @@ namespace Brick2Life.Feedback
             }
             LastFrame = frame;
             UpdateStatus(frame);
+            if (frame.Changed) FeedbackChanged?.Invoke(frame);
             return frame;
         }
 

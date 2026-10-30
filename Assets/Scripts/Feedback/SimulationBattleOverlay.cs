@@ -57,6 +57,7 @@ namespace Brick2Life.Feedback
         private BattleLevel lastLevel;
         private BattleSimulation lastBattle;
         private long lastShotSequence = -1;
+        public BattleLevel DisplayedLevel => lastLevel;
         private bool captureVisible = true;
         private float animationTime;
         public Transform MarksRoot => root;
@@ -102,7 +103,7 @@ namespace Brick2Life.Feedback
                 if (material != null) { if (material.mainTexture != null) Destroy(material.mainTexture); Destroy(material); }
         }
 
-        private void Update()
+        private void SynchronizeLevel()
         {
             if (controller != null && lastLevel != controller.Level)
             {
@@ -116,6 +117,22 @@ namespace Brick2Life.Feedback
                 lastShotSequence = -1;
                 animationTime = 0;
             }
+        }
+
+        // Confirmation may arrive after this component's Update. Refresh geometry before any preview renders it.
+        public void RefreshLayout()
+        {
+            SynchronizeLevel();
+            if (controller == null || controller.State == null || controller.State.WaitingForLayout ||
+                (projector != null && !projector.IsVisible)) { HideAll(); return; }
+            SyncRoutes();
+            SyncRangeRings();
+            SyncTowerArrows(controller.State);
+        }
+
+        private void Update()
+        {
+            SynchronizeLevel();
             if (controller == null || controller.State == null || controller.State.WaitingForLayout) { HideAll(); return; }
             bool visible = projector == null || projector.IsVisible;
             if (!visible) { HideAll(); return; }
@@ -141,7 +158,7 @@ namespace Brick2Life.Feedback
         // ---- arrows -------------------------------------------------------------------------
         private void SyncRoutes()
         {
-            IReadOnlyList<BattleRoute> activeRoutes = controller.Battle != null ? controller.Battle.ActiveRoutes : controller.Level?.Routes;
+            IReadOnlyList<BattleRoute> activeRoutes = controller.DisplayRoutes;
             int routes = activeRoutes != null ? activeRoutes.Count : 0;
             int wanted = routes * arrowsPerRoute;
             while (arrows.Count < wanted) arrows.Add(CreateQuad("BattleArrow", arrowMaterial, arrowSize));
