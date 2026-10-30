@@ -1,6 +1,6 @@
 # Brick2Life
 
-Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层积木工作台、固定透视相机、可配置光照、RGB/真值配对采集，以及任务 C 的关卡反馈与虚拟投影（由确认事件驱动）。视觉识别（B）仍待接入，图像驱动的完整闭环尚未完成。
+Unity 中的积木交互与视觉反馈实验平台。当前实现 10×10 单层积木工作台、固定透视相机、可配置光照、RGB/真值配对采集，以及 RGB 识别、稳定确认、关卡反馈、塔防战斗和虚拟投影。真值仅用于评价，不参与视觉预测或开战正确性判断。
 
 ## 运行
 
@@ -21,11 +21,11 @@ git clone --branch feat/task-a-unity-bricks-camera https://github.com/hanyang-su
 | Core | 固定棋盘定义、布局、不可变快照、观测与差异；无 Unity 依赖 | A 基础合同，B 差异 |
 | Application | 确认会话、帧/标定校验、有限测试集布局计划；无 Unity 依赖 | 集成负责人 |
 | Simulation | 独立棋盘会话、编辑界面、相机/光照采集和场景接线 | A |
-| Vision | 固定格位识别：调色板色样、逐格顶面采样与色相分类、连续帧稳定与增删移动事件、与真值的准确率对照；无 Unity 依赖 | B |
+| Vision | 固定格位识别：调色板色样、逐格顶面采样与归一化 RGB 分类、连续帧稳定与变化事件、与真值的准确率对照；无 Unity 依赖 | B |
 | Feedback | 关卡语义映射（颜色→核心/城墙/塔）、游戏对象更新、表面贴合的虚拟投影与场景分层；只消费 `BoardUpdate` | C |
 | Battle | 关卡转 20×20 战斗格、A* 寻路、波次/塔/核心模拟与暂停重试；无 Unity 依赖 | 新管线 |
 
-任务 B 与任务 C 已接线：识别面板持有唯一的 `BoardSyncSession`，确认后的 `BoardUpdate` 同时驱动关卡对象与投影，人工目标演示在识别接入后自动停用。战斗在任务 C 的确认关卡上开局（可多入口、参数全可调、支持暂停/重试）。任务 C 见 [反馈指南](docs/task-c-feedback-guide.md)，任务 B 见 [识别说明](docs/task-b-recognition-changes.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)，后续安排见 [开发方案](docs/brick2life-development-plan.md)。
+任务 B 与任务 C 已接线：识别面板持有唯一的 `BoardSyncSession`，确认后的 `BoardUpdate` 同时驱动关卡对象与投影，人工目标演示在识别接入后自动停用。自动识别启用时，点击开始后等待新采集 RGB 的稳定确认，再按当前确认布局与入口重新规划；战斗中锁定编辑，支持多入口、暂停和重试。编辑器 Play 模式打开原始布局与只读投影两个窗口，展示窗口可旋转缩放，并切换“积木＋投影／仅投影”。角色纹样与战斗动态效果均纳入投影采集开关。使用见 [双窗口指南](docs/editor-dual-window-guide.md) 和 [A/C 整合说明](docs/a-c-integration.md)；任务 C 见 [反馈指南](docs/task-c-feedback-guide.md)，任务 B 见 [识别说明](docs/task-b-recognition-changes.md)。Core 的 `Contracts/` 是公共合同唯一来源。接入方式见 [架构说明](docs/architecture.md)。
 
 ## 采集数据
 

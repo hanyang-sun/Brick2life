@@ -245,18 +245,16 @@ namespace Brick2Life.Simulation
         // Recognition samples hide the virtual projection first: clear → settle → capture → restore.
         public SimulationObservationImage CaptureObservationImage(bool includeProjection)
         {
-            IProjectionGate gate = ProjectionCaptureGate.Current;
-            bool hidden = !includeProjection && gate != null && gate.IsProjectionVisible;
-            if (hidden) gate.SetProjectionVisible(false);
+            IDisposable suppression = includeProjection ? null : ProjectionCaptureGate.Suppress();
             try
             {
-                if (hidden && sourceCamera != null)
+                if (!includeProjection && sourceCamera != null)
                     for (int i = 0; i < projectionSettleFrames; i++) sourceCamera.Render();
                 return CaptureObservationImageInternal(includeProjection);
             }
             finally
             {
-                if (hidden) gate.SetProjectionVisible(true);
+                suppression?.Dispose();
             }
         }
 

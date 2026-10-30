@@ -28,6 +28,10 @@ namespace Brick2Life.Feedback
         private bool selectSpawns;
         private GameObject visionCanvas;
         private SimulationBoardSession editingLockedBoard;
+        private SimulationVisionMonitor pendingVision;
+        private BoardSyncSession pendingSession;
+        private long pendingConfirmation;
+        private float pendingSeconds;
 
         public WavePlan WavePlan { get; set; } = WavePlan.Trial;
         public TowerSettings TowerSettings { get; set; } = TowerSettings.Trial;
@@ -35,6 +39,9 @@ namespace Brick2Life.Feedback
         public BattleLevel Level { get; private set; }
         public BattleSimulation Battle { get; private set; }
         public BattleState State => Battle != null ? Battle.State : lastState;
+        public IReadOnlyList<ShotEvent> LastShots { get; private set; } = Array.Empty<ShotEvent>();
+        public long ShotSequence { get; private set; }
+        public bool PendingStart => pendingVision != null;
         public bool Running => Battle != null && !Battle.State.Finished && Battle.State.Phase != BattlePhase.Ready;
         public string LastMessage { get; private set; } = "先点“点棋盘选入口”，再点棋盘上的空格";
         public SimulationBattlePanel Panel => panel;
@@ -139,14 +146,33 @@ namespace Brick2Life.Feedback
 
         public bool StartBattle()
         {
-            if (Running) return false;
+            if (Running || PendingStart) return false;
+            var vision = FindFirstObjectByType<SimulationVisionMonitor>();
+            if (vision != null && vision.isActiveAndEnabled && vision.Automatic && vision.Session != null)
+            {
+                pendingVision = vision;
+                pendingSession = vision.Session;
+                pendingConfirmation = vision.RequestFreshConfirmation();
+                pendingSeconds = 0;
+                LastMessage = "等待任务 B 从新采集的 RGB 确认布局，确认后自动开始…";
+                if (panel != null) panel.Refresh(this);
+                return false;
+            }
+            // Standalone/manual observation fixtures already supply an explicitly confirmed layout.
+            return BeginBattle();
+        }
+
+        private bool BeginBattle()
+        {
             // Every new battle captures the latest confirmed layout and current entrances.
             // The resulting BattleLevel stays fixed throughout that battle, including wave intervals.
             if (!Build()) return false;
             IReadOnlyList<BattleIssue> issues = BattleValidation.Check(Level, WavePlan, TowerSettings);
             if (issues.Count != 0) { LastMessage = issues[0].Message; return false; }
             Battle = new BattleSimulation(Level, WavePlan, TowerSettings);
-            SelectSpawns = false;
+            EndSpawnSelection();
+            LastShots = Array.Empty<ShotEvent>();
+            ShotSequence++;
             if (view != null) { view.Build(Level); view.ClearSpawns(); }
             if (!Battle.StartWave()) { LastMessage = "无法开始第一波。"; return false; }
             LastMessage = "战斗开始：第 1 波";
@@ -173,11 +199,21 @@ namespace Brick2Life.Feedback
 
         public bool Restart()
         {
+            if (PendingStart)
+            {
+                pendingVision = null;
+                pendingSession = null;
+                LastMessage = "已取消等待识别确认。";
+                if (panel != null) panel.Refresh(this);
+                return true;
+            }
             if (Battle == null) return false;
             Battle.Restart();
             Battle = null;
             Level = null;
             lastState = null;
+            LastShots = Array.Empty<ShotEvent>();
+            ShotSequence++;
             if (view != null) { view.ClearEnemies(); view.ClearRoutes(); }
             LastMessage = "已重置：入口保留，可调整积木和参数后开始";
             PublishSpawns();
@@ -188,7 +224,8 @@ namespace Brick2Life.Feedback
         public void StepManual(float seconds)
         {
             if (Battle == null) return;
-            Battle.Step(seconds);
+            LastShots = Battle.Step(seconds);
+            ShotSequence++;
             Publish();
         }
 
@@ -200,6 +237,24 @@ namespace Brick2Life.Feedback
 
         private void Update()
         {
+            if (PendingStart)
+            {
+                pendingSeconds += Time.unscaledDeltaTime;
+                if (!pendingVision.isActiveAndEnabled || !pendingVision.Automatic ||
+                    pendingVision.Session != pendingSession || pendingSeconds > 8f)
+                {
+                    pendingVision = null;
+                    pendingSession = null;
+                    LastMessage = "未取得新的布局确认，请检查 RGB 识别或标定后重新开始。";
+                    if (panel != null) panel.Refresh(this);
+                }
+                else if (pendingVision.HasConfirmed(pendingConfirmation))
+                {
+                    pendingVision = null;
+                    pendingSession = null;
+                    BeginBattle();
+                }
+            }
             if (SelectSpawns && !Running && Input.GetMouseButtonDown(0))
             {
                 if (pointer == null) { LastMessage = "场景里没有棋盘指针组件，无法点选入口。"; }
@@ -208,8 +263,18 @@ namespace Brick2Life.Feedback
                 else LastMessage = "这里不是棋盘空格：请点棋盘上的空位（有积木的格子不能当入口）。";
             }
             if (!autoStep || Battle == null) return;
-            Battle.Step(Time.deltaTime);
+            LastShots = Battle.Step(Time.deltaTime);
+            ShotSequence++;
             Publish();
+        }
+
+        private void EndSpawnSelection()
+        {
+            // Ending a selection is internal cleanup, even when the display window currently owns focus.
+            selectSpawns = false;
+            if (brickEditor != null) brickEditor.enabled = true;
+            if (visionCanvas != null) visionCanvas.SetActive(true);
+            if (panel != null) panel.SetSelecting(false);
         }
 
         private void Publish()

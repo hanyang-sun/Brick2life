@@ -13,7 +13,7 @@ foreach ($folder in @('Scripts\Core','Scripts\Application','Scripts\Vision','Scr
     New-Item -ItemType Directory -Path $destination -Force | Out-Null
     Copy-Item -Path (Join-Path $repoRoot ('Assets\' + $folder + '\*')) -Destination $destination -Recurse -Force
 }
-foreach ($file in @('SimulationProjectionPreview.cs','SimulationProjectionWindow.cs','SimulationDualWindowSession.cs')) {
+foreach ($file in @('SimulationProjectionPreview.cs','SimulationProjectionWindow.cs','SimulationDualWindowSession.cs','SimulationFeedbackSetup.cs')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot ('Assets\Editor\' + $file)) -Destination (Join-Path $runPath ('Assets\Editor\' + $file)) -Force
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Unity\SimulationDualWindowChecks.cs') -Destination (Join-Path $runPath 'Assets\Editor\SimulationDualWindowChecks.cs') -Force

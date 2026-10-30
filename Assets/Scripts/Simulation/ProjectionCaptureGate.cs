@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Brick2Life.Simulation
 {
@@ -13,19 +14,45 @@ namespace Brick2Life.Simulation
         void SetProjectionVisible(bool visible);
     }
 
-    /// <summary>Single hand-off point between the projector and the capture adapter.</summary>
+    /// <summary>Hides registered projections for one synchronous capture, restoring each previous state.</summary>
     public static class ProjectionCaptureGate
     {
-        public static IProjectionGate Current { get; private set; }
+        private static readonly List<IProjectionGate> gates = new List<IProjectionGate>();
+        public static IProjectionGate Current => gates.Count == 0 ? null : gates[gates.Count - 1];
 
         public static void Register(IProjectionGate gate)
         {
-            if (gate != null) Current = gate;
+            if (gate != null && !gates.Contains(gate)) gates.Add(gate);
         }
 
         public static void Unregister(IProjectionGate gate)
         {
-            if (ReferenceEquals(Current, gate)) Current = null;
+            gates.Remove(gate);
+        }
+
+        public static IDisposable Suppress() => new CaptureScope();
+
+        private sealed class CaptureScope : IDisposable
+        {
+            private readonly List<IProjectionGate> hidden = new List<IProjectionGate>();
+            public CaptureScope()
+            {
+                try
+                {
+                    foreach (IProjectionGate gate in gates.ToArray())
+                        if (gate.IsProjectionVisible)
+                        {
+                            hidden.Add(gate);
+                            gate.SetProjectionVisible(false);
+                        }
+                }
+                catch { Dispose(); throw; }
+            }
+            public void Dispose()
+            {
+                for (int i = hidden.Count - 1; i >= 0; i--) hidden[i].SetProjectionVisible(true);
+                hidden.Clear();
+            }
         }
     }
 }

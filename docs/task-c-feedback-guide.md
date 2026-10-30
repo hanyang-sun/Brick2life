@@ -1,6 +1,6 @@
 # 任务 C 手册：关卡反馈与虚拟投影
 
-更新：2026-10-25。适用工程：Brick2Life（Unity 6000.3.24f1，Built-in 渲染管线，默认场景 `Assets/Scenes/Brick2LifeSimulation.unity`）。
+更新：2026-10-30。适用工程：Brick2Life（Unity 6000.3.24f1，Built-in 渲染管线，默认场景 `Assets/Scenes/Brick2LifeSimulation.unity`）。A/C 整合以 [整合说明](a-c-integration.md) 及 [双窗口指南](editor-dual-window-guide.md) 为当前入口；历史验证记录保持各自测试时的条件。
 
 ## 1. 任务 C 在系统里的位置
 
@@ -49,9 +49,9 @@ C 不读 `SimulationBoardSession.Snapshot()`，不读 GT，也不创建观测。
 
 | 种类 | 覆盖范围 | 表面 | 默认颜色/强度 |
 | --- | --- | --- | --- |
-| `GridPoint` | 11×11 交点（每点 0.12 格见方） | 相邻格有积木时投积木顶面，否则投桌面 | 冷白，alpha 0.35 |
-| `RoleHighlight` | 所有占用且有角色的格（0.86 格见方） | 积木顶面 | 核心蓝 / 城墙灰白 / 防御塔橙，alpha 0.55 |
-| `ChangeHighlight` | 本次 `BoardDelta` 涉及的格（0.96 格见方） | 有积木时投积木顶面 | 新增绿 / 移除红 / 改色黄，alpha 0.8 |
+| `GridPoint` | 11×11 交点（每点 0.07 格见方，边界向棋盘内约束） | 相邻格有积木时投积木顶面，否则投桌面 | 冷白，alpha 0.16 |
+| `RoleHighlight` | 所有占用且有角色的格（0.8 格见方） | 积木顶面 | 核心徽记 / 城墙砖纹 / 防御塔靶纹，alpha 0.32，核心有呼吸效果 |
+| `ChangeHighlight` | 本次 `BoardDelta` 涉及的格（0.96 格见方） | 变化后仍有积木时投顶面，否则投桌面 | 新增绿 / 移除红 / 改色黄的轮廓圈，alpha 0.75，默认 1.6 秒淡出 |
 
 - 位置：格 `(x, y)` 的中心是 `(x+0.5, y+0.5)`；表面高度由 `ProjectionSimulator` 决定（积木顶面 1.0、桌面 0.0，再加 0.006 偏移）。因此面片中心与格位中心的重合是构造保证；`ProjectionSimulator.MeasureAlignmentError(plan)` 可返回实际最大偏差（当前实现应为 0）。
 - 面片是 `PrimitiveType.Quad`，绕 X 转 90° 落在水平面，材质为无光照 alpha 混合（安装菜单创建的 `ProjectionMark.mat` 用 `Sprites/Default`），`shadowCastingMode=Off`，且不生成 Collider，避免影响积木编辑的射线拾取。
@@ -60,10 +60,10 @@ C 不读 `SimulationBoardSession.Snapshot()`，不读 GT，也不创建观测。
 
 ### 4.1 投影与拍照时序
 
-识别取样必须看到“没有投影的真实积木”，否则自己的投影会污染输入；研究“投影干扰”时又要能带投影取样。实现方式：
+当前默认关闭投影取样作为无干扰对照；研究“投影干扰”时使用保留投影的采集条件。实现方式：
 
-- `IProjectionGate`（`Assets/Scripts/Simulation/ProjectionCaptureGate.cs`）定义 `IsProjectionVisible` 与 `SetProjectionVisible`；`ProjectionSimulator` 实现该接口并在 `OnEnable/OnDisable` 注册/注销到静态 `ProjectionCaptureGate.Current`（Simulation 程序集不依赖 Feedback）。
-- `SimulationCameraCapture.CaptureObservationImage()` 的默认行为：若 `captureWithoutProjection=true`（默认）且投影可见 → `SetProjectionVisible(false)` → 按 `projectionSettleFrames`（默认 2）追加 `sourceCamera.Render()` 等待画面稳定 → 取像素 → `finally` 立即恢复投影。
+- `IProjectionGate`（`Assets/Scripts/Simulation/ProjectionCaptureGate.cs`）由角色投影与战斗覆盖层共同实现并注册；Simulation 程序集不依赖 Feedback。
+- `SimulationCameraCapture.CaptureObservationImage()` 的默认行为：若 `captureWithoutProjection=true`（默认），通过 `ProjectionCaptureGate.Suppress()` 临时隐藏全部已注册投影 → 按 `projectionSettleFrames`（默认 2）追加 `sourceCamera.Render()` → 取像素 → `finally` 恢复各投影原有状态。采集失败也恢复，战斗覆盖层同步隐藏，不依赖下一帧 Update。
 - `CaptureObservationImage(true)` 保留投影，用于干扰对照；返回的 `SimulationObservationImage.ProjectionVisible` 记录本次取样是否带投影。
 - 运行时按 **F8** 实时切换“取样是否关闭投影”，日志会打印当前模式。
 - 注意：这是仿真层面的时序（关掉面片后手动渲染即可稳定）；真实投影仪需要按设备响应时间等待，届时把 `projectionSettleFrames` 换成实际延时即可。
@@ -108,13 +108,13 @@ B 接通后：
 
 - 投影是“贴在可见表面上的面片 + alpha 混合”，不是光学投影仿真：没有镜头畸变、亮度衰减、梯形校正、投影阴影；因此它只能支持“投影颜色干扰识别”这类实验，不能宣称真实投影设备的表现。升级路径是官方 Built-in `Projector` 组件（正交、Ignore Layers）+ 投影贴图，只替换 `ProjectionSimulator` 的渲染层，Application 层接口不变。
 - 单层 10×10、等大积木；多层、遮挡、隐藏层不在本轮范围。
-- 关卡只做“唯一核心”判定，不包含寻路、波次、战斗；塔防运行时在归档的 `Archive/BrickDefense` 中，本任务不重建它。
+- 语义关卡只做“唯一核心”等合法性判定；寻路、波次和战斗已由当前 `Brick2Life.Battle` 新管线承接，归档代码不进入编译。
 - 目标版本验收已于 2026-10-27 在 `6000.3.24f1` 上完成（第 6 节四项全部通过：编译零错误、安装菜单与 Play、对齐误差 0、投影进入相机且游戏对象零影响、Windows x64 构建成功）；2022.3 适配副本的验证见第 10 节。
 
 ## 9. 验证命令
 
 ```powershell
-# 纯 C# 断言 596 项（任务 C 73 项 + 战斗 104 项）
+# 纯 C# 断言 600 项（包含投影计划 29 项、战斗 104 项）
 dotnet run --project Tests/Brick2Life.Checks.csproj
 ```
 
@@ -142,3 +142,9 @@ Unity 侧（有 6000.3.24f1 的机器）按第 6 节执行，并记录：面片�
 2026-10-25 在本机按此流程得到的实测结果（详见验证记录）：关卡对象 3 个、投影面片 134 个、对齐误差 0、顶置相机看不到游戏对象但能看到投影（开/关图像差 25136 像素）、隐藏游戏对象后顶置图像 0 像素变化。
 
 限制：`2022.3` 没有 uGUI 2.0.0，也没有 Unity 6 的部分序列化/渲染行为，所以副本只用于“逻辑 + 接线 + 分层 + 投影可见性”的验证，不能替代 6.3 的编译、运行时与构建验收；副本也不要拿去覆盖仓库。
+
+## 9.2 展示模式与投影效果
+
+- Unity 编辑器 Play 模式同时打开“原始积木布局”和“投影展示”两个独立窗口。原始窗口编辑与战斗操作；展示窗口只读，提供“积木＋投影／仅投影”切换、旋转、缩放和视角复位；纯投影保留暗色棋盘轮廓。切换展示不更改源对象或识别相机。C 原分支 F1/F2/F3 的单窗口工具条不与双窗口并存，也不再引入舞台改层或第二套编辑锁。
+- 战斗投影覆盖层：路径流动箭头、每塔范围环、开火闪光、命中涟漪、核心冲击环（掉血时）、城墙局部波纹（敌人贴墙经过时）、塔朝向箭头（指向最近敌人）。
+- 重开与锁定：自动识别开启时，点“开始”后等待 B 新采集 RGB 的确认，再用当前确认布局与入口规划；不读取原始棋盘来判断识别对错。重试可以取消等待，超时或会话变更会提示重新开始。战斗中（含暂停、等待下一波）不能改积木或入口，胜利/失败/重试后解锁。人工目标与独立 fixture 在无自动视觉输入时直接使用已确认观测。

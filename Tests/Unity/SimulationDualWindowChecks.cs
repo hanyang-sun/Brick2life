@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Brick2Life.Application;
+using Brick2Life.Battle;
 using Brick2Life.Core;
 using Brick2Life.Editor;
 using Brick2Life.Feedback;
@@ -17,7 +18,7 @@ public static class SimulationDualWindowChecks
     [Serializable] private sealed class Result
     {
         public bool passed;
-        public int assertions, captureChangedPixels;
+        public int assertions, captureChangedPixels, projectionChangedPixels, cleanCaptureMismatchPixels;
         public List<string> failures = new List<string>();
     }
     private static Result result;
@@ -29,6 +30,12 @@ public static class SimulationDualWindowChecks
     {
         result = new Result();
         EditorSceneManager.OpenScene("Assets/Scenes/Brick2LifeSimulation.unity");
+        Require(Object.FindObjectsByType<SimulationBattleOverlay>(FindObjectsSortMode.None).Length == 1,
+            "The saved scene must contain exactly one battle projection overlay.");
+        SimulationFeedbackSetup.InstallAndSave();
+        SimulationFeedbackSetup.InstallAndSave();
+        Require(Object.FindObjectsByType<SimulationBattleOverlay>(FindObjectsSortMode.None).Length == 1,
+            "Reinstalling feedback duplicated the battle projection overlay.");
         EditorSettings.enterPlayModeOptionsEnabled = true;
         EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
         EditorApplication.playModeStateChanged += OnPlay;
@@ -48,7 +55,7 @@ public static class SimulationDualWindowChecks
     {
         try
         {
-            if (EditorApplication.timeSinceStartup - startedAt > 50) throw new TimeoutException("Dual-window checks timed out.");
+            if (EditorApplication.timeSinceStartup - startedAt > 90) throw new TimeoutException("Dual-window checks timed out.");
             if (lastFrame == Time.frameCount) return;
             lastFrame = Time.frameCount;
             if (!sequence.MoveNext()) Finish();
@@ -201,6 +208,169 @@ public static class SimulationDualWindowChecks
         SimulationDualWindowSession.Close();
         Check(workspace.cullingMask == mask && SimulationEditAccess.CanEdit, "Closing windows did not restore camera/input configuration.");
         Check(board.Version == boardVersion && board.Bricks.Count == sourceCount, "Opening/closing windows mutated the source board.");
+        IEnumerator integration = VerifyProjectionIntegration(board, editor, adapter, capture, monitor, controller, overhead);
+        while (integration.MoveNext()) yield return integration.Current;
+    }
+
+    private static IEnumerator VerifyProjectionIntegration(SimulationBoardSession board, SimulationBrickEditor editor,
+        SimulationLevelAdapter adapter, SimulationCameraCapture capture, SimulationVisionMonitor monitor,
+        SimulationBattleController controller, Camera overhead)
+    {
+        // Real RGB recognition of an explicitly arranged test scene; GT is used only by the normal evaluator.
+        editor.ClearBoard();
+        Require(board.TryAdd(9, 9, "blue", out BoardLayout.Brick core), "Could not arrange the RGB core fixture.");
+        Require(board.TryAdd(5, 5, "red", out _), "Could not arrange the RGB tower fixture.");
+        Require(board.TryAdd(4, 5, "green", out _), "Could not arrange the RGB wall fixture.");
+        capture.CaptureWithoutProjection = true;
+        monitor.Configure(3, false);
+        for (int i = 0; i < 3; i++) monitor.AnalyzeOnce();
+        Require(monitor.LastRawScore.ExactMatches == 100 && adapter.Feedback.Level.IsPlayable,
+            "Clean RGB did not establish the playable three-brick fixture.");
+        Check(adapter.Projection.MaterialNameOf(GameRole.Core) == "ProjectionCore", "Core emblem material is missing.");
+        Check(adapter.Projection.MaterialNameOf(GameRole.Tower) == "ProjectionTower", "Tower pattern material is missing.");
+        Check(adapter.Projection.MaterialNameOf(GameRole.Wall) == "ProjectionWall", "Wall pattern material is missing.");
+        controller.ClearSpawns();
+        Require(controller.AddSpawn(new GridPoint(3, 3)), "Could not set the integration entrance.");
+        controller.WavePlan = new WavePlan(1, 1, 2000, 0.1, 1, 1);
+        controller.TowerSettings = new TowerSettings(100, 1, 8, 0.1);
+        controller.SetAutoStep(false);
+        Require(board.TryMove(core.BrickId, 8, 8), "Could not move the core before a fresh confirmation.");
+        typeof(SimulationVisionMonitor).GetField("interval", System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic).SetValue(monitor, 9999f);
+        monitor.Automatic = true;
+        controller.SelectSpawns = true;
+        Check(!controller.StartBattle() && controller.PendingStart && !controller.Running,
+            "Starting used an old confirmed layout instead of waiting for fresh RGB.");
+        SimulationEditAccess.ConfigureFocus(() => false);
+        for (int i = 0; i < 2; i++)
+        {
+            monitor.AnalyzeOnce();
+            yield return null;
+            Check(controller.PendingStart && !controller.Running, "Battle started before the fresh confirmation window.");
+        }
+        monitor.AnalyzeOnce();
+        yield return null;
+        Require(controller.Running && !controller.PendingStart, "Fresh RGB confirmation did not start the queued battle.");
+        monitor.Automatic = false;
+        Check(controller.Level.CellAt(16, 16).IsCore && !controller.Level.CellAt(18, 18).IsCore,
+            "Battle did not replan to the newly confirmed core.");
+        Check(!controller.SelectSpawns && editor.enabled && board.IsEditingLocked,
+            "Deferred start did not end spawn selection or retain the model lock when focus changed.");
+        SimulationEditAccess.ConfigureFocus(null);
+        yield return null;
+        var overlay = controller.GetComponent<SimulationBattleOverlay>();
+        Require(overlay != null && overlay.MarksRoot != controller.transform, "Battle projection has no isolated source root.");
+        Require(overlay.ActiveArrowCount == 7, "Flowing route arrows are missing.");
+        Require(overlay.ActiveRangeRingCount == 1, "There must be exactly one visible range ring per physical tower.");
+        Require(overlay.ActiveTowerArrowCount == 1, "There must be exactly one aiming arrow per physical tower.");
+        Transform rangeRing = overlay.MarksRoot.Find("BattleRange");
+        Transform aimArrow = overlay.MarksRoot.Find("BattleTowerAim");
+        Check(rangeRing != null && Vector2.Distance(new Vector2(rangeRing.position.x, rangeRing.position.z),
+            new Vector2(5.5f, 5.5f)) < 0.001f, "Tower range ring is not centered on its physical brick.");
+        Check(aimArrow != null && Vector2.Distance(new Vector2(aimArrow.position.x, aimArrow.position.z),
+            new Vector2(5.5f, 5.5f)) < 0.001f, "Tower aiming arrow is not centered on its physical brick.");
+        controller.StepManual(0.2f);
+        Require(controller.LastShots.Count > 0, "The integration battle did not produce shooting events.");
+        controller.SetPaused(true);
+        yield return null;
+        int effects = overlay.ActiveEffectCount;
+        Check(effects > 0, "Shooting events did not produce flashes/hit effects.");
+        yield return null;
+        yield return null;
+        Check(overlay.ActiveEffectCount == effects, "Paused/manual frames consumed the same shooting batch repeatedly.");
+        SimulationObservationImage clean = capture.CaptureObservationImage(false);
+        SimulationObservationImage disabled;
+        using (ProjectionCaptureGate.Suppress())
+        {
+            Check(!adapter.Projection.IsVisible, "Capture suppression did not hide role projections.");
+            foreach (Renderer renderer in overlay.MarksRoot.GetComponentsInChildren<Renderer>())
+                Check(renderer.forceRenderingOff, "Capture suppression left a battle projection visible.");
+            disabled = capture.CaptureObservationImage(true);
+        }
+        result.cleanCaptureMismatchPixels = ChangedPixels(clean, disabled);
+        Check(result.cleanCaptureMismatchPixels == 0, "Clean capture contains residual battle projection pixels.");
+        Check(adapter.Projection.IsVisible, "Capture did not restore the role projection state.");
+        foreach (Renderer renderer in overlay.MarksRoot.GetComponentsInChildren<Renderer>())
+            Check(!renderer.forceRenderingOff, "Capture did not restore a battle projection renderer.");
+        result.projectionChangedPixels = ChangedPixels(clean, capture.CaptureObservationImage(true));
+        Check(result.projectionChangedPixels > 0, "Retaining projection did not change the actual overhead RGB.");
+        RenderTexture target = overhead.targetTexture;
+        try
+        {
+            overhead.targetTexture = null;
+            bool threw = false;
+            try { capture.CaptureObservationImage(false); }
+            catch (InvalidOperationException) { threw = true; }
+            Check(threw, "Missing capture target was not rejected.");
+        }
+        finally { overhead.targetTexture = target; }
+        Check(adapter.Projection.IsVisible, "Failed capture left the projector hidden.");
+        foreach (Renderer renderer in overlay.MarksRoot.GetComponentsInChildren<Renderer>())
+            Check(!renderer.forceRenderingOff, "Failed capture left a battle renderer suppressed.");
+        using (var preview = new SimulationProjectionPreview(board.Palette))
+        {
+            preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, controller.View, false);
+            int expected = adapter.Projection.ActiveMarkCount + overlay.ActiveArrowCount +
+                overlay.ActiveRangeRingCount + overlay.ActiveTowerArrowCount + overlay.ActiveEffectCount;
+            Check(preview.ProjectionCount == expected, "Combined preview omitted or duplicated battle projection meshes.");
+            Save(preview.Render(1000, 720), "battle-combined.png");
+            preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, controller.View, true);
+            Check(!preview.BricksVisible && preview.ProjectionCount == expected,
+                "Projection-only mode lost battle effects or kept confirmed brick models.");
+            Save(preview.Render(1000, 720), "battle-projection-only.png");
+        }
+        float fadeStarted = Time.realtimeSinceStartup;
+        while (Time.realtimeSinceStartup - fadeStarted < 1.8f) yield return null;
+        bool faded = true;
+        for (int i = 0; i < adapter.Projection.LastPlan.Marks.Count; i++)
+        {
+            ProjectionMark mark = adapter.Projection.LastPlan.Marks[i];
+            if (mark.Kind == ProjectionMarkKind.ChangeHighlight &&
+                adapter.Projection.MarksRoot.GetChild(i).gameObject.activeSelf) faded = false;
+        }
+        Check(faded, "Change rings did not fade away while the battle was paused.");
+        Require(controller.Restart(), "Could not restart the combined integration battle.");
+        yield return null;
+        Check(!board.IsEditingLocked && overlay.ActiveArrowCount == 0 && overlay.ActiveRangeRingCount == 0 &&
+            overlay.ActiveEffectCount == 0, "Retry left a battle lock or old projection effects behind.");
+        monitor.Automatic = true;
+        Check(!controller.StartBattle() && controller.PendingStart, "Could not queue a second fresh confirmation.");
+        Check(controller.Restart() && !controller.PendingStart && !board.IsEditingLocked,
+            "Retry did not cancel a pending start.");
+        monitor.Automatic = false;
+        controller.ClearSpawns();
+        Require(controller.AddSpawn(new GridPoint(8, 7)), "Could not arrange the core-impact fixture.");
+        controller.WavePlan = new WavePlan(1, 1, 2000, 20, 10, 1);
+        Require(controller.StartBattle(), "Could not start the core-impact fixture.");
+        yield return null;
+        controller.StepManual(2f);
+        yield return null;
+        Check(controller.State.CoreHealth == 90, "The core-impact fixture did not leak exactly one enemy.");
+        bool coreImpact = false;
+        var property = new MaterialPropertyBlock();
+        foreach (MeshRenderer renderer in overlay.MarksRoot.GetComponentsInChildren<MeshRenderer>())
+        {
+            if (renderer.name != "BattleFx") continue;
+            renderer.GetPropertyBlock(property);
+            Color color = property.GetColor(Shader.PropertyToID("_Color"));
+            if (color.r < 0.9f || color.g > 0.4f) continue;
+            coreImpact = true;
+            Check(Vector2.Distance(new Vector2(renderer.transform.position.x, renderer.transform.position.z),
+                new Vector2(8.5f, 8.5f)) < 0.001f && renderer.transform.position.y > 1f,
+                "Core damage ring is not centered above the confirmed core brick.");
+        }
+        Check(coreImpact, "Core damage produced no visible impact ring.");
+        Require(controller.Restart(), "Could not reset the core-impact fixture.");
+        yield return null;
+    }
+
+    private static int ChangedPixels(SimulationObservationImage a, SimulationObservationImage b)
+    {
+        int count = 0;
+        for (int i = 0; i < a.Rgb.Length; i += 3)
+            if (Math.Abs(a.Rgb[i] - b.Rgb[i]) > 1 || Math.Abs(a.Rgb[i + 1] - b.Rgb[i + 1]) > 1 ||
+                Math.Abs(a.Rgb[i + 2] - b.Rgb[i + 2]) > 1) count++;
+        return count;
     }
 
     private static void Save(RenderTexture target, string name)

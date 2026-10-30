@@ -9,6 +9,8 @@ namespace Brick2Life.Application
     public enum ProjectionSurface { Table = 0, BrickTop = 1 }
     public enum ProjectionMarkKind { GridPoint = 0, RoleHighlight = 1, ChangeHighlight = 2 }
     public enum ProjectionChange { Added = 0, Removed = 1, Recolored = 2 }
+    // Outlines mark secondary information without hiding the fill underneath.
+    public enum ProjectionShape { Fill = 0, Ring = 1 }
 
     public readonly struct ProjectionColor
     {
@@ -39,15 +41,17 @@ namespace Brick2Life.Application
         public ProjectionSurface Surface { get; }
         public GameRole Role { get; }
         public ProjectionChange? Change { get; }
+        public ProjectionShape Shape { get; }
         public ProjectionColor Color { get; }
         public float CenterX => X + SizeX * 0.5f;
         public float CenterY => Y + SizeY * 0.5f;
 
         internal ProjectionMark(float x, float y, float sizeX, float sizeY, ProjectionMarkKind kind,
-            ProjectionSurface surface, GameRole role, ProjectionChange? change, ProjectionColor color)
+            ProjectionSurface surface, GameRole role, ProjectionChange? change, ProjectionColor color,
+            ProjectionShape shape = ProjectionShape.Fill)
         {
             X = x; Y = y; SizeX = sizeX; SizeY = sizeY; Kind = kind; Surface = surface;
-            Role = role; Change = change; Color = color;
+            Role = role; Change = change; Color = color; Shape = shape;
         }
         public override string ToString() =>
             $"{Kind}@({X:0.00},{Y:0.00}) size {SizeX:0.00}x{SizeY:0.00} {Surface} {Role} {Change} {Color}";
@@ -60,12 +64,15 @@ namespace Brick2Life.Application
         public bool IncludeChangeHighlights { get; set; } = true;
         // Hard cap keeps the projector workload bounded on dense boards and after large deltas.
         public int MaxMarks { get; set; } = 400;
-        public float GridPointSize { get; set; } = 0.12f;
-        public float HighlightSize { get; set; } = 0.86f;
+        public float GridPointSize { get; set; } = 0.07f;
+        public float HighlightSize { get; set; } = 0.8f;
         public float ChangeSize { get; set; } = 0.96f;
-        public float GridAlpha { get; set; } = 0.35f;
-        public float HighlightAlpha { get; set; } = 0.55f;
-        public float ChangeAlpha { get; set; } = 0.8f;
+        // The lattice is context, not decoration: keep it faint so role patterns stay readable.
+        public float GridAlpha { get; set; } = 0.16f;
+        public float HighlightAlpha { get; set; } = 0.32f;
+        public float ChangeAlpha { get; set; } = 0.75f;
+        // Change marks fade out in the view after this many seconds; the plan only carries the duration.
+        public float ChangeFadeSeconds { get; set; } = 1.6f;
 
         internal void Validate()
         {
@@ -74,6 +81,8 @@ namespace Brick2Life.Application
                 throw new ArgumentOutOfRangeException(nameof(GridPointSize), "Projection sizes must be positive.");
             if (!Unit(GridAlpha) || !Unit(HighlightAlpha) || !Unit(ChangeAlpha))
                 throw new ArgumentOutOfRangeException(nameof(GridAlpha), "Projection alphas are normalized.");
+            if (!Positive(ChangeFadeSeconds))
+                throw new ArgumentOutOfRangeException(nameof(ChangeFadeSeconds), "Change fade duration must be positive.");
         }
         private static bool Positive(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value > 0;
         private static bool Unit(float value) => !float.IsNaN(value) && value >= 0 && value <= 1;
@@ -86,13 +95,14 @@ namespace Brick2Life.Application
         public IReadOnlyList<ProjectionMark> Marks { get; }
         public bool Truncated { get; }
         public string Summary { get; }
+        public float ChangeFadeSeconds { get; }
 
         internal ProjectionPlan(BoardDefinition definition, long levelVersion, List<ProjectionMark> marks,
-            bool truncated, string summary)
+            bool truncated, string summary, float changeFadeSeconds)
         {
             Definition = definition; LevelVersion = levelVersion;
             Marks = new ReadOnlyCollection<ProjectionMark>(marks);
-            Truncated = truncated; Summary = summary;
+            Truncated = truncated; Summary = summary; ChangeFadeSeconds = changeFadeSeconds;
         }
 
         public int Count(ProjectionMarkKind kind)
@@ -140,7 +150,8 @@ namespace Brick2Life.Application
             if (settings.IncludeGridPoints)
                 for (int y = 0; y <= level.Definition.Height; y++)
                     for (int x = 0; x <= level.Definition.Width; x++)
-                        Add(new ProjectionMark(x - settings.GridPointSize * 0.5f, y - settings.GridPointSize * 0.5f,
+                        Add(new ProjectionMark(ClampGrid(x, settings.GridPointSize, level.Definition.Width),
+                            ClampGrid(y, settings.GridPointSize, level.Definition.Height),
                             settings.GridPointSize, settings.GridPointSize, ProjectionMarkKind.GridPoint,
                             LatticeSurface(level, x, y), GameRole.None, null,
                             GridColor.WithAlpha(settings.GridAlpha)));
@@ -164,19 +175,31 @@ namespace Brick2Life.Application
                     if (change.Before.Occupancy != Occupancy.Occupied) kind = ProjectionChange.Added;
                     else if (change.After.Occupancy != Occupancy.Occupied) kind = ProjectionChange.Removed;
                     else kind = ProjectionChange.Recolored;
-                    bool onBrick = change.Before.Occupancy == Occupancy.Occupied || change.After.Occupancy == Occupancy.Occupied;
+                    // A removed brick no longer provides a top face, so its mark must land on the table.
+                    bool onBrick = change.After.Occupancy == Occupancy.Occupied;
                     Add(new ProjectionMark(Center(change.Position.X, settings.ChangeSize), Center(change.Position.Y, settings.ChangeSize),
                         settings.ChangeSize, settings.ChangeSize, ProjectionMarkKind.ChangeHighlight,
                         onBrick ? ProjectionSurface.BrickTop : ProjectionSurface.Table, GameRole.None, kind,
-                        ColorOf(kind).WithAlpha(settings.ChangeAlpha)));
+                        ColorOf(kind).WithAlpha(settings.ChangeAlpha), ProjectionShape.Ring));
                 }
 
             string summary = $"格点 {CountOf(marks, ProjectionMarkKind.GridPoint)} · 高亮 {CountOf(marks, ProjectionMarkKind.RoleHighlight)}" +
                 $" · 变更 {CountOf(marks, ProjectionMarkKind.ChangeHighlight)}" + (truncated ? "（已截断）" : "");
-            return new ProjectionPlan(level.Definition, level.SourceVersion, marks, truncated, summary);
+            return new ProjectionPlan(level.Definition, level.SourceVersion, marks, truncated, summary, settings.ChangeFadeSeconds);
         }
 
         private static float Center(int cell, float size) => cell + (1 - size) * 0.5f;
+
+        // Lattice points stay inside the board: at the border they would otherwise hang half off the table.
+        private static float ClampGrid(int coordinate, float size, int extent)
+        {
+            float half = size * 0.5f;
+            float value = coordinate - half;
+            float max = extent - size;
+            if (value < 0) return 0;
+            if (value > max) return max;
+            return value;
+        }
 
         // A lattice point is drawn on brick height when any adjacent cell is occupied, matching an overhead projector.
         private static ProjectionSurface LatticeSurface(LevelState level, int x, int y)

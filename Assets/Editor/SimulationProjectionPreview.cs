@@ -144,21 +144,27 @@ namespace Brick2Life.Editor
             bool confirmedProjection = level != null && projection != null && projection.LastPlan != null &&
                 projection.LastPlan.LevelVersion == level.SourceVersion;
             projectionRoot.gameObject.SetActive(confirmedProjection && projection.IsVisible);
-            MirrorMeshes(confirmedProjection ? projection.MarksRoot : null, projectionRoot, projectionCopies);
+            var overlay = battle != null ? battle.GetComponent<SimulationBattleOverlay>() : null;
+            MirrorMeshes(confirmedProjection ? projection.MarksRoot : null, projectionRoot, projectionCopies,
+                confirmedProjection && overlay != null ? overlay.MarksRoot : null);
             battleRoot.gameObject.SetActive(!projectionOnly);
-            MirrorMeshes(battle != null ? battle.transform : null, battleRoot, battleCopies);
+            MirrorMeshes(battle != null ? battle.transform : null, battleRoot, battleCopies,
+                excludedLayer: projection != null ? projection.ProjectionLayer : 31);
             MirrorRoutes(battle != null ? battle.transform : null);
         }
 
-        private void MirrorMeshes(Transform sourceRoot, Transform parent, Dictionary<int, MeshRenderer> copies)
+        private void MirrorMeshes(Transform sourceRoot, Transform parent, Dictionary<int, MeshRenderer> copies,
+            Transform additionalRoot = null, int excludedLayer = -1)
         {
             stale.Clear();
             stale.AddRange(copies.Keys);
-            if (sourceRoot != null)
-                foreach (MeshRenderer source in sourceRoot.GetComponentsInChildren<MeshRenderer>())
+            foreach (Transform sourceGroup in new[] { sourceRoot, additionalRoot })
+            if (sourceGroup != null)
+                foreach (MeshRenderer source in sourceGroup.GetComponentsInChildren<MeshRenderer>())
                 {
                     MeshFilter filter = source.GetComponent<MeshFilter>();
-                    if (filter == null || filter.sharedMesh == null || !source.enabled) continue;
+                    if (filter == null || filter.sharedMesh == null || !source.enabled || source.forceRenderingOff ||
+                        source.gameObject.layer == excludedLayer) continue;
                     int id = source.GetInstanceID();
                     stale.Remove(id);
                     if (!copies.TryGetValue(id, out MeshRenderer target))

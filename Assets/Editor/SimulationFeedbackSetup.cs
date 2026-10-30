@@ -138,6 +138,12 @@ namespace Brick2Life.Editor
             viewObject.ApplyModifiedProperties();
 
             SimulationBattleController controller = EnsureComponent<SimulationBattleController>(battleRoot.gameObject);
+            SimulationBattleOverlay overlay = EnsureComponent<SimulationBattleOverlay>(battleRoot.gameObject);
+            var overlayObject = new SerializedObject(overlay);
+            overlayObject.FindProperty("controller").objectReferenceValue = controller;
+            overlayObject.FindProperty("projector").objectReferenceValue = FindFirst<ProjectionSimulator>();
+            overlayObject.FindProperty("root").objectReferenceValue = battleRoot;
+            overlayObject.ApplyModifiedProperties();
             GameObject panelObject = GameObject.Find("BattlePanelRoot");
             if (panelObject == null)
             {

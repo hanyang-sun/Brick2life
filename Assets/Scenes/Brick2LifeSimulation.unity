@@ -4252,6 +4252,7 @@ GameObject:
   - component: {fileID: 1730692417}
   - component: {fileID: 1730692416}
   - component: {fileID: 1730692415}
+  - component: {fileID: 1730692418}
   m_Layer: 0
   m_Name: Battle
   m_TagString: Untagged
@@ -4275,6 +4276,7 @@ MonoBehaviour:
   view: {fileID: 1730692416}
   panel: {fileID: 864833550}
   pointer: {fileID: 54039463}
+  brickEditor: {fileID: 0}
   autoStep: 1
 --- !u!114 &1730692416
 MonoBehaviour:
@@ -4309,6 +4311,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1480744937}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1730692418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730692414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cde17bf7d9764068963954fb5b04012f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Brick2Life.Feedback::Brick2Life.Feedback.SimulationBattleOverlay
+  controller: {fileID: 1730692415}
+  projector: {fileID: 1480744935}
+  root: {fileID: 1730692417}
+  projectionLayerName: Brick2LifeProjection
+  fallbackLayer: 31
+  arrowsPerRoute: 7
+  arrowSize: 0.34
+  arrowSpeed: 1.6
+  ringHeight: 0.02
+  flashSeconds: 0.18
+  rippleSeconds: 0.5
 --- !u!1 &1835982914
 GameObject:
   m_ObjectHideFlags: 0

@@ -43,6 +43,12 @@ namespace Brick2Life.Simulation
         private float elapsed;
         private bool primed;
         private string loggedError;
+        private long captureSequence;
+        private long confirmedCaptureSequence = -1;
+
+        // Require fresh RGB evidence without consulting source layout or evaluation scores.
+        public long RequestFreshConfirmation() => captureSequence + requiredFrames;
+        public bool HasConfirmed(long requestedSequence) => confirmedCaptureSequence >= requestedSequence;
 
         public bool Automatic { get; set; } = true;
 
@@ -120,6 +126,7 @@ namespace Brick2Life.Simulation
             LastRawScore = null;
             LastStableScore = null;
             LastError = null;
+            confirmedCaptureSequence = -1;
             // Task C binds to this session so recognition and feedback share one confirmed state.
             Action<BoardSyncSession> rebuilt = SessionRebuilt;
             if (rebuilt != null) rebuilt(sync);
@@ -163,6 +170,7 @@ namespace Brick2Life.Simulation
             if (board == null || !board.IsInitialized || capture == null || calibration == null)
                 throw new InvalidOperationException("识别面板尚未绑定棋盘和相机。");
             SimulationObservationImage image = capture.CaptureObservationImage();
+            captureSequence++;
             // The snapshot is only the accuracy reference. Recognize does not receive it.
             BoardSnapshot truth = board.Snapshot();
             GridSample[][] samples = capture.BuildTopSamples(board.Definition, calibration, image.Width, image.Height);
@@ -180,6 +188,8 @@ namespace Brick2Life.Simulation
                     request.CapturedAtUtc, request.CalibrationId, observation.Cells);
                 BoardUpdate update = sync.Confirm(request, stamped);
                 LastOutcome = update.Outcome;
+                if (update.Outcome == UpdateOutcome.Baseline || update.Outcome == UpdateOutcome.Changed ||
+                    update.Outcome == UpdateOutcome.Unchanged) confirmedCaptureSequence = captureSequence;
                 // Task C consumes the confirmed prediction event; no ground truth is forwarded.
                 Action<BoardUpdate> applied = UpdateApplied;
                 if (applied != null) applied(update);

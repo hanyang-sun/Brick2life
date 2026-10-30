@@ -29,13 +29,13 @@ flowchart TD
 - Application 的 DatasetPlan 定义有限的日常测试布局、稳定种子及逻辑内容分组；它不修改公共棋盘合同。Editor 负责隔离采集任务，Simulation 继续只依赖 Core。
 - Application 另含任务 C 的纯逻辑：LevelSemantics（颜色→角色、关卡状态与合法性）、ProjectionPlan（逐格投影标记）、LevelFeedbackSession（消费 BoardUpdate 产出反馈帧）。三者都不引用 Unity。
 - Simulation 引用 Core、Application、Vision 和 Unity UI，承担引擎具体实现。Bootstrap 组装棋盘、编辑界面、采集，并在运行时挂载识别面板 `SimulationVisionMonitor`。
-- `Brick2Life.Vision` 不引用 Unity：`VisionCalibration`（调色板色样）、`CameraProjection`（固定格位采样）、`FixedGridRecognizer`（逐格色相分类）、`LayoutChangeTracker`（连续帧稳定与增删移动事件）、`RecognitionScore`（与真值对照的准确率）。
+- `Brick2Life.Vision` 不引用 Unity：`VisionCalibration`（调色板色样）、`CameraProjection`（固定格位采样）、`FixedGridRecognizer`（逐格归一化 RGB 分类）、`LayoutChangeTracker`（连续帧稳定与变化事件）、`RecognitionScore`（与真值对照的准确率）。
 - 识别面板 `SimulationVisionMonitor` 拥有唯一的 `BoardSyncSession`：每帧采样 → 识别 → 连续三帧稳定后 `BeginFrame/Confirm`，再通过 `UpdateApplied` 事件把 `BoardUpdate` 交给任务 C；面板底部另有一行显示任务 C 的关卡与投影摘要。
 - Feedback 引用 Core、Application、Battle、Vision、Simulation 和 Unity UI，是任务 C 的引擎侧：`SimulationFeedbackBootstrap` 在存在识别面板时共享其 `BoardSyncSession`（否则自建会话供人工目标演示），`SimulationLevelAdapter` 把 `BoardUpdate` 变成关卡对象与投影标记，`SimulationLevelView` 生成游戏对象，`ProjectionSimulator` 生成贴在表面上的投影面片。
 - `Brick2Life.Battle` 不引用 Unity：`BattleLevel` 把确认关卡（10×10）映射成 20×20 战斗格并校验入口通路，`RouteSearch` 做四方向 A*，`BattleSimulation` 以 1/60 固定步长跑波次、塔与核心；`SimulationBattleController/View/Panel` 只负责驱动、渲染和参数输入。
 - Editor 引用 Core、Application、Battle、Vision、Simulation、Feedback 和 Unity UI，仅 Editor 编译，承载灯光配置、任务 C 安装与分层检查、战斗装置安装、依赖检查与构建。
 
-Awake 顺序为棋盘会话 -200、接线 -100、任务 C 反馈入口 -50，随后编辑界面 Start。战斗在 `开始` 的瞬间冻结当前确认关卡，局中识别变化不影响本局。
+Awake 顺序为棋盘会话 -200、接线 -100、任务 C 反馈入口 -50，随后编辑界面 Start。自动视觉输入启用时，点击 `开始` 后等待 B 的新采集确认，再冻结确认关卡；不读取原始棋盘内容判断识别是否正确。局中识别变化不影响本局，暂停和波次间隔仍锁定模型编辑。
 
 ## 状态归属
 
@@ -75,7 +75,9 @@ SimulationBoardSession.ReplaceLayout 先校验定义并准备全部几何，再�
 
 Fail 用于采集/识别异常，Cancel 用于取消；ChangeCalibration 取消旧请求并保留旧确认状态供显示。第一阶段只有所有格位占用和颜色都确定才整体确认。应用无路等问题不属于视觉拒绝。
 
-投影与拍照的时序由 `IProjectionGate`（Simulation 程序集）连接：`ProjectionSimulator` 在实现该接口后于 `OnEnable` 注册到 `ProjectionCaptureGate`，`SimulationCameraCapture.CaptureObservationImage()` 在取样前关闭投影、按 `projectionSettleFrames` 追加渲染以等待画面稳定、取完立即恢复；`CaptureObservationImage(true)` 可保留投影，用于“投影干扰”对照。识别默认使用无投影取样（F8 可实时切换）。
+投影与拍照的时序由 `IProjectionGate`（Simulation 程序集）连接：角色投影与战斗覆盖层在 `OnEnable` 注册到 `ProjectionCaptureGate`。`SimulationCameraCapture.CaptureObservationImage()` 通过 `Suppress()` 临时关闭全部已注册投影、按 `projectionSettleFrames` 追加渲染、取完在 finally 中恢复各自原状态；战斗渲染同步隐藏，不依赖下一次 Update。`CaptureObservationImage(true)` 保留投影，用于干扰对照。识别默认使用无投影取样，F8 可实时切换。
+
+编辑器双窗口采用独立预览场景：确认布局重建积木，`ProjectionSimulator` 与 `SimulationBattleOverlay` 的可见面片共同镜像到投影组。两种展示模式都保留该组，只有组合模式显示数字游戏对象。原始窗口拥有编辑焦点，战斗锁在模型层生效；展示切换不改变源相机、布局和采集条件。详见 [A/C 整合说明](a-c-integration.md)。
 
 ### C：关卡与投影（2026-10-25）
 

@@ -1,5 +1,7 @@
 # 任务 C 验证记录
 
+> 以下保留 C 原分支各轮的历史验证条件。2026-10-30 合入 A 后采用独立双窗口及统一采集门；当前实现与复测结果见 `docs/a-c-integration.md`，不再使用历史单窗口工具条与 BrickEditGate。
+
 日期：2026-10-25（Asia/Shanghai）。工程：`E:\Brick2Life`（main `691b380` + 本次改动）。
 
 ## 已执行
@@ -244,3 +246,68 @@ PROBE_ENTRANCE_OK level=[核心 1 · 城墙 1 · 防御塔 8] editorBefore=True 
 - `ProjectSettings/TagManager.asset`（30/31 层名）
 - `Assets/Scenes/Brick2LifeSimulation.unity`（顶置相机掩码）
 - `docs/architecture.md`（模块、状态归属、C 小节、验证结果）
+
+## 9. 本轮验收：重规划、锁定、展示与投影效果（2026-10-29/30）
+
+### 9.1 重开一局必须重新规划
+
+探针（`TempReplanProbe`）在 6000.3.24f1 上实测：
+
+```text
+PROBE_REPLAN_OK started=True oldRouteLen=40 lockedDuringBattle=True lockedWhenPaused=True
+  addSpawnBlocked=True clearBlocked=True restarted=True unlockedAfterRestart=True levelCleared=True
+  wallPlaced=True boardV=11 levelV=1 pendingRejected=True
+  pendingMsg=[等待识别确认最新布局…（棋盘与最近一次确认不一致，确认后会自动开始）]
+  startedAfterWait=True newLevelInstance=True routeChanged=True routeAfterLen=56
+```
+
+结论：新增城墙后点“开始”不会复用旧关卡；控制器逐格比较棋盘与最近确认关卡，不一致就等待，B 确认后自动开局并从当前布局与入口重新规划（路线 40 → 56 个路点、`BattleLevel` 为新实例）。此前用版本号比较的写法是错的：`BoardLayout.Version` 数编辑次数、确认快照版本数确认次数。
+
+### 9.2 战斗期间锁定
+
+同一探针：`lockedDuringBattle=True`、`lockedWhenPaused=True`（暂停仍锁）、`addSpawnBlocked=True`、`clearBlocked=True`；`Restart` 后 `unlockedAfterRestart=True`。锁定由 `BrickEditGate`（战斗 / 展示模式两个来源）统一提供，编辑器在鼠标、工具按钮、颜色按钮、清空与拖拽入口全部检查。
+
+### 9.3 三种界面
+
+`TempDisplayProbe` 实测：
+
+```text
+PROBE_DISPLAY_OK display=True mode=Original originalProjection=False originalLocked=False
+  showcaseProjection=True showcaseLocked=True showcaseStageInMask=True
+  onlyProjection=True onlyLocked=True onlyStageInMask=False onlyGameInMask=False
+  onlyClearFlags=SolidColor onlyBackground=RGBA(0.000, 0.000, 0.000, 1.000)
+  bricksActive=True brickLayer=28 topSeesStage=True
+  backProjection=False backLocked=False backStageInMask=True
+```
+
+结论：原始布局可编辑、投影关闭；积木+投影与仅投影只读；仅投影把积木/底板（层 28）与游戏层（30）从工作区相机剔除并改黑底，但积木对象仍激活、顶置相机仍包含层 28，因此识别采集不受影响；切回原始后相机掩码恢复。
+
+### 9.4 投影修复与角色图案
+
+- 删除提示改为投在桌面（`ProjectionSurface.Table`），不再悬空在积木原位；单测覆盖（见 `ProjectionPlanChecks`，29 项）。
+- 格点坐标夹在棋盘内（`ClampGrid`），格点 alpha 0.16、尺寸 0.07；角色填充 0.32。
+- 变化提示改为**环形**并按 `ChangeFadeSeconds`(1.6s) 淡出后隐藏，避免与角色填充混色。
+- 角色图案由程序生成纹理：核心徽记 + 双环 + 呼吸脉冲、塔靶盘 + 十字准星、城墙砖缝 + 护盾边框。
+
+### 9.5 战斗投影效果与塔朝向箭头
+
+`TempFx2` 长时运行（6000.3.24f1）：
+
+```text
+PROBE_FX2_INFO shots=24 maxFx=4 coreDrops=0 arrows=7 rings=8 towerArrows=8
+  monitor=Unchanged level=核心 1 · 城墙 1 · 防御塔 8 · 格点 121 · 高亮 10 · 变更 0
+```
+
+- 路径箭头 7 个/入口、范围环每塔 1 个（去重后 8 个）、塔朝向箭头 8 支；
+- 24 次射击、同屏最多 4 个开火/受击特效；
+- 战斗全程识别 `monitor=Unchanged`，投影未遮挡识别。
+
+### 9.6 泄漏场景：核心冲击环
+
+`TempLeak` 实测（塔射程 0.1 让敌人漏进核心）：
+
+```text
+PROBE_LEAK_OK drops=2 core=40 maxFx=2 effectsNow=1
+```
+
+核心血量 50→40（两次泄漏，每次 5），每次掉血生成核心冲击环；截图 `E:\caogao\fx-leak.png`。
