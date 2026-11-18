@@ -21,3 +21,8 @@
 - 工作流引用 [actions/checkout v5](https://github.com/actions/checkout/tree/v5)、[actions/setup-dotnet v5](https://github.com/actions/setup-dotnet/tree/v5)、[actions/upload-artifact v4](https://github.com/actions/upload-artifact/tree/v4)，分别用于签出、安装 SDK 和上传检查日志。
 - 三者均采用 MIT 许可证，完整声明保留在各上游仓库的 `LICENSE`。本项目没有复制、修改或分发其源码；它们由 GitHub Actions 在 CI 中执行，不进入 Unity 成品。
 - `game-ci/unity-test-runner` 仅作方案比较，本次未引入。比较与采用范围见 `docs/research/logic-ci-github.md`。
+
+## KlakSpout 2.0.6
+
+- 通过 Unity Package Manager 引入 [KlakSpout 2.0.6](https://github.com/keijiro/KlakSpout/releases/tag/2.0.6)，提交 `849e7bca3c167839ed697796153e1749acf0c53f`，保留上游原版包和 [Unlicense](https://github.com/keijiro/KlakSpout/blob/main/LICENSE)。
+- Windows Unity 编辑器用 `SpoutSender` 将投影纹理交给同机 Screenberry。另见 [接入比较](docs/research/screenberry-spout-github.md)。

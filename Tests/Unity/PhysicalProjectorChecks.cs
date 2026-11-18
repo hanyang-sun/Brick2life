@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Brick2Life.Battle;
 using Brick2Life.Core;
 using Brick2Life.Editor;
 using Brick2Life.Feedback;
@@ -221,7 +222,7 @@ public static class PhysicalProjectorChecks
         var adapter = Object.FindFirstObjectByType<SimulationLevelAdapter>();
         var battle = Object.FindFirstObjectByType<SimulationBattleController>();
         var board = Object.FindFirstObjectByType<SimulationBoardSession>();
-        Check(battle.GenerateNewRound(2, 3), "Cannot generate physical projector fixture.");
+        Check(battle.GenerateNewRound(12, 2), "Cannot generate physical projector fixture.");
         Check(board.TryAdd(2, 2, "red", out _) && board.TryAdd(6, 2, "green", out _), "Cannot create colored receiver bricks.");
         light = adapter.Projection.GetComponent<SimulationProjectedLight>();
         Check(light != null && light.enabled, "Physical projector was not enabled automatically.");
@@ -344,10 +345,159 @@ public static class PhysicalProjectorChecks
         Check(face != null && Mathf.Abs(face.transform.position.y - 1f) < 0.0001f, "Octopus face is not on the confirmed brick top.");
         Check(battle.Running && battle.GetComponent<SimulationBattleOverlay>().ActiveEnemyCount > 0,
             "Live battle animation did not enter the projector output.");
+        var current = overlay.MarksRoot.Find("BattlePath")?.GetComponent<MeshRenderer>();
+        Check(current != null && current.sharedMaterial.shader.isSupported && overlay.RouteProjectionVisible,
+            "The current shader did not produce floor route content.");
+        var routes = battle.DisplayRoutes;
+        Check(routes.Count == 2 && routes[0].Route.Zip(routes[0].Route.Skip(1), (a, b) => (a, b))
+            .Intersect(routes[1].Route.Zip(routes[1].Route.Skip(1), (a, b) => (a, b))).Count() >= 6,
+            "The render fixture should contain two branches and a shared downstream lane.");
         monitor.AnalyzeOnce();
         Check(monitor.LastRawScore.ExactMatches == 100, "Clean sampling after reflected projection corrupted RGB recognition.");
         capture.CaptureObservationImage(true);
+        Save(light.OutputTexture, "ocean-current-output.png");
         preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, battle.View, false);
         Save(preview.Render(960, 720), "physical-projector-battle.png");
+        yield return VerifyCoralWall(board, adapter, preview, battle);
+        yield return VerifyPufferfish(adapter, preview, battle, overlay);
+    }
+
+    private static IEnumerator VerifyPufferfish(SimulationLevelAdapter adapter, SimulationProjectionPreview preview,
+        SimulationBattleController battle, SimulationBattleOverlay overlay)
+    {
+        Check(battle.Restart() && overlay.ActiveEnemyCount == 0, "Restart must hide the previous enemies.");
+        battle.WavePlan = new WavePlan(1, 4, 24, 2.0, 10, 0.32);
+        battle.TowerSettings = new TowerSettings(100, 12, 24, 0.35);
+        capture.CaptureWithoutProjection = false;
+        Check(battle.StartBattle(), "Cannot start the pufferfish fixture.");
+        battle.StepManual(0.58f);
+        yield return null;
+
+        Renderer[] ActiveRenderers() => overlay.MarksRoot.GetComponentsInChildren<Renderer>();
+        var fish = ActiveRenderers().FirstOrDefault(r => r.name == "BattleEnemy");
+        Check(fish != null && battle.State.Enemies.Count >= 2 && overlay.ActiveEnemyCount == battle.State.Enemies.Count,
+            "Spawned enemies did not appear as a school.");
+        if (fish == null || battle.State.Enemies.Count == 0) yield break;
+        var enemy = battle.State.Enemies[0];
+        var heading = new Vector3((float)enemy.HeadingX, 0f, (float)enemy.HeadingY).normalized;
+        Check(Vector3.Dot(fish.transform.up, heading) > 0.99f, "The pufferfish is not facing its next waypoint.");
+        Check(!ActiveRenderers().Any(r => r.name == "BattleEnemyBar" || r.name == "BattleEnemyId"),
+            "Healthy pufferfish must keep the lane clear of health bars and debug numbers.");
+        capture.CaptureObservationImage(true);
+        Check(fish.sharedMaterial.name == "Pufferfish" && !ShaderUtil.ShaderHasError(fish.sharedMaterial.shader),
+            "Pufferfish shader did not compile.");
+        Save(light.OutputTexture, "pufferfish-live-swim.png");
+        preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, battle.View, false);
+        Save(preview.Render(960, 720), "pufferfish-live-reflected.png");
+
+        battle.StepManual(0.10f);
+        yield return null;
+        Check(battle.LastShots.Any(shot => !shot.Killed), "A real bubble must wound a pufferfish.");
+        var properties = new MaterialPropertyBlock();
+        fish.GetPropertyBlock(properties);
+        float hit = properties.GetFloat("_Hit"), phase = properties.GetFloat("_SwimPhase");
+        Check(hit > 0.6f && ActiveRenderers().Any(r => r.name == "BattleEnemyFill"),
+            "A bubble hit must show the pufferfish reaction and health bar.");
+        capture.CaptureObservationImage(true);
+        Save(light.OutputTexture, "pufferfish-live-hit.png");
+        monitor.AnalyzeOnce();
+        Check(monitor.LastRawScore.ExactMatches == 100, "Pufferfish projection corrupted continuous layout recognition.");
+
+        battle.SetPaused(true);
+        yield return null;
+        battle.StepManual(0.10f);
+        yield return null;
+        fish.GetPropertyBlock(properties);
+        Check(Mathf.Approximately(properties.GetFloat("_Hit"), hit) &&
+            Mathf.Approximately(properties.GetFloat("_SwimPhase"), phase), "The pufferfish pose advanced while paused.");
+        battle.SetPaused(false);
+
+        for (int i = 0; i < 30 && !battle.LastShots.Any(shot => shot.Killed); i++)
+        {
+            battle.StepManual(0.06f);
+            yield return null;
+        }
+        var burst = ActiveRenderers().FirstOrDefault(r => r.sharedMaterial.name == "PufferfishBurst");
+        Check(battle.LastShots.Any(shot => shot.Killed) && burst != null && burst.sharedMaterial.GetFloat("_Burst") == 1f,
+            "A defeated pufferfish must produce the three-bubble burst.");
+        capture.CaptureObservationImage(true);
+        Save(light.OutputTexture, "pufferfish-live-burst.png");
+        Check(battle.Restart() && overlay.ActiveEnemyCount == 0 && overlay.ActiveEffectCount == 0,
+            "Restart must clear pufferfish and their defeat effects.");
+    }
+
+    private static IEnumerator VerifyCoralWall(SimulationBoardSession board, SimulationLevelAdapter adapter,
+        SimulationProjectionPreview preview, SimulationBattleController battle)
+    {
+        Check(board.TryAdd(6, 1, "green", out var south), "Cannot place the south arm of the L-shaped wall.");
+        Check(board.TryAdd(7, 2, "green", out _) && board.TryAdd(5, 3, "green", out _),
+            "Cannot place the east arm and the diagonal wall.");
+        for (int x = 3; x <= 7; x++)
+            Check(board.TryAdd(x, 8, "green", out _), "Cannot place the straight wall for the crest fixture.");
+        for (int i = 0; i < 3; i++) monitor.AnalyzeOnce();
+        ProjectionSimulator projection = adapter.Projection;
+        var properties = new MaterialPropertyBlock();
+        Renderer WallAt(int x, int y) => projection.MarksRoot.GetComponentsInChildren<Renderer>()
+            .FirstOrDefault(r => r.sharedMaterial.name == "ProjectionWall" &&
+                r.transform.position == new Vector3(x + 0.5f, 1f, y + 0.5f));
+        Vector4 Read(Renderer renderer, string property)
+        {
+            renderer.GetPropertyBlock(properties);
+            return properties.GetVector(property);
+        }
+        Renderer elbow = WallAt(6, 2), diagonal = WallAt(5, 3);
+        Check(elbow != null && elbow.sharedMaterial.shader.isSupported && diagonal != null,
+            "Coral shader or confirmed wall renderers missing.");
+        if (elbow == null || diagonal == null) yield break;
+        Check(Read(elbow, "_Exposed") == new Vector4(1, 0, 0, 1) &&
+            Read(elbow, "_InnerCorners") == new Vector4(0, 1, 0, 0),
+            "L-shaped wall exposes a shared edge or misses its inside corner.");
+        Check(Read(diagonal, "_Exposed") == Vector4.one,
+            "A diagonal-only neighbor incorrectly closes a wall edge.");
+        for (int x = 3; x <= 7; x++)
+        {
+            Renderer wall = WallAt(x, 8);
+            if (wall != null) wall.GetPropertyBlock(properties);
+            float expected = x % 2 == 1 ? 1f : 0f;
+            Check(wall != null && properties.GetFloat("_ShowCrest") == expected,
+                "The straight wall renderer did not receive its crest placement.");
+        }
+        float fadeEnds = Time.unscaledTime + projection.LastPlan.ChangeFadeSeconds;
+        while (Time.unscaledTime <= fadeEnds) yield return null;
+        var idle = capture.CaptureObservationImage(true);
+        Check(!ShaderUtil.ShaderHasError(elbow.sharedMaterial.shader), "Coral shader failed to compile for the render fixture.");
+        Save(light.OutputTexture, "coral-wall-output.png");
+        Save(top.targetTexture, "coral-wall-rgb.png");
+        preview.UpdateScene(adapter.Feedback.Level, projection, battle.View, false);
+        Save(preview.Render(960, 720), "coral-wall-preview.png");
+
+        var update = typeof(ProjectionSimulator).GetMethod("UpdateWallProximity", BindingFlags.Instance | BindingFlags.NonPublic);
+        void Approach(double x, double z) =>
+            update.Invoke(projection, new object[] { new[] { new EnemyState(1, x * 2, z * 2, 0, 24, 0) }, 0.25f });
+        Approach(7.06, 2.5);
+        Check(Read(elbow, "_Nearby") == Vector4.zero, "Enemy inside a shared seam lit up that seam.");
+        Approach(5.94, 2.5);
+        Check(Read(elbow, "_Nearby") == new Vector4(1, 0, 0, 0), "A passing enemy did not light only its facing side.");
+        var nearby = capture.CaptureObservationImage(true);
+        Save(light.OutputTexture, "coral-wall-nearby-output.png");
+        Save(top.targetTexture, "coral-wall-nearby-rgb.png");
+        Check(Difference(idle.Rgb, nearby.Rgb) > 10, "Changing the coral proximity did not affect reflected pixels.");
+        update.Invoke(projection, new object[] { Array.Empty<EnemyState>(), 0.25f });
+        Check(Read(elbow, "_Nearby") == Vector4.zero, "Coral tip glow did not fade after the enemy passed.");
+
+        capture.CaptureWithoutProjection = false;
+        monitor.AnalyzeOnce();
+        Check(monitor.LastRawScore.ExactMatches == 100, "Coral wall layout misread with reflected projection and compensation.");
+        capture.CaptureWithoutProjection = true;
+        Check(board.TryAdd(7, 1, "green", out _), "Cannot fill the inside corner of the coral wall.");
+        for (int i = 0; i < 3; i++) monitor.AnalyzeOnce();
+        elbow = WallAt(6, 2);
+        Check(elbow != null && Read(elbow, "_InnerCorners") == Vector4.zero,
+            "Filling the diagonal did not close the inside corner.");
+        Check(south != null && board.TryDelete(south.BrickId), "Cannot remove a wall from the fixture.");
+        for (int i = 0; i < 3; i++) monitor.AnalyzeOnce();
+        elbow = WallAt(6, 2);
+        Check(elbow != null && Read(elbow, "_Exposed") == new Vector4(1, 0, 1, 1) &&
+            Read(elbow, "_InnerCorners") == Vector4.zero, "Wall edge did not refresh after removing its neighbor.");
     }
 }

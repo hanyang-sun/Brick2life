@@ -448,7 +448,16 @@ namespace Brick2Life.Battle
             {
                 Enemy enemy = enemies[i];
                 if (enemy.PendingReroute) pending++;
-                snapshots[i] = new EnemyState(enemy.Id, enemy.X, enemy.Y, enemy.Progress, enemy.Health, enemy.SpawnIndex);
+                double headingX = 0, headingY = 0;
+                for (int waypoint = enemy.WaypointIndex; waypoint < enemy.Route.Length; waypoint++)
+                {
+                    GridPoint target = enemy.Route[waypoint];
+                    headingX = target.X - enemy.X;
+                    headingY = target.Y - enemy.Y;
+                    if (Math.Abs(headingX) + Math.Abs(headingY) > 1e-10) break;
+                }
+                snapshots[i] = new EnemyState(enemy.Id, enemy.X, enemy.Y, enemy.Progress, enemy.Health, enemy.SpawnIndex,
+                    headingX, headingY);
             }
             if (!usingPreviousRoutes && !waitingForLayout)
                 routeWarning = pending == 0 ? "" : "道路已更新，" + pending + " 个敌人正脱离新放置积木，脱离后重新寻路。";

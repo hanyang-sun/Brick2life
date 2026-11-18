@@ -275,7 +275,7 @@ public static class SimulationDualWindowChecks
         yield return null;
         var overlay = controller.GetComponent<SimulationBattleOverlay>();
         Require(overlay != null && overlay.MarksRoot != controller.transform, "Battle projection has no isolated source root.");
-        Require(overlay.ActiveArrowCount == 7, "Flowing route arrows are missing.");
+        Require(overlay.RouteProjectionVisible, "The ocean current route projection is missing.");
         Require(overlay.ActiveRangeRingCount == 1, "There must be exactly one visible range ring per physical tower.");
         Require(overlay.ActiveTowerArrowCount == 4, "There must be four octopus arms per physical tower.");
         Transform rangeRing = overlay.MarksRoot.Find("BattleRange");
@@ -326,8 +326,7 @@ public static class SimulationDualWindowChecks
         using (var preview = new SimulationProjectionPreview(board.Palette))
         {
             preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, controller.View, false);
-            int expected = adapter.Projection.ActiveMarkCount + overlay.ActiveArrowCount +
-                overlay.ActiveRangeRingCount + overlay.ActiveTowerArrowCount + overlay.ActiveEffectCount;
+            int expected = adapter.Projection.ActiveMarkCount + overlay.MarksRoot.GetComponentsInChildren<MeshRenderer>().Length;
             Check(preview.ProjectionCount == expected, "Combined preview omitted or duplicated battle projection meshes.");
             Save(preview.Render(1000, 720), "battle-combined.png");
             preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, controller.View, true);
@@ -404,7 +403,7 @@ public static class SimulationDualWindowChecks
         }
         Require(controller.Restart(), "Could not restart the combined integration battle.");
         yield return null;
-        Check(!board.IsEditingLocked && overlay.ActiveArrowCount == 0 && overlay.ActiveRangeRingCount == 0 &&
+        Check(!board.IsEditingLocked && !overlay.RouteProjectionVisible && overlay.ActiveRangeRingCount == 0 &&
             overlay.ActiveEffectCount == 0, "Retry left a battle lock or old projection effects behind.");
         monitor.Automatic = true;
         Check(!controller.StartBattle() && controller.PendingStart, "Could not queue a second fresh confirmation.");

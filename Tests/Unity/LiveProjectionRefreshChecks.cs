@@ -328,11 +328,15 @@ public static class LiveProjectionRefreshChecks
             }
         Check(centeredRoutes, stage + ": entrance routes run along physical-cell edges.");
         yield return null;
-        var bands = (List<GameObject>)typeof(SimulationBattleOverlay)
-            .GetField("pathBands", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(overlay);
-        Check(bands.Count >= routeSegments.Count && routeSegments.Select((position, i) =>
-            Vector3.Distance(position, bands[i].transform.position) < 0.001f).All(value => value),
-            stage + ": actual projected path bands do not follow the centered enemy routes.");
+        MeshRenderer[] lanes = overlay.MarksRoot.GetComponentsInChildren<MeshRenderer>().Where(r => r.name == "BattlePath").ToArray();
+        Check(lanes.Length == 1 && lanes[0].forceRenderingOff && lanes[0].transform.position.y == 0f,
+            stage + ": route content should use one shared floor projection, including at junctions.");
+        var fieldTexture = lanes.FirstOrDefault()?.sharedMaterial.mainTexture as Texture2D;
+        Check(fieldTexture != null && routeSegments.All(position =>
+        {
+            Color sample = fieldTexture.GetPixelBilinear(position.x / 10f, position.z / 10f);
+            return sample.a > 0.9f && sample.b < 0.5f;
+        }), stage + ": the current field does not follow the centered enemy routes.");
         foreach (string name in new[] { "BattleRange", "OctopusFace" })
         {
             MeshRenderer[] renderers = overlay.MarksRoot.GetComponentsInChildren<MeshRenderer>().Where(r => r.name == name).ToArray();

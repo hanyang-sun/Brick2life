@@ -235,7 +235,7 @@ public static class GeneratedDefenseRoundChecks
             Check(battle.ActiveRoutes[i].Spawn.Equals(new GridPoint(round.Spawns[i].X * 2 + 1, round.Spawns[i].Y * 2 + 1)),
                 "Retained route was assigned to a different entrance.");
         var overlay = controller.GetComponent<SimulationBattleOverlay>();
-        Check(overlay != null && overlay.ActiveArrowCount > 0, "Blocked-layout fallback hid the usable old route arrows.");
+        Check(overlay != null && overlay.RouteProjectionVisible, "Blocked-layout fallback hid the usable old route projection.");
         using (var preview = new SimulationProjectionPreview(board.Palette))
         {
             preview.UpdateScene(adapter.Feedback.Level, adapter.Projection, controller.View, false);
@@ -336,15 +336,15 @@ public static class GeneratedDefenseRoundChecks
         Require(board.TryAdd(occupiedCell.X, occupiedCell.Y, "green", out _), "Could not place a wall under the live enemy.");
         ConfirmRgb(monitor);
         yield return null;
-        Require(controller.Level.IsValid && controller.State.UsingPreviousRoutes,
-            "Transient overlap did not retain old routes on an otherwise routable map.");
+        Require(controller.Level.IsValid && !controller.State.UsingPreviousRoutes && controller.State.PendingEnemyReroutes == 1,
+            "Transient overlap should preserve the covered enemy's route without reverting the entrance routes.");
         LevelState sameObservation = adapter.Feedback.Level;
         BattleSimulation overlapBattle = controller.Battle;
         controller.StepManual(2.25f);
         yield return null;
         Check(ReferenceEquals(sameObservation, adapter.Feedback.Level) && ReferenceEquals(overlapBattle, controller.Battle),
             "Transient-overlap recovery replaced the confirmed layout or battle.");
-        Check(!controller.State.UsingPreviousRoutes && !controller.State.WaitingForLayout &&
+        Check(controller.State.PendingEnemyReroutes == 0 && !controller.State.UsingPreviousRoutes && !controller.State.WaitingForLayout &&
             string.IsNullOrEmpty(controller.State.RouteWarning),
             "Enemy left the obstacle, but unchanged confirmed layout never retried current routes.");
         Check(controller.State.Enemies.Single().Id == overlapped.Id &&

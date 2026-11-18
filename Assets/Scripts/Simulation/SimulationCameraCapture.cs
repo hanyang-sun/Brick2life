@@ -30,6 +30,7 @@ namespace Brick2Life.Simulation
         private bool originalHdr;
         private float lockedExposure = 1;
         public string LastSavedPath { get; private set; }
+        public RenderTexture OutputTexture => sourceCamera != null ? sourceCamera.targetTexture : null;
         // True selects pause recognition. The monitor owns the pause-wide suppression scope.
         public bool CaptureWithoutProjection { get => captureWithoutProjection; set => captureWithoutProjection = value; }
 

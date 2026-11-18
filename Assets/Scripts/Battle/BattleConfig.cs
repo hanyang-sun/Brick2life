@@ -55,9 +55,14 @@ namespace Brick2Life.Battle
         public double RouteProgress { get; }
         public int Health { get; }
         public int SpawnIndex { get; }
-        public EnemyState(int id, double x, double y, double progress, int health, int spawnIndex)
+        // Unnormalized direction to the next distinct waypoint on this enemy's route.
+        public double HeadingX { get; }
+        public double HeadingY { get; }
+        public EnemyState(int id, double x, double y, double progress, int health, int spawnIndex,
+            double headingX = 0, double headingY = 0)
         {
             Id = id; X = x; Y = y; RouteProgress = progress; Health = health; SpawnIndex = spawnIndex;
+            HeadingX = headingX; HeadingY = headingY;
         }
     }
 
