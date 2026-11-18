@@ -9,8 +9,8 @@ using UnityEngine.Rendering;
 namespace Brick2Life.Feedback
 {
     /// <summary>
-    /// Battle projection overlay: flowing route arrows, octopus towers, bubble attacks,
-    /// core shock rings and wall ripples. These renderers generate the projector's output image;
+    /// Battle projection overlay: ocean currents, octopus towers, bubble attacks,
+    /// and core shock rings. These renderers generate the projector's output image;
     /// observing cameras receive its light on the board and bricks instead of seeing source quads.
     /// </summary>
     [DisallowMultipleComponent]
@@ -21,9 +21,6 @@ namespace Brick2Life.Feedback
         [SerializeField] private Transform root;
         [SerializeField] private string projectionLayerName = "Brick2LifeProjection";
         [SerializeField, Range(0, 31)] private int fallbackLayer = 31;
-        [SerializeField, Min(1)] private int arrowsPerRoute = 7;
-        [SerializeField, Min(0.05f)] private float arrowSize = 0.34f;
-        [SerializeField, Min(0.1f)] private float arrowSpeed = 1.6f;
         [SerializeField, Min(0.1f)] private float rippleSeconds = 0.5f;
 
         private sealed class Fx
@@ -38,7 +35,6 @@ namespace Brick2Life.Feedback
         }
 
         private readonly List<Fx> effects = new List<Fx>();
-        private readonly List<GameObject> arrows = new List<GameObject>();
         private readonly List<GameObject> rangeRings = new List<GameObject>();
         private readonly List<GameObject> towerArrows = new List<GameObject>();
         private readonly List<Vector2> towerAim = new List<Vector2>();
@@ -53,19 +49,24 @@ namespace Brick2Life.Feedback
         private readonly List<GameObject> enemyIcons = new List<GameObject>();
         private readonly List<GameObject> enemyBars = new List<GameObject>();
         private readonly List<GameObject> enemyFills = new List<GameObject>();
-        private readonly List<TextMesh> enemyIds = new List<TextMesh>();
+        private const float EnemySize = 0.58f;
+        private const float EnemyHitDuration = 0.25f;
+        private const float EnemyHealthDuration = 0.75f;
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int HitId = Shader.PropertyToID("_Hit");
+        private static readonly int SwimPhaseId = Shader.PropertyToID("_SwimPhase");
+        private MaterialPropertyBlock properties;
         private readonly List<GameObject> spawnMarkers = new List<GameObject>();
-        private readonly List<GameObject> pathBands = new List<GameObject>();
-        private Material arrowMaterial, ringMaterial, enemyMaterial, barMaterial, pathMaterial, rangeMaterial;
-        private Font labelFont;
+        private GameObject currentLane;
+        private IReadOnlyList<BattleRoute> currentRoutes;
+        private Material ringMaterial, enemyMaterial, enemyBurstMaterial, barMaterial, pathMaterial, rangeMaterial;
         public int ActiveEnemyCount { get { int c = 0; foreach (GameObject e in enemyIcons) if (e != null && e.activeSelf) c++; return c; } }
         public int SpawnMarkerCount => spawnMarkers.Count;
         public int RouteCount => controller != null && controller.DisplayRoutes != null ? controller.DisplayRoutes.Count : 0;
-        public int ActiveArrowCount { get { int c = 0; foreach (GameObject a in arrows) if (a != null && a.activeSelf) c++; return c; } }
+        public bool RouteProjectionVisible => captureVisible && currentLane != null && currentLane.activeInHierarchy;
         public int ActiveRangeRingCount { get { int c = 0; foreach (GameObject r in rangeRings) if (r != null && r.activeSelf) c++; return c; } }
         public int ActiveTowerArrowCount { get { int c = 0; foreach (GameObject a in towerArrows) if (a != null && a.activeSelf) c++; return c; } }
         public int ActiveEffectCount => effects.Count;
-        public int PathSegmentCount { get { int c = 0; foreach (GameObject b in pathBands) if (b != null && b.activeSelf) c++; return c; } }
         private int projectionLayer;
         private int lastCoreHealth = -1;
 
@@ -90,9 +91,9 @@ namespace Brick2Life.Feedback
         private void OnDisable()
         {
             ProjectionCaptureGate.Unregister(this);
-            HideAll();
+            if (currentLane != null) currentLane.SetActive(false);
+            HideBattleEffects();
         }
-        private readonly List<float> wallCooldown = new List<float>();
 
         private void Awake()
         {
@@ -105,19 +106,19 @@ namespace Brick2Life.Feedback
             }
             projectionLayer = LayerMask.NameToLayer(projectionLayerName);
             if (projectionLayer < 0) projectionLayer = fallbackLayer;
+            properties = new MaterialPropertyBlock();
             BuildMaterials();
         }
 
         private void OnDestroy()
         {
             foreach (Fx fx in effects) if (fx.Quad != null) Destroy(fx.Quad);
-            foreach (GameObject arrow in arrows) if (arrow != null) Destroy(arrow);
+            if (currentLane != null) Destroy(currentLane);
             foreach (GameObject ring in rangeRings) if (ring != null) Destroy(ring);
-            foreach (GameObject band in pathBands) if (band != null) Destroy(band);
             foreach (GameObject arrow in towerArrows) if (arrow != null) Destroy(arrow);
             foreach (GameObject icon in enemyIcons) if (icon != null) Destroy(icon);
             foreach (GameObject bar in enemyBars) if (bar != null) Destroy(bar);
-            foreach (TextMesh id in enemyIds) if (id != null) Destroy(id.gameObject);
+            foreach (GameObject fill in enemyFills) if (fill != null) Destroy(fill);
             foreach (GameObject marker in spawnMarkers) if (marker != null) Destroy(marker);
             foreach (GameObject bubble in bubbles) Destroy(bubble);
             foreach (GameObject face in faces) Destroy(face);
@@ -126,7 +127,9 @@ namespace Brick2Life.Feedback
                 Destroy(face.mainTexture);
                 Destroy(face);
             }
-            foreach (Material material in new[] { arrowMaterial, ringMaterial, enemyMaterial, barMaterial, pathMaterial, rangeMaterial, armMaterial, bubbleMaterial })
+            if (enemyMaterial != null) Destroy(enemyMaterial);
+            if (enemyBurstMaterial != null) Destroy(enemyBurstMaterial);
+            foreach (Material material in new[] { ringMaterial, barMaterial, pathMaterial, rangeMaterial, armMaterial, bubbleMaterial })
                 if (material != null)
                 {
                     if (material.mainTexture != null && material.mainTexture != Texture2D.whiteTexture && material.mainTexture != Texture2D.blackTexture)
@@ -137,11 +140,10 @@ namespace Brick2Life.Feedback
 
         private void SynchronizeLevel()
         {
-            if (controller != null && lastLevel != controller.Level)
+            if (controller != null && (lastLevel != controller.Level || !ReferenceEquals(lastBattle, controller.Battle)))
             {
                 foreach (Fx fx in effects) if (fx.Quad != null) Destroy(fx.Quad);
                 effects.Clear();
-                wallCooldown.Clear();
                 towerIds.Clear();
                 celebrations.Clear();
                 hitTimes.Clear();
@@ -150,9 +152,9 @@ namespace Brick2Life.Feedback
                 {
                     lastCoreHealth = -1;
                     projector?.ResetCoreHit();
+                    lastShotSequence = -1;
                 }
                 lastBattle = controller.Battle;
-                lastShotSequence = -1;
                 animationTime = 0;
             }
         }
@@ -161,9 +163,9 @@ namespace Brick2Life.Feedback
         public void RefreshLayout()
         {
             SynchronizeLevel();
-            if (controller == null || controller.State == null || controller.State.WaitingForLayout ||
-                (projector != null && !projector.IsVisible)) { HideAll(); return; }
             SyncRoutes();
+            if (controller == null || controller.State == null || controller.State.WaitingForLayout ||
+                (projector != null && !projector.IsVisible)) { HideBattleEffects(); return; }
             SyncRangeRings(controller.State);
             SyncBubbles();
             SyncTowerArrows(controller.State);
@@ -173,10 +175,15 @@ namespace Brick2Life.Feedback
         private void Update()
         {
             SynchronizeLevel();
-            if (controller == null || controller.State == null || controller.State.WaitingForLayout) { HideAll(); return; }
-            bool visible = projector == null || projector.IsVisible;
-            if (!visible) { HideAll(); return; }
-            BattleState state = controller.State;
+            BattleState state = controller != null ? controller.State : null;
+            if (state == null || !state.Paused)
+                projector?.UpdateWallProximity(state != null && !state.Finished ? state.Enemies : null, Time.deltaTime);
+            if (state == null || state.WaitingForLayout || (projector != null && !projector.IsVisible))
+            {
+                SyncRoutes();
+                HideBattleEffects();
+                return;
+            }
             if (!state.Paused) animationTime += Time.deltaTime;
             HandleShots();
             SyncRoutes();
@@ -185,55 +192,53 @@ namespace Brick2Life.Feedback
             SyncTowerArrows(state);
             SyncEnemies(state);
             HandleCore(state);
-            if (!state.Paused && !state.Finished) HandleWallRipples(state);
             UpdateEffects();
         }
 
-        private void HideAll()
+        private void HideBattleEffects()
         {
-            foreach (GameObject arrow in arrows) if (arrow != null) arrow.SetActive(false);
             foreach (GameObject ring in rangeRings) if (ring != null) ring.SetActive(false);
-            foreach (GameObject band in pathBands) if (band != null) band.SetActive(false);
             foreach (GameObject arrow in towerArrows) if (arrow != null) arrow.SetActive(false);
             foreach (GameObject bubble in bubbles) bubble.SetActive(false);
             foreach (GameObject face in faces) face.SetActive(false);
+            foreach (GameObject icon in enemyIcons) icon.SetActive(false);
+            foreach (GameObject bar in enemyBars) bar.SetActive(false);
+            foreach (GameObject fill in enemyFills) fill.SetActive(false);
             foreach (Fx fx in effects) if (fx.Quad != null) fx.Quad.SetActive(false);
         }
 
-        // ---- arrows -------------------------------------------------------------------------
+        // ---- ocean current ------------------------------------------------------------------
         private void SyncRoutes()
         {
-            IReadOnlyList<BattleRoute> activeRoutes = controller.DisplayRoutes;
-            int routes = activeRoutes != null ? activeRoutes.Count : 0;
-            SyncPathBands(activeRoutes);
-            int wanted = routes * arrowsPerRoute;
-            while (arrows.Count < wanted) arrows.Add(CreateQuad("BattleArrow", arrowMaterial, arrowSize));
-            for (int i = 0; i < arrows.Count; i++) arrows[i].SetActive(i < wanted);
-            if (routes == 0) return;
-            float t = animationTime * arrowSpeed;
-            for (int r = 0; r < routes; r++)
+            BattleState state = controller != null ? controller.State : null;
+            IReadOnlyList<BattleRoute> routes = controller != null ? controller.DisplayRoutes : null;
+            if (!isActiveAndEnabled || pathMaterial == null || routes == null || routes.Count == 0 || controller.Level == null ||
+                state?.WaitingForLayout == true || (state == null && !controller.GeneratedObjectives) ||
+                (projector != null && !projector.IsVisible))
             {
-                IReadOnlyList<GridPoint> route = activeRoutes[r].Route;
-                for (int a = 0; a < arrowsPerRoute; a++)
-                {
-                    float progress = Mathf.Repeat(t / Mathf.Max(1, route.Count) + a / (float)arrowsPerRoute, 1f);
-                    Sample(route, progress, out Vector3 position, out Vector3 direction);
-                    GameObject arrow = arrows[r * arrowsPerRoute + a];
-                    arrow.transform.position = position;
-                    if (direction.sqrMagnitude > 1e-4f)
-                        arrow.transform.rotation = Quaternion.Euler(90f, -Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg, 0f);
-                }
+                if (currentLane != null) currentLane.SetActive(false);
+                return;
             }
-        }
-
-        private static void Sample(IReadOnlyList<GridPoint> route, float progress, out Vector3 position, out Vector3 direction)
-        {
-            float scaled = Mathf.Clamp01(progress) * (route.Count - 1);
-            int index = Mathf.Min((int)scaled, route.Count - 2);
-            float fraction = scaled - index;
-            Vector3 from = World(route[index]), to = World(route[index + 1]);
-            position = Vector3.Lerp(from, to, fraction);
-            direction = to - from;
+            if (currentLane == null)
+            {
+                pathMaterial.mainTexture = new Texture2D(OceanCurrentMap.Resolution, OceanCurrentMap.Resolution,
+                    TextureFormat.RGBAFloat, false, true)
+                {
+                    name = "Ocean Current Field", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
+                };
+                currentLane = CreateQuad("BattlePath", pathMaterial, 1f);
+            }
+            if (!ReferenceEquals(currentRoutes, routes))
+            {
+                Vector2 size = new Vector2(controller.Level.Width, controller.Level.Height) / BattleLevel.NavigationPerPhysical;
+                currentLane.transform.position = new Vector3(size.x * 0.5f, 0f, size.y * 0.5f);
+                currentLane.transform.localScale = new Vector3(size.x, size.y, 1f);
+                OceanCurrentMap.Bake((Texture2D)pathMaterial.mainTexture, size, routes);
+                currentRoutes = routes;
+            }
+            currentLane.SetActive(true);
+            pathMaterial.SetFloat("_FlowTime", animationTime);
+            pathMaterial.SetFloat("_RouteOpacity", state == null ? 0.65f : 1f);
         }
 
         private static Vector3 World(GridPoint cell) => World(cell, 0f);
@@ -269,33 +274,6 @@ namespace Brick2Life.Feedback
                 SetColor(ring, invaded ? new Color(0.56f, 1f, 0.93f, 0.95f) : new Color(0.35f, 0.85f, 1f, 0.60f));
             }
             for (int i = towers; i < rangeRings.Count; i++) rangeRings[i].SetActive(false);
-        }
-
-        // Soft flowing band under each route; UV offset animates the flow without moving geometry.
-        private void SyncPathBands(IReadOnlyList<BattleRoute> routes)
-        {
-            int segments = 0;
-            if (routes != null)
-                foreach (BattleRoute route in routes) segments += Mathf.Max(0, route.Route.Count - 1);
-            while (pathBands.Count < segments) pathBands.Add(CreateQuad("BattlePath", pathMaterial, 1f));
-            int used = 0;
-            if (routes != null)
-                foreach (BattleRoute route in routes)
-                    for (int i = 0; i < route.Route.Count - 1; i++)
-                    {
-                        Vector3 from = World(route.Route[i]), to = World(route.Route[i + 1]);
-                        Vector3 direction = to - from;
-                        float length = direction.magnitude;
-                        if (length < 0.01f) continue;
-                        GameObject band = pathBands[used++];
-                        band.SetActive(true);
-                        band.transform.position = (from + to) * 0.5f;
-                        band.transform.rotation = Quaternion.Euler(90f, -Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg, 0f);
-                        band.transform.localScale = new Vector3(length, 0.3f, 1f);
-                        SetColor(band, new Color(0.35f, 0.85f, 1f, 0.28f));
-                    }
-            for (int i = used; i < pathBands.Count; i++) pathBands[i].SetActive(false);
-            if (pathMaterial != null) pathMaterial.mainTextureOffset = new Vector2(0f, -animationTime * 0.8f);
         }
 
         private static Vector3 World(GridPoint cell, float height) => WorldAt(cell.X, cell.Y, height);
@@ -403,10 +381,10 @@ namespace Brick2Life.Feedback
             }
         }
 
-        // ---- enemies (projected decals with health bar and id) -----------------------------
+        // ---- enemies ------------------------------------------------------------------------
         private void SyncEnemies(BattleState state)
         {
-            if (state == null) return;
+            if (state == null || enemyMaterial == null) return;
             int count = state.Enemies.Count;
             EnsureEnemyPool(count);
             int maxHealth = controller != null && controller.Battle != null ? controller.Battle.Plan.EnemyHealth : 1;
@@ -414,36 +392,45 @@ namespace Brick2Life.Feedback
             {
                 bool active = i < count;
                 enemyIcons[i].SetActive(active);
-                enemyBars[i].SetActive(active);
-                enemyFills[i].SetActive(active);
-                enemyIds[i].gameObject.SetActive(active);
-                if (!active) continue;
+                if (!active)
+                {
+                    enemyBars[i].SetActive(false);
+                    enemyFills[i].SetActive(false);
+                    continue;
+                }
                 EnemyState enemy = state.Enemies[i];
                 Vector3 position = WorldAt(enemy.X, enemy.Y);
-                float x = position.x, z = position.z;
-                float surface = SurfaceHeight(x, z);
-                float hop = 0f;
+                position.y = SurfaceHeight(position.x, position.z);
+                float yaw = Mathf.Atan2((float)enemy.HeadingX, (float)enemy.HeadingY) * Mathf.Rad2Deg;
+                Quaternion facing = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(90f, 0f, 0f);
+                enemyIcons[i].transform.SetPositionAndRotation(position, facing);
+
+                float hitAge = EnemyHealthDuration;
                 if (hitTimes.TryGetValue(enemy.Id, out float hitTime))
                 {
-                    float age = (animationTime - hitTime) / 0.25f;
-                    if (age >= 1f) hitTimes.Remove(enemy.Id);
-                    else hop = Mathf.Sin(age * Mathf.PI);
+                    hitAge = animationTime - hitTime;
+                    if (hitAge >= EnemyHealthDuration) hitTimes.Remove(enemy.Id);
                 }
-                enemyIcons[i].transform.position = new Vector3(x, surface, z + hop * 0.10f);
-                enemyIcons[i].transform.localScale = new Vector3(0.34f + hop * 0.05f, 0.34f + hop * 0.10f, 1f);
-                SetColor(enemyIcons[i], new Color(1f, 0.35f, 0.3f, 0.95f));
+                properties.Clear();
+                properties.SetFloat(HitId, 1f - Mathf.SmoothStep(0f, 1f, hitAge / EnemyHitDuration));
+                properties.SetFloat(SwimPhaseId, Mathf.Sin((float)enemy.RouteProgress * 6f + enemy.Id * 1.73f));
+                enemyIcons[i].GetComponent<Renderer>().SetPropertyBlock(properties);
+
                 float ratio = Mathf.Clamp01(enemy.Health / (float)Mathf.Max(1, maxHealth));
-                enemyBars[i].transform.position = new Vector3(x, surface, z - 0.24f);
-                enemyBars[i].transform.localScale = new Vector3(0.62f, 0.08f, 1f);
-                SetColor(enemyBars[i], new Color(0.05f, 0.05f, 0.07f, 0.85f));
-                float width = 0.58f * ratio;
-                enemyFills[i].transform.position = new Vector3(x - 0.29f + width * 0.5f, surface, z - 0.24f);
+                bool showHealth = ratio < 1f && hitAge < EnemyHealthDuration;
+                enemyBars[i].SetActive(showHealth);
+                enemyFills[i].SetActive(showHealth);
+                if (!showHealth) continue;
+                float opacity = 1f - Mathf.InverseLerp(0.50f, EnemyHealthDuration, hitAge);
+                const float fillWidth = 0.36f;
+                Vector3 barPosition = position + new Vector3(0f, 0f, -0.34f);
+                enemyBars[i].transform.position = barPosition;
+                SetColor(enemyBars[i], new Color(0.05f, 0.05f, 0.07f, 0.85f * opacity));
+                float width = fillWidth * ratio;
+                enemyFills[i].transform.position = barPosition + new Vector3((width - fillWidth) * 0.5f, 0f, 0f);
                 enemyFills[i].transform.localScale = new Vector3(Mathf.Max(0.001f, width), 0.05f, 1f);
-                SetColor(enemyFills[i], Color.Lerp(new Color(1f, 0.25f, 0.2f, 0.95f), new Color(0.4f, 1f, 0.5f, 0.95f), ratio));
-                TextMesh id = enemyIds[i];
-                id.text = enemy.Id.ToString();
-                id.transform.position = new Vector3(x + 0.22f, surface, z + 0.2f);
-                id.color = new Color(1f, 0.9f, 0.75f, 0.95f);
+                SetColor(enemyFills[i], Color.Lerp(new Color(1f, 0.25f, 0.2f, opacity),
+                    new Color(1f, 0.89f, 0.55f, opacity), ratio));
             }
         }
 
@@ -468,23 +455,11 @@ namespace Brick2Life.Feedback
         {
             while (enemyIcons.Count < count)
             {
-                enemyIcons.Add(CreateQuad("BattleEnemy", enemyMaterial, 0.34f));
-                enemyBars.Add(CreateQuad("BattleEnemyBar", barMaterial, 0.62f));
+                enemyIcons.Add(CreateQuad("BattleEnemy", enemyMaterial, EnemySize));
+                GameObject bar = CreateQuad("BattleEnemyBar", barMaterial, 0.40f);
+                bar.transform.localScale = new Vector3(0.40f, 0.08f, 1f);
+                enemyBars.Add(bar);
                 enemyFills.Add(CreateQuad("BattleEnemyFill", barMaterial, 0.3f));
-                var labelObject = new GameObject("BattleEnemyId");
-                labelObject.layer = projectionLayer;
-                labelObject.transform.SetParent(root, false);
-                labelObject.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-                var label = labelObject.AddComponent<TextMesh>();
-                labelObject.GetComponent<Renderer>().forceRenderingOff = true;
-                labelObject.GetComponent<Renderer>().sortingOrder = 9;
-                label.font = labelFont != null ? labelFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                label.fontSize = 64;
-                label.characterSize = 0.06f;
-                label.anchor = TextAnchor.MiddleCenter;
-                label.alignment = TextAlignment.Center;
-                label.color = Color.white;
-                enemyIds.Add(label);
             }
         }
 
@@ -525,6 +500,11 @@ namespace Brick2Life.Feedback
                 else hitTimes.Remove(shot.EnemyId);
                 Vector3 position = WorldAt(shot.TargetX, shot.TargetY);
                 position.y = SurfaceHeight(position.x, position.z);
+                if (shot.Killed && enemyBurstMaterial != null)
+                {
+                    SpawnEffect(position, EnemySize, 0.95f, Color.white, 0.34f, enemyBurstMaterial);
+                    continue;
+                }
                 for (int i = 0; i < 4; i++)
                 {
                     float angle = (i + 0.5f) * Mathf.PI * 0.5f;
@@ -551,38 +531,14 @@ namespace Brick2Life.Feedback
                 if (!level.Cells[i].IsCoreCenter) continue;
                 float height = controller.Round != null ? 0f : 1f;
                 SpawnEffect(World(level.Cells[i].Position, height),
-                    0.6f, 3.2f, new Color(1f, 0.3f, 0.35f, 0.95f), rippleSeconds * 1.4f);
+                    0.6f, 3.2f, new Color(1f, 0.3f, 0.35f, 0.95f), rippleSeconds * 1.4f, ringMaterial);
                 break;
             }
         }
 
-        // A wall ripple appears where an enemy is passing next to a wall, with a per-cell cooldown.
-        private void HandleWallRipples(BattleState state)
+        private void SpawnEffect(Vector3 position, float startScale, float endScale, Color color, float life, Material material)
         {
-            BattleLevel level = controller.Level;
-            if (level == null) return;
-            while (wallCooldown.Count < level.Cells.Count) wallCooldown.Add(0f);
-            for (int i = 0; i < wallCooldown.Count; i++) wallCooldown[i] = Mathf.Max(0f, wallCooldown[i] - Time.deltaTime);
-            foreach (EnemyState enemy in state.Enemies)
-            {
-                float wx = (float)enemy.X * 0.5f, wz = (float)enemy.Y * 0.5f;
-                for (int i = 0; i < level.Cells.Count; i++)
-                {
-                    if (level.Cells[i].Role != Application.GameRole.Wall) continue;
-                    BattleCell cell = level.Cells[i];
-                    float cx = cell.Position.X * 0.5f + 0.25f, cz = cell.Position.Y * 0.5f + 0.25f;
-                    if (Mathf.Abs(cx - wx) > 0.8f || Mathf.Abs(cz - wz) > 0.8f) continue;
-                    if (wallCooldown[i] > 0f) continue;
-                    wallCooldown[i] = 0.7f;
-                    SpawnEffect(new Vector3(cx, 1f, cz), 0.4f, 1.4f, new Color(0.75f, 0.9f, 1f, 0.7f), rippleSeconds);
-                    break;
-                }
-            }
-        }
-
-        private void SpawnEffect(Vector3 position, float startScale, float endScale, Color color, float life)
-        {
-            GameObject quad = CreateQuad("BattleFx", ringMaterial, 1f);
+            GameObject quad = CreateQuad("BattleFx", material, 1f);
             quad.SetActive(true);
             quad.transform.position = position;
             var fx = new Fx { Quad = quad, Age = 0f, Life = life, StartScale = startScale, EndScale = endScale, Color = color };
@@ -626,9 +582,9 @@ namespace Brick2Life.Feedback
         {
             var renderer = quad.GetComponent<Renderer>();
             if (renderer == null) return;
-            var block = new MaterialPropertyBlock();
-            block.SetColor(Shader.PropertyToID("_Color"), color);
-            renderer.SetPropertyBlock(block);
+            properties.Clear();
+            properties.SetColor(ColorId, color);
+            renderer.SetPropertyBlock(properties);
         }
 
         private GameObject CreateQuad(string name, Material material, float size)
@@ -648,7 +604,6 @@ namespace Brick2Life.Feedback
                 case "BattleEntranceMarker": renderer.sortingOrder = 2; break;
                 case "OctopusArm": renderer.sortingOrder = 3; break;
                 case "OctopusFace": renderer.sortingOrder = 4; break;
-                case "BattleArrow": renderer.sortingOrder = 5; break;
                 case "BattleEnemy": renderer.sortingOrder = 6; break;
                 case "BattleEnemyBar": renderer.sortingOrder = 7; break;
                 case "BattleEnemyFill": renderer.sortingOrder = 8; break;
@@ -667,55 +622,24 @@ namespace Brick2Life.Feedback
         {
             Shader shader = Shader.Find("Sprites/Default");
             if (shader == null) return;
-            arrowMaterial = new Material(shader) { name = "BattleArrow", mainTexture = MakeArrowTexture(64) };
             ringMaterial = new Material(shader) { name = "BattleRing", mainTexture = MakeRingTexture(64) };
-            enemyMaterial = new Material(shader) { name = "BattleEnemyIcon", mainTexture = MakeEnemyTexture(64) };
+            Shader fishShader = Resources.Load<Shader>("ProjectedLight/Pufferfish");
+            if (fishShader != null)
+            {
+                enemyMaterial = new Material(fishShader) { name = "Pufferfish" };
+                enemyBurstMaterial = new Material(fishShader) { name = "PufferfishBurst" };
+                enemyBurstMaterial.SetFloat("_Burst", 1f);
+            }
+            else Debug.LogError("缺少河豚敌人投影材质。", this);
             barMaterial = new Material(shader) { name = "BattleBar", mainTexture = Texture2D.whiteTexture };
-            pathMaterial = new Material(shader) { name = "BattlePathBand", mainTexture = MakePathTexture(64) };
-            if (pathMaterial.mainTexture != null) pathMaterial.mainTexture.wrapMode = TextureWrapMode.Repeat;
+            Shader currentShader = Resources.Load<Shader>("ProjectedLight/OceanCurrent");
+            if (currentShader != null) pathMaterial = new Material(currentShader) { name = "OceanCurrentLane" };
             rangeMaterial = new Material(shader) { name = "BattleRangeGlow", mainTexture = MakeRangeTexture(128) };
             armMaterial = new Material(shader) { name = "OctopusArm", mainTexture = MakeArmTexture() };
             bubbleMaterial = new Material(shader) { name = "OctopusBubble", mainTexture = MakeBubbleTexture() };
             faceMaterials = new Material[17];
             for (int i = 0; i < faceMaterials.Length; i++)
                 faceMaterials[i] = new Material(shader) { name = "OctopusFace" + i, mainTexture = MakeFaceTexture(i) };
-            labelFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        }
-
-        // Triangle pointing along +X so the quad rotation can aim it down the route.
-        private static Texture2D MakeArrowTexture(int size)
-        {
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
-            var pixels = new Color32[size * size];
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float u = x / (float)(size - 1), v = y / (float)(size - 1);
-                    float alpha = 0f;
-                    if (u > 0.15f && u < 0.95f && Mathf.Abs(v - 0.5f) < (0.95f - u) * 0.5f) alpha = 1f;
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(alpha * 255f));
-                }
-            texture.SetPixels32(pixels); texture.Apply(false, false);
-            return texture;
-        }
-
-        // Soft band: bright centre, transparent edges, repeated along the route for the flow offset.
-        private static Texture2D MakePathTexture(int size)
-        {
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Bilinear };
-            var pixels = new Color32[size * size];
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float v = y / (float)(size - 1);
-                    float edge = Mathf.SmoothStep(0f, 0.5f, Mathf.Min(v, 1f - v));
-                    float u = x / (float)(size - 1);
-                    float pulse = 0.75f + 0.25f * Mathf.Sin(u * Mathf.PI * 2f);
-                    byte a = (byte)(Mathf.Clamp01(edge * pulse) * 255f);
-                    pixels[y * size + x] = new Color32(255, 255, 255, a);
-                }
-            texture.SetPixels32(pixels); texture.Apply(false, false);
-            return texture;
         }
 
         private static Texture2D PaintTexture(int size, Func<Vector2, Color> paint)
@@ -812,27 +736,6 @@ namespace Brick2Life.Feedback
                 if (x > 0.88f || Mathf.Abs(y) > 0.88f) return new Color32(173, 81, 45, 255);
                 return new Color32(233, 130, 62, 255);
             });
-        }
-
-        // Diamond with a bright core reads clearly as a projected enemy marker from above.
-        private static Texture2D MakeEnemyTexture(int size)
-        {
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
-            var pixels = new Color32[size * size];
-            float center = (size - 1) * 0.5f;
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float dx = Mathf.Abs((x - center) / center), dy = Mathf.Abs((y - center) / center);
-                    float diamond = dx + dy;
-                    float alpha = 0f;
-                    if (diamond < 0.9f) alpha = 0.25f;
-                    if (diamond > 0.72f && diamond < 0.9f) alpha = 0.95f;
-                    if (diamond < 0.28f) alpha = 1f;
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(alpha) * 255f));
-                }
-            texture.SetPixels32(pixels); texture.Apply(false, false);
-            return texture;
         }
 
         private static Texture2D MakeRingTexture(int size)

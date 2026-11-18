@@ -10,7 +10,14 @@ namespace Brick2Life.Application
     public enum ProjectionMarkKind { GridPoint = 0, RoleHighlight = 1, ChangeHighlight = 2 }
     public enum ProjectionChange { Added = 0, Removed = 1, Recolored = 2 }
     // Outlines mark secondary information without hiding the fill underneath.
-    public enum ProjectionShape { Fill = 0, Ring = 1 }
+    public enum ProjectionShape { Fill = 0, Ring = 1, Whirlpool = 2 }
+
+    [Flags]
+    public enum WallConnections
+    {
+        None = 0, West = 1, East = 2, South = 4, North = 8,
+        SouthWest = 16, SouthEast = 32, NorthWest = 64, NorthEast = 128
+    }
 
     public readonly struct ProjectionColor
     {
@@ -42,16 +49,20 @@ namespace Brick2Life.Application
         public GameRole Role { get; }
         public ProjectionChange? Change { get; }
         public ProjectionShape Shape { get; }
+        public WallConnections WallNeighbors { get; }
+        public bool ShowWallCrest { get; }
         public ProjectionColor Color { get; }
         public float CenterX => X + SizeX * 0.5f;
         public float CenterY => Y + SizeY * 0.5f;
 
         internal ProjectionMark(float x, float y, float sizeX, float sizeY, ProjectionMarkKind kind,
             ProjectionSurface surface, GameRole role, ProjectionChange? change, ProjectionColor color,
-            ProjectionShape shape = ProjectionShape.Fill)
+            ProjectionShape shape = ProjectionShape.Fill, WallConnections wallNeighbors = WallConnections.None,
+            bool showWallCrest = false)
         {
             X = x; Y = y; SizeX = sizeX; SizeY = sizeY; Kind = kind; Surface = surface;
-            Role = role; Change = change; Color = color; Shape = shape;
+            Role = role; Change = change; Color = color; Shape = shape; WallNeighbors = wallNeighbors;
+            ShowWallCrest = showWallCrest;
         }
         public override string ToString() =>
             $"{Kind}@({X:0.00},{Y:0.00}) size {SizeX:0.00}x{SizeY:0.00} {Surface} {Role} {Change} {Color}";
@@ -164,18 +175,23 @@ namespace Brick2Life.Application
                         LevelCell cell = level.At(x, y);
                         if ((!cell.Occupied && cell.Role != GameRole.Core) || cell.Role == GameRole.None) continue;
                         if (cell.Role == GameRole.Tower && !settings.IncludeTowerHighlights) continue;
-                        Add(new ProjectionMark(Center(x, settings.HighlightSize), Center(y, settings.HighlightSize),
-                            settings.HighlightSize, settings.HighlightSize, ProjectionMarkKind.RoleHighlight,
+                        // The wall border must reach the neighboring tile while staying on the brick top.
+                        bool wall = cell.Role == GameRole.Wall;
+                        float size = wall ? 0.99f : settings.HighlightSize;
+                        WallConnections neighbors = wall ? WallNeighborsAt(level, x, y) : WallConnections.None;
+                        Add(new ProjectionMark(Center(x, size), Center(y, size),
+                            size, size, ProjectionMarkKind.RoleHighlight,
                             cell.Occupied ? ProjectionSurface.BrickTop : ProjectionSurface.Table, cell.Role, null,
                             ColorOf(cell.Role).WithAlpha(!cell.Occupied && cell.Role == GameRole.Core
-                                ? 0.75f : settings.HighlightAlpha)));
+                                ? 0.75f : settings.HighlightAlpha),
+                            wallNeighbors: neighbors, showWallCrest: wall && HasWallCrest(level, x, y, neighbors)));
                     }
 
             if (level.Round != null)
                 foreach (GridPoint spawn in level.Round.Spawns)
                     Add(new ProjectionMark(Center(spawn.X, settings.HighlightSize), Center(spawn.Y, settings.HighlightSize),
                         settings.HighlightSize, settings.HighlightSize, ProjectionMarkKind.RoleHighlight,
-                        ProjectionSurface.Table, GameRole.None, null, new ProjectionColor(1f, 0.76f, 0.18f, 0.7f), ProjectionShape.Ring));
+                        ProjectionSurface.Table, GameRole.None, null, new ProjectionColor(0.41f, 0.98f, 0.88f, 0.85f), ProjectionShape.Whirlpool));
 
             if (settings.IncludeChangeHighlights && delta != null)
                 foreach (CellChange change in delta.Changes)
@@ -198,6 +214,54 @@ namespace Brick2Life.Application
         }
 
         private static float Center(int cell, float size) => cell + (1 - size) * 0.5f;
+
+        private static bool HasWallCrest(LevelState level, int x, int y, WallConnections neighbors)
+        {
+            const WallConnections horizontal = WallConnections.West | WallConnections.East;
+            const WallConnections vertical = WallConnections.South | WallConnections.North;
+            const int maxGap = 3;
+            // Isolated walls, ends, elbows and junctions anchor the crests on each straight run.
+            if (neighbors != horizontal && neighbors != vertical) return true;
+
+            int stepX = neighbors == horizontal ? 1 : 0;
+            int stepY = 1 - stepX;
+            int DistanceToAnchor(int direction)
+            {
+                int distance = 1;
+                while (WallNeighborsAt(level, x + distance * stepX * direction,
+                    y + distance * stepY * direction) == neighbors)
+                    distance++;
+                return distance;
+            }
+
+            int offset = DistanceToAnchor(-1);
+            int span = offset + DistanceToAnchor(1);
+            int intervals = (span + maxGap - 1) / maxGap;
+            // Divide the run evenly, rounding each crest to the nearest cell.
+            for (int i = 1; i < intervals; i++)
+                if (offset == (i * span + intervals / 2) / intervals) return true;
+            return false;
+        }
+
+        private static WallConnections WallNeighborsAt(LevelState level, int x, int y)
+        {
+            bool IsWall(int cx, int cy) => cx >= 0 && cy >= 0 &&
+                cx < level.Definition.Width && cy < level.Definition.Height &&
+                level.At(cx, cy).Role == GameRole.Wall;
+
+            bool west = IsWall(x - 1, y), east = IsWall(x + 1, y);
+            bool south = IsWall(x, y - 1), north = IsWall(x, y + 1);
+            WallConnections neighbors = WallConnections.None;
+            if (west) neighbors |= WallConnections.West;
+            if (east) neighbors |= WallConnections.East;
+            if (south) neighbors |= WallConnections.South;
+            if (north) neighbors |= WallConnections.North;
+            if (west && south && IsWall(x - 1, y - 1)) neighbors |= WallConnections.SouthWest;
+            if (east && south && IsWall(x + 1, y - 1)) neighbors |= WallConnections.SouthEast;
+            if (west && north && IsWall(x - 1, y + 1)) neighbors |= WallConnections.NorthWest;
+            if (east && north && IsWall(x + 1, y + 1)) neighbors |= WallConnections.NorthEast;
+            return neighbors;
+        }
 
         // Lattice points stay inside the board: at the border they would otherwise hang half off the table.
         private static float ClampGrid(int coordinate, float size, int extent)

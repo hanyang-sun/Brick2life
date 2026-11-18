@@ -44,6 +44,23 @@ internal static class ProjectionPlanChecks
         Check(Math.Abs(highlight.Color.Alpha - 0.32f) < 1e-4, "Role highlight alpha does not follow the options.");
         Check(ProjectionPlanBuilder.ColorOf(GameRole.Tower).Red > ProjectionPlanBuilder.ColorOf(GameRole.Wall).Red, "Role colors are not distinguishable.");
 
+        (int x, int y)[] WallCrests(params (int x, int y, string color)[] bricks) =>
+            ProjectionPlanBuilder.Build(Level(1, bricks), null).Marks
+                .Where(mark => mark.ShowWallCrest).Select(mark => ((int)mark.CenterX, (int)mark.CenterY)).ToArray();
+
+        Check(WallCrests((2, 2, "green"), (3, 2, "green"), (4, 2, "green"))
+            .SequenceEqual(new[] { (2, 2), (4, 2) }), "A short straight wall must display crests on its ends.");
+        var longWall = Enumerable.Range(0, 8).Select(x => (x, 4, "green")).ToArray();
+        Check(WallCrests(longWall).SequenceEqual(new[] { (0, 4), (2, 4), (5, 4), (7, 4) }),
+            "A long horizontal wall must space crests evenly between its ends.");
+        Check(WallCrests(Enumerable.Range(1, 5).Select(y => (3, y, "green")).ToArray())
+            .SequenceEqual(new[] { (3, 1), (3, 3), (3, 5) }), "Vertical walls must use the same crest spacing.");
+        Check(WallCrests((1, 6, "green"), (2, 6, "green"), (3, 6, "green"), (4, 6, "green"),
+                (5, 6, "green"), (3, 7, "green"))
+            .SequenceEqual(new[] { (1, 6), (3, 6), (5, 6), (3, 7) }), "A junction must anchor crests on each branch.");
+        Check(WallCrests(longWall.Where(brick => brick.x != 3).ToArray())
+            .SequenceEqual(new[] { (0, 4), (2, 4), (4, 4), (7, 4) }), "Removing a wall must recalculate crests on the new runs.");
+
         var battleProjection = ProjectionPlanBuilder.Build(level, null, new ProjectionOptions { IncludeTowerHighlights = false });
         Check(battleProjection.Count(ProjectionMarkKind.RoleHighlight) == 2 &&
             !battleProjection.Marks.Any(mark => mark.Kind == ProjectionMarkKind.RoleHighlight && mark.Role == GameRole.Tower),

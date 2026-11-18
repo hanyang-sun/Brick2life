@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Brick2Life.Application;
+using Brick2Life.Battle;
 using Brick2Life.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -30,11 +31,24 @@ namespace Brick2Life.Feedback
         [SerializeField] private bool visible = true;
 
         private readonly List<GameObject> pool = new List<GameObject>();
+        private readonly List<WallPattern> walls = new List<WallPattern>();
+        private sealed class WallPattern
+        {
+            public Renderer Renderer;
+            public Vector2 Center;
+            public Vector4 Exposed;
+            public Vector4 Nearby;
+        }
+
         // Unity objects cannot be constructed in field initializers; created in Awake instead.
         private MaterialPropertyBlock properties;
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int ExposedId = Shader.PropertyToID("_Exposed");
+        private static readonly int InnerCornersId = Shader.PropertyToID("_InnerCorners");
+        private static readonly int NearbyId = Shader.PropertyToID("_Nearby");
+        private static readonly int ShowCrestId = Shader.PropertyToID("_ShowCrest");
         private Material runtimeMaterial;
-        private Material ringMaterial, coreMaterial, wallMaterial;
+        private Material ringMaterial, coreMaterial, wallMaterial, whirlpoolMaterial;
         private bool[] isChangeMark = Array.Empty<bool>();
         private const int CoreHitFrameCount = 17;
         private const int CoreIdleFrameCount = 24;
@@ -133,7 +147,8 @@ namespace Brick2Life.Feedback
             if (coreFrames != null)
                 foreach (Texture2D frame in coreFrames) Destroy(frame);
             if (coreMaterial != null) Destroy(coreMaterial);
-            foreach (Material material in new[] { ringMaterial, wallMaterial })
+            if (wallMaterial != null) Destroy(wallMaterial);
+            foreach (Material material in new[] { ringMaterial, whirlpoolMaterial })
                 if (material != null) { if (material.mainTexture != null) Destroy(material.mainTexture); Destroy(material); }
         }
 
@@ -141,6 +156,7 @@ namespace Brick2Life.Feedback
         {
             if (plan == null) throw new ArgumentNullException(nameof(plan));
             LastPlan = plan;
+            walls.Clear();
             if (marksRoot == null) marksRoot = transform;
             Material material = EnsureMaterial();
             if (material == null) { HideAll(); return; }
@@ -169,7 +185,7 @@ namespace Brick2Life.Feedback
         {
             foreach (GameObject quad in pool)
                 if (quad != null) { quad.SetActive(false); Destroy(quad); }
-            pool.Clear(); VisibleMarkCount = 0; LastPlan = null;
+            pool.Clear(); walls.Clear(); VisibleMarkCount = 0; LastPlan = null;
             ResetCoreHit();
         }
 
@@ -192,10 +208,11 @@ namespace Brick2Life.Feedback
             baseAlpha = new float[count];
         }
 
-        // Change rings, core emblems and wall courses carry the role identity; color stays auxiliary.
+        // Change rings, core emblems and coral barriers carry the role identity; color stays auxiliary.
         private Material MaterialFor(ProjectionMark mark, Material fallback)
         {
             EnsureTextures(fallback);
+            if (mark.Shape == ProjectionShape.Whirlpool) return whirlpoolMaterial != null ? whirlpoolMaterial : fallback;
             if (mark.Kind == ProjectionMarkKind.ChangeHighlight || mark.Shape == ProjectionShape.Ring)
                 return ringMaterial != null ? ringMaterial : fallback;
             if (mark.Kind != ProjectionMarkKind.RoleHighlight) return fallback;
@@ -213,8 +230,10 @@ namespace Brick2Life.Feedback
             Shader shader = fallback != null ? fallback.shader : Shader.Find("Sprites/Default");
             if (shader == null) return;
             ringMaterial = new Material(shader) { name = "ProjectionRing", mainTexture = MakeRing(96, 0.55f) };
+            whirlpoolMaterial = new Material(shader) { name = "ProjectionWhirlpool", mainTexture = MakeWhirlpool(96) };
             coreMaterial = new Material(shader) { name = "ProjectionCore", mainTexture = LoadCoreFrames() };
-            wallMaterial = new Material(shader) { name = "ProjectionWall", mainTexture = MakeWallPattern(96) };
+            Shader coralShader = Resources.Load<Shader>("ProjectedLight/CoralWall");
+            if (coralShader != null) wallMaterial = new Material(coralShader) { name = "ProjectionWall" };
         }
 
         private static Texture2D NewTexture(int size) => new Texture2D(size, size, TextureFormat.RGBA32, false)
@@ -236,6 +255,26 @@ namespace Brick2Life.Feedback
                     pixels[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(alpha) * 255f));
                 }
             texture.SetPixels32(pixels); texture.Apply(false, false);
+            return texture;
+        }
+
+        private static Texture2D MakeWhirlpool(int size)
+        {
+            Texture2D texture = NewTexture(size);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    Vector2 point = new Vector2((2f * x + 1f) / size - 1f, (2f * y + 1f) / size - 1f);
+                    float radius = point.magnitude;
+                    float winding = Mathf.Atan2(point.y, point.x) / (2f * Mathf.PI) + radius / 0.42f;
+                    float distance = Mathf.Abs(Mathf.Repeat(winding + 0.5f, 1f) - 0.5f) * 0.42f;
+                    float stroke = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.033f, 0.065f, distance));
+                    float ends = Mathf.InverseLerp(0.08f, 0.19f, radius) * (1f - Mathf.InverseLerp(0.77f, 0.93f, radius));
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(255f * stroke * ends));
+                }
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
             return texture;
         }
 
@@ -291,25 +330,58 @@ namespace Brick2Life.Feedback
                 coreMaterial.mainTexture = coreFrames[index];
         }
 
-        private static Texture2D MakeWallPattern(int size)
+        internal void UpdateWallProximity(IReadOnlyList<EnemyState> enemies, float deltaTime)
         {
-            Texture2D texture = NewTexture(size);
-            var pixels = new Color32[size * size];
-            const int courses = 4;
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
+            foreach (WallPattern wall in walls)
+            {
+                Vector4 target = Vector4.zero;
+                for (int i = 0; enemies != null && i < enemies.Count; i++)
                 {
-                    float u = x / (float)(size - 1), v = y / (float)(size - 1);
-                    int course = Mathf.FloorToInt(v * courses);
-                    float offset = course % 2 == 0 ? 0f : 0.5f;
-                    float joint = Mathf.Abs(((u * 2f + offset) % 1f) - 0.5f);
-                    float alpha = joint < 0.06f ? 0.55f : 0.16f;
-                    float border = Mathf.Min(Mathf.Min(u, 1f - u), Mathf.Min(v, 1f - v));
-                    if (border < 0.07f) alpha = 0.85f;
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(alpha) * 255f));
+                    EnemyState enemy = enemies[i];
+                    // Navigation cells are half the size of physical bricks.
+                    float x = (float)enemy.X * 0.5f - wall.Center.x;
+                    float z = (float)enemy.Y * 0.5f - wall.Center.y;
+                    float along = Mathf.Min(Mathf.Abs(x), Mathf.Abs(z));
+                    float normal = Mathf.Max(Mathf.Abs(x), Mathf.Abs(z));
+                    if (normal < 0.5f || normal >= 1.06f || along >= 0.68f) continue;
+
+                    int side = Mathf.Abs(x) >= Mathf.Abs(z) ? (x < 0f ? 0 : 1) : (z < 0f ? 2 : 3);
+                    if (wall.Exposed[side] == 0f) continue;
+                    float strength = (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.56f, 1.06f, normal))) *
+                        (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.45f, 0.68f, along)));
+                    target[side] = Mathf.Max(target[side], strength);
                 }
-            texture.SetPixels32(pixels); texture.Apply(false, false);
-            return texture;
+
+                Vector4 nearby = wall.Nearby;
+                for (int side = 0; side < 4; side++)
+                    nearby[side] = Mathf.MoveTowards(nearby[side], target[side],
+                        deltaTime * (target[side] > nearby[side] ? 9f : 4f));
+                if (nearby.Equals(wall.Nearby)) continue;
+                wall.Nearby = nearby;
+                wall.Renderer.GetPropertyBlock(properties);
+                properties.SetVector(NearbyId, nearby);
+                wall.Renderer.SetPropertyBlock(properties);
+            }
+        }
+
+        private void PlaceWall(Renderer renderer, ProjectionMark mark)
+        {
+            bool Connected(WallConnections side) => (mark.WallNeighbors & side) == side;
+            var exposed = new Vector4(Connected(WallConnections.West) ? 0f : 1f,
+                Connected(WallConnections.East) ? 0f : 1f, Connected(WallConnections.South) ? 0f : 1f,
+                Connected(WallConnections.North) ? 0f : 1f);
+            float InnerCorner(WallConnections sides, WallConnections diagonal) =>
+                Connected(sides) && !Connected(diagonal) ? 1f : 0f;
+            var corners = new Vector4(
+                InnerCorner(WallConnections.West | WallConnections.South, WallConnections.SouthWest),
+                InnerCorner(WallConnections.East | WallConnections.South, WallConnections.SouthEast),
+                InnerCorner(WallConnections.West | WallConnections.North, WallConnections.NorthWest),
+                InnerCorner(WallConnections.East | WallConnections.North, WallConnections.NorthEast));
+            properties.SetVector(ExposedId, exposed);
+            properties.SetVector(InnerCornersId, corners);
+            properties.SetVector(NearbyId, Vector4.zero);
+            properties.SetFloat(ShowCrestId, mark.ShowWallCrest ? 1f : 0f);
+            walls.Add(new WallPattern { Renderer = renderer, Center = new Vector2(mark.CenterX, mark.CenterY), Exposed = exposed });
         }
 
         private void Place(GameObject quad, ProjectionMark mark, Material material)
@@ -326,9 +398,11 @@ namespace Brick2Life.Feedback
             renderer.sharedMaterial = MaterialFor(mark, material);
             ProjectionColor color = mark.Color;
             bool core = mark.Kind == ProjectionMarkKind.RoleHighlight && mark.Role == GameRole.Core;
+            properties.Clear();
             properties.SetColor(ColorId, core
                 ? new Color(1f, 1f, 1f, color.Alpha * intensity)
                 : new Color(color.Red, color.Green, color.Blue, color.Alpha * intensity));
+            if (wallMaterial != null && renderer.sharedMaterial == wallMaterial) PlaceWall(renderer, mark);
             renderer.SetPropertyBlock(properties);
         }
 

@@ -1,5 +1,13 @@
 {
+  "scopedRegistries": [
+    {
+      "name": "Keijiro",
+      "url": "https://registry.npmjs.org",
+      "scopes": ["jp.keijiro.klak.spout"]
+    }
+  ],
   "dependencies": {
+    "jp.keijiro.klak.spout": "2.0.6",
     "com.unity.ugui": "2.0.0",
     "com.unity.multiplayer.center": "1.0.1",
     "com.unity.modules.accessibility": "1.0.0",
