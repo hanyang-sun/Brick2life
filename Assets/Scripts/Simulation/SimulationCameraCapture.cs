@@ -120,11 +120,13 @@ namespace Brick2Life.Simulation
                 imageWidth = target.width, imageHeight = target.height,
                 cameraConfiguration = SnapshotCamera(target),
                 lightingConfiguration = SimulationLightingConfiguration.SnapshotScene(),
-                cells = new GroundTruthCell[snapshot.Definition.CellCount]
+                cells = new GroundTruthCell[snapshot.Definition.CellCount],
+                bricks = new GroundTruthBrick[board.Bricks.Count]
             };
             truth.cameraConfigurationId = ConfigurationId(truth.cameraConfiguration);
             truth.lightingConfigurationId = ConfigurationId(truth.lightingConfiguration, SimulationLightingConfiguration.IdPrefix);
             truth.boardCorners = SnapshotBoardCorners(truth);
+            int brickIndex = 0;
             for (int y = 0; y < snapshot.Definition.Height; y++)
                 for (int x = 0; x < snapshot.Definition.Width; x++)
                 {
@@ -134,6 +136,16 @@ namespace Brick2Life.Simulation
                         gridX = x, gridY = y, occupied = cell.Occupancy == Occupancy.Occupied,
                         brickId = cell.BrickId ?? "", colorId = cell.ColorId ?? "", layer = 0
                     };
+                    int layers = board.StackHeight(x, y);
+                    for (int layer = 0; layer < layers; layer++)
+                    {
+                        BoardLayout.Brick brick = board.AtLayer(x, y, layer);
+                        truth.bricks[brickIndex++] = new GroundTruthBrick
+                        {
+                            gridX = x, gridY = y, layer = brick.Layer,
+                            brickId = brick.BrickId, colorId = brick.ColorId
+                        };
+                    }
                 }
             return truth;
         }
@@ -237,6 +249,7 @@ namespace Brick2Life.Simulation
             public string boardCornerPixelConvention = "top-left origin; integer pixel centers; x=viewportX*imageWidth-0.5; y=(1-viewportY)*imageHeight-0.5";
             public BoardCorner[] boardCorners;
             public GroundTruthCell[] cells;
+            public GroundTruthBrick[] bricks;
         }
 
         [Serializable] private sealed class CameraConfiguration
@@ -275,6 +288,12 @@ namespace Brick2Life.Simulation
             public int gridX, gridY, layer;
             public bool occupied;
             public string brickId = "", colorId = "";
+        }
+
+        [Serializable] private sealed class GroundTruthBrick
+        {
+            public int gridX, gridY, layer;
+            public string brickId, colorId;
         }
 
         // RGB and the public camera matrices only. Ground truth cells are not read.

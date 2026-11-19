@@ -10,6 +10,8 @@
 
 代码读取实际采集相机的参数，正交、透视均可使用。它不会替你切换投影模式或调整机位。图像尺寸来自相机绑定的 RenderTexture，与 Game 窗口尺寸无关。
 
+GT 的 `cells` 仍按原顺序记录底层 100 格。新采集的 JSON 另含 `bricks` 数组，按 `gridY`、`gridX`、`layer` 升序记录每块实际积木的位置、`brickId` 和 `colorId`。底层 `layer = 0`，上一层递增 1；空棋盘的 `bricks` 为空数组。读取只含 `cells` 的旧文件时，可用其中已占用的格作为单层记录。两份布局字段都只供评价。
+
 - `Assets/Scripts/Simulation/SimulationCameraCapture.cs`：配置快照、编号、配对导出及一致性保护。
 - `Tests/Unity/SimulationCameraMetadataChecks.cs`：在隔离 Unity 工程中实际渲染和读取 PNG/JSON 的检查源码，不参与主工程 .NET 检查项目的编译。
 - `Tests/RunSimulationCameraMetadataChecks.ps1`：将 Core、Simulation 和检查源码复制到 `.scratch/camera-metadata-validation/run-*`，运行隐藏的独立 Unity 工程；主工程可以保持打开。

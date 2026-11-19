@@ -24,6 +24,8 @@ namespace Brick2Life.Simulation
         private PointerEventData pointerEvent;
         private bool dragPreview, dragValid;
         private Vector2Int dragCell;
+        private int dragLayer;
+        private SimulationWorkspaceCamera workspaceView;
         public Vector2Int HoveredCell { get; private set; } = new Vector2Int(-1, -1);
 
         private void Awake()
@@ -38,16 +40,18 @@ namespace Brick2Life.Simulation
                 enabled = false;
                 return;
             }
+            workspaceView = workspaceCamera.GetComponent<SimulationWorkspaceCamera>();
             ClearHover();
         }
+
+        internal void OrbitWorkspace(float horizontalPixels) => workspaceView?.Orbit(horizontalPixels);
 
         private void LateUpdate()
         {
             if (dragPreview)
             {
                 if (UnityApplication.isFocused && BoardLayout.Contains(dragCell.x, dragCell.y))
-                    // 移动目标是棋盘格位，方框贴合棋盘而不是积木顶面。
-                    ShowCell(dragCell, 0);
+                    ShowCell(dragCell, dragLayer, dragLayer);
                 else ClearHover();
                 return;
             }
@@ -57,7 +61,7 @@ namespace Brick2Life.Simulation
                 ClearHover();
                 return;
             }
-            ShowCell(cell, surfaceHeight);
+            ShowCell(cell, surfaceHeight, Mathf.RoundToInt(surfaceHeight) - 1);
         }
 
         public bool TryPickCell(Vector2 screenPosition, out Vector2Int cell, out float surfaceHeight)
@@ -108,14 +112,18 @@ namespace Brick2Life.Simulation
             return uiHits.Count == 0;
         }
 
-        public void SetDragPreview(Vector2Int cell, bool valid)
-        { dragPreview = true; dragCell = cell; dragValid = valid; }
+        public void SetDragPreview(Vector2Int cell, bool valid) => SetStackDragPreview(cell, valid, 0);
+
+        internal void SetStackDragPreview(Vector2Int cell, bool valid, int layer)
+        { dragPreview = true; dragCell = cell; dragValid = valid; dragLayer = layer; }
 
         public void ClearDragPreview() => dragPreview = false;
 
-        private void ShowCell(Vector2Int cell, float surfaceHeight)
+        private void ShowCell(Vector2Int cell, float surfaceHeight, int layer)
         {
-            cellLabel.text = dragPreview ? $"拖拽目标：({cell.x + 1}, {cell.y + 1})" : $"当前格位：({cell.x + 1}, {cell.y + 1})";
+            string location = $"({cell.x + 1}, {cell.y + 1})";
+            if (layer >= 0) location += $" 第 {layer + 1} 层";
+            cellLabel.text = (dragPreview ? "拖拽目标：" : "当前格位：") + location;
             HoveredCell = cell;
             outlineRoot.gameObject.SetActive(true);
             Color color = !dragPreview ? new Color(1, 0.75f, 0.15f) :

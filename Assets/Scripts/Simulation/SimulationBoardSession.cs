@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Brick2Life.Core;
 using UnityEngine;
 
@@ -17,6 +18,9 @@ namespace Brick2Life.Simulation
         }
         [SerializeField] private Transform bricksRoot;
         [SerializeField] private PaletteEntry[] palette;
+        private const int MaxLayerCount = 3;
+        [SerializeField, Range(1, MaxLayerCount)] private int maxLayers = MaxLayerCount;
+        private int LayerLimit => Mathf.Clamp(maxLayers, 1, MaxLayerCount);
         private Dictionary<string, GameObject> objects = new Dictionary<string, GameObject>();
         private BoardLayout layout;
         private readonly HashSet<GridPoint> reserved = new HashSet<GridPoint>();
@@ -77,16 +81,17 @@ namespace Brick2Life.Simulation
             }
             var candidate = new BoardLayout(new BoardDefinition(colorIds: colors));
             var candidateObjects = new Dictionary<string, GameObject>();
-            foreach (Transform child in root)
+            foreach (Transform child in root.Cast<Transform>().OrderBy(child => child.position.y))
             {
                 Renderer renderer = child.GetComponent<Renderer>();
                 int index = Array.FindIndex(entries, entry => renderer != null && entry.material == renderer.sharedMaterial);
                 Vector3 position = child.position;
                 int x = Mathf.FloorToInt(position.x), y = Mathf.FloorToInt(position.z);
-                if (index < 0 || child.GetComponent<Collider>() == null ||
-                    (position - new Vector3(x + 0.5f, 0.5f, y + 0.5f)).sqrMagnitude > 0.0001f ||
-                    !candidate.TryAdd(x, y, entries[index].colorId, out BoardLayout.Brick brick))
-                    throw new InvalidOperationException("Initial bricks must occupy valid, distinct unit cells with palette materials.");
+                int layer = Mathf.FloorToInt(position.y);
+                if (index < 0 || layer >= LayerLimit || child.GetComponent<Collider>() == null ||
+                    (position - BrickCenter(x, y, layer)).sqrMagnitude > 0.0001f ||
+                    !candidate.TryAddAtLayer(x, y, layer, entries[index].colorId, out BoardLayout.Brick brick))
+                    throw new InvalidOperationException("Initial bricks must occupy supported, distinct unit cells with palette materials.");
                 candidateObjects.Add(brick.BrickId, child.gameObject);
             }
             bricksRoot = root; palette = (PaletteEntry[])entries.Clone();
@@ -94,15 +99,22 @@ namespace Brick2Life.Simulation
             foreach (var pair in candidateObjects) objects.Add(pair.Key, pair.Value);
             layout = candidate;
         }
+        private static Vector3 BrickCenter(int x, int y, int layer) => new Vector3(x + 0.5f, layer + 0.5f, y + 0.5f);
         private BoardLayout RequireLayout() => layout ?? throw new InvalidOperationException("Board session has not been initialized.");
         public BoardSnapshot Snapshot() => RequireLayout().Snapshot();
         public BoardLayout.Brick At(int x, int y) => RequireLayout().At(x, y);
-        public bool CanPlace(int x, int y, string movingId = null)
+        public bool CanPlace(int x, int y, string movingId = null) => CanPlaceAtLayer(x, y, 0, movingId);
+
+        internal BoardLayout.Brick AtLayer(int x, int y, int layer) => RequireLayout().AtLayer(x, y, layer);
+        internal int StackHeight(int x, int y) => RequireLayout().StackHeight(x, y);
+
+        internal bool CanPlaceAtLayer(int x, int y, int layer, string movingId = null)
         {
-            LastPlacementIssue = IsReserved(x, y) ? "核心和出生点是系统保留格，请选择其他位置。" : "目标格已有积木或不在棋盘内。";
-            bool allowed = !IsReserved(x, y) && RequireLayout().CanPlace(x, y, movingId);
-            if (allowed) LastPlacementIssue = null;
-            return allowed;
+            LastPlacementIssue = IsReserved(x, y) ? "核心和出生点是系统保留格，请选择其他位置。" :
+                layer >= LayerLimit ? $"每格最多叠放 {LayerLimit} 层。" :
+                RequireLayout().CanPlaceAtLayer(x, y, layer, movingId) ? null :
+                layer == 0 ? "目标格已有积木或不在棋盘内。" : "目标层已有积木或没有下层支撑。";
+            return LastPlacementIssue == null;
         }
 
         // Validate and prepare the complete view before replacing the live model. Local versions remain monotonic.
@@ -134,7 +146,7 @@ namespace Brick2Life.Simulation
                     instance.SetActive(false);
                     instance.name = "Brick_" + brick.ColorId;
                     instance.transform.SetParent(bricksRoot, false);
-                    instance.transform.position = new Vector3(brick.GridX + 0.5f, 0.5f, brick.GridY + 0.5f);
+                    instance.transform.position = BrickCenter(brick.GridX, brick.GridY, brick.Layer);
                     instance.GetComponent<Renderer>().sharedMaterial = palette[index].material;
                 }
             }
@@ -149,22 +161,24 @@ namespace Brick2Life.Simulation
             foreach (GameObject instance in objects.Values) instance.SetActive(true);
         }
 
-        public bool TryAdd(int x, int y, string colorId, out BoardLayout.Brick added)
+        public bool TryAdd(int x, int y, string colorId, out BoardLayout.Brick added) => TryAddAtLayer(x, y, 0, colorId, out added);
+
+        internal bool TryAddAtLayer(int x, int y, int layer, string colorId, out BoardLayout.Brick added)
         {
             added = null;
             if (IsEditingLocked) return false;
             var model = RequireLayout();
             int index = Array.FindIndex(palette, entry => entry.colorId == colorId);
             if (!IsPlayerColorAvailable(colorId)) { LastPlacementIssue = "请选择城墙或防御塔。"; return false; }
-            if (index < 0 || !CanPlace(x, y)) return false;
+            if (index < 0 || !CanPlaceAtLayer(x, y, layer)) return false;
             GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
             try
             {
                 instance.name = "Brick_" + colorId;
                 instance.transform.SetParent(bricksRoot, false);
-                instance.transform.position = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
+                instance.transform.position = BrickCenter(x, y, layer);
                 instance.GetComponent<Renderer>().sharedMaterial = palette[index].material;
-                if (!model.TryAdd(x, y, colorId, out added)) throw new InvalidOperationException("Layout changed while adding a brick.");
+                if (!model.TryAddAtLayer(x, y, layer, colorId, out added)) throw new InvalidOperationException("Layout changed while adding a brick.");
                 objects.Add(added.BrickId, instance);
                 return true;
             }
@@ -177,12 +191,14 @@ namespace Brick2Life.Simulation
             objects.Remove(id); instance.SetActive(false); Destroy(instance);
             return true;
         }
-        public bool TryMove(string id, int x, int y)
+        public bool TryMove(string id, int x, int y) => TryMoveToLayer(id, x, y, 0);
+
+        internal bool TryMoveToLayer(string id, int x, int y, int layer)
         {
             if (IsEditingLocked) return false;
-            if (!CanPlace(x, y, id)) return false;
-            if (!RequireLayout().TryMove(id, x, y)) return false;
-            objects[id].transform.position = new Vector3(x + 0.5f, 0.5f, y + 0.5f);
+            if (!CanPlaceAtLayer(x, y, layer, id)) return false;
+            if (!RequireLayout().TryMoveToLayer(id, x, y, layer)) return false;
+            objects[id].transform.position = BrickCenter(x, y, layer);
             return true;
         }
     }

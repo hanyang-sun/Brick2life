@@ -2616,6 +2616,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Brick2Life.Simulation::Brick2Life.Simulation.SimulationWorkspaceCamera
   padding: 1.1
   minimumSize: 7.1
+  board: {fileID: 920000001}
 --- !u!81 &1087626021
 AudioListener:
   m_ObjectHideFlags: 0

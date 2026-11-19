@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Brick2Life.Core;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityApplication = UnityEngine.Application;
@@ -11,6 +10,7 @@ namespace Brick2Life.Simulation
     public sealed class SimulationBrickEditor : MonoBehaviour
     {
         private enum Tool { Add, Delete, Move }
+        private const float OrbitDragThreshold = 5f;
         [SerializeField] private SimulationGridPointer pointer;
         [SerializeField] private Button[] toolButtons;
         [SerializeField] private Button colorButtonTemplate;
@@ -23,9 +23,13 @@ namespace Brick2Life.Simulation
         private Tool tool;
         private int colorIndex;
         private string draggedId;
-        private Vector3 grabOffset;
+        private Vector2Int dragSource;
         private Vector2Int dragTarget;
+        private int dragLayer;
         private bool hasDragTarget;
+        private bool boardPressed, orbiting;
+        private Vector2 pressPosition;
+        private float lastOrbitX;
         private CanvasGroup editingControls;
 
         public SimulationBoardSession Board => board;
@@ -129,8 +133,8 @@ namespace Brick2Life.Simulation
             CancelDrag();
             tool = (Tool)index;
             RefreshButtons();
-            statusLabel.text = tool == Tool.Add ? $"添加 {palette[colorIndex].label}：点击空格" :
-                tool == Tool.Delete ? "删除：点击要移除的积木" : "移动：按住积木拖拽，松开放置；Esc / 右键取消";
+            statusLabel.text = tool == Tool.Add ? $"添加 {palette[colorIndex].label}：点击放置，拖动旋转" :
+                tool == Tool.Delete ? "点击删除最上层，拖动旋转" : "拖拽最上层积木，拖动空处旋转";
         }
 
         public void SelectColor(int index)
@@ -172,36 +176,67 @@ namespace Brick2Life.Simulation
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
             { CancelDrag(); return; }
             Vector2 position = Input.mousePosition;
-            if (Input.GetMouseButtonDown(0)) HandlePointerDown(position);
-            if (draggedId == null) return;
-            UpdateDrag(position);
-            if (Input.GetMouseButtonUp(0)) EndDrag(position);
-            else if (!Input.GetMouseButton(0)) CancelDrag();
+            if (Input.GetMouseButtonDown(0)) BeginPointerGesture(position);
+            if (Input.GetMouseButtonUp(0)) EndPointerGesture(position);
+            else if (Input.GetMouseButton(0)) UpdatePointerGesture(position);
+            else if (boardPressed || draggedId != null) CancelDrag();
+        }
+
+        private void BeginPointerGesture(Vector2 position)
+        {
+            if (tool == Tool.Move) HandlePointerDown(position);
+            if (draggedId != null || !pointer.TryProjectToBoard(position, out _)) return;
+            boardPressed = true;
+            pressPosition = position;
+            lastOrbitX = position.x;
+        }
+
+        private void UpdatePointerGesture(Vector2 position)
+        {
+            if (draggedId != null) { UpdateDrag(position); return; }
+            if (!boardPressed || (!orbiting && (position - pressPosition).sqrMagnitude <
+                OrbitDragThreshold * OrbitDragThreshold)) return;
+
+            orbiting = true;
+            pointer.OrbitWorkspace(position.x - lastOrbitX);
+            lastOrbitX = position.x;
+        }
+
+        private void EndPointerGesture(Vector2 position)
+        {
+            if (draggedId != null) { EndDrag(position); return; }
+            UpdatePointerGesture(position);
+            bool clicked = boardPressed && !orbiting && tool != Tool.Move;
+            boardPressed = orbiting = false;
+            if (clicked) HandlePointerDown(position);
         }
 
         private void HandlePointerDown(Vector2 position)
         {
             if (!CanEdit) return;
-            if (!pointer.TryPickCell(position, out Vector2Int cell, out _)) return;
+            if (!pointer.TryPickCell(position, out Vector2Int cell, out float surfaceHeight)) return;
             if (board.IsReserved(cell.x, cell.y))
             { statusLabel.text = "核心和出生点由系统固定，不能放置、删除或移动。"; return; }
-            BoardLayout.Brick brick = board.At(cell.x, cell.y);
+            int height = board.StackHeight(cell.x, cell.y);
             if (tool == Tool.Add)
             {
-                if (!board.TryAdd(cell.x, cell.y, palette[colorIndex].colorId, out var added))
+                if (!board.TryAddAtLayer(cell.x, cell.y, height, palette[colorIndex].colorId, out var added))
                 { statusLabel.text = board.LastPlacementIssue ?? "目标格不可放置，请选择其他位置。"; return; }
-                statusLabel.text = $"已添加 {palette[colorIndex].label}：({cell.x + 1}, {cell.y + 1})";
+                statusLabel.text = $"已添加 {palette[colorIndex].label}：({cell.x + 1}, {cell.y + 1}) 第 {added.Layer + 1} 层";
+                return;
             }
-            else if (tool == Tool.Delete)
+            var brick = board.AtLayer(cell.x, cell.y, Mathf.RoundToInt(surfaceHeight) - 1);
+            if (brick == null) { statusLabel.text = "这里没有积木。"; return; }
+            if (brick.Layer != height - 1) { statusLabel.text = "请先移走上层积木。"; return; }
+            if (tool == Tool.Delete)
             {
-                if (brick == null) { statusLabel.text = "这里没有积木。"; return; }
                 if (!DeleteBrick(brick.BrickId)) return;
-                statusLabel.text = $"已删除：({cell.x + 1}, {cell.y + 1})";
+                statusLabel.text = $"已删除：({cell.x + 1}, {cell.y + 1}) 第 {brick.Layer + 1} 层";
             }
-            else if (brick != null && pointer.TryProjectToBoard(position, out Vector3 ground))
+            else
             {
                 draggedId = brick.BrickId;
-                grabOffset = new Vector3(brick.GridX + 0.5f, 0, brick.GridY + 0.5f) - ground;
+                dragSource = cell;
                 UpdateDrag(position);
             }
         }
@@ -211,17 +246,12 @@ namespace Brick2Life.Simulation
         private void UpdateDrag(Vector2 position)
         {
             if (!CanEdit) { CancelDrag(); return; }
-            hasDragTarget = pointer.TryProjectToBoard(position, out Vector3 ground);
-            if (hasDragTarget)
-            {
-                Vector3 center = ground + grabOffset;
-                dragTarget = new Vector2Int(Mathf.FloorToInt(center.x), Mathf.FloorToInt(center.z));
-                hasDragTarget = BoardLayout.Contains(dragTarget.x, dragTarget.y);
-            }
-            bool valid = hasDragTarget && board.CanPlace(dragTarget.x, dragTarget.y, draggedId);
-            pointer.SetDragPreview(hasDragTarget ? dragTarget : new Vector2Int(-1, -1), valid);
+            hasDragTarget = pointer.TryPickCell(position, out dragTarget, out _);
+            dragLayer = board.StackHeight(dragTarget.x, dragTarget.y) - (dragTarget == dragSource ? 1 : 0);
+            bool valid = hasDragTarget && board.CanPlaceAtLayer(dragTarget.x, dragTarget.y, dragLayer, draggedId);
+            pointer.SetStackDragPreview(dragTarget, valid, dragLayer);
             statusLabel.text = !hasDragTarget ? "目标在棋盘外或界面上，松开将取消移动。" :
-                valid ? $"拖拽到 ({dragTarget.x + 1}, {dragTarget.y + 1})，松开放置。" :
+                valid ? $"拖拽到 ({dragTarget.x + 1}, {dragTarget.y + 1}) 第 {dragLayer + 1} 层，松开放置。" :
                 (board.LastPlacementIssue ?? "目标格不可放置，松开将取消移动。");
         }
 
@@ -230,9 +260,9 @@ namespace Brick2Life.Simulation
             if (!CanEdit) { CancelDrag(); return; }
             UpdateDrag(position);
             string id = draggedId;
-            bool moved = hasDragTarget && board.TryMove(id, dragTarget.x, dragTarget.y);
+            bool moved = hasDragTarget && board.TryMoveToLayer(id, dragTarget.x, dragTarget.y, dragLayer);
             CancelDrag();
-            statusLabel.text = moved ? $"已放置：({dragTarget.x + 1}, {dragTarget.y + 1})" : "移动已取消，积木保持原位。";
+            statusLabel.text = moved ? $"已放置：({dragTarget.x + 1}, {dragTarget.y + 1}) 第 {dragLayer + 1} 层" : "移动已取消，积木保持原位。";
         }
 
         private void CancelDrag()
@@ -240,6 +270,7 @@ namespace Brick2Life.Simulation
             bool wasDragging = draggedId != null;
             draggedId = null;
             hasDragTarget = false;
+            boardPressed = orbiting = false;
             if (pointer != null) pointer.ClearDragPreview();
             if (wasDragging && statusLabel != null) statusLabel.text = "移动已取消，积木保持原位。";
         }
